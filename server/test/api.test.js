@@ -375,3 +375,91 @@ test('22. 운영 모드(devEntitlement=false)에서는 /api/dev/entitlement 호�
     await ctx.close();
   }
 });
+
+test('23. POST /api/session은 서명된 세션 토큰과 uid를 발급한다', async () => {
+  const ctx = await startTestServer();
+  try {
+    const r = await ctx.req('POST', '/api/session');
+    assert.equal(r.status, 200);
+    assert.match(r.body.uid, /^mj_[0-9a-f]{32}$/);
+    assert.match(r.body.token, /^mj1\.mj_[0-9a-f]{32}\.[A-Za-z0-9_-]{43}$/);
+  } finally {
+    await ctx.close();
+  }
+});
+
+test('24. 위조된 Bearer 세션 토큰으로 요청하면 401(invalid_token)을 반환한다', async () => {
+  const ctx = await startTestServer();
+  try {
+    const r = await ctx.req('GET', '/api/me', {
+      headers: { Authorization: 'Bearer mj1.mj_00000000000000000000000000000000.invalid_sig_0000000000000000000000000000000' }
+    });
+    assert.equal(r.status, 401);
+    assert.equal(r.body.error, 'invalid_token');
+  } finally {
+    await ctx.close();
+  }
+});
+
+test('25. 비구독 사용자의 GET /api/temples/:id/extras 요청은 추가 풍수 본문을 숨기고 개수만 알려준다', async () => {
+  const ctx = await startTestServer();
+  try {
+    const r = await ctx.req('GET', '/api/temples/seongjusa/extras', { uid: 'u_free_temple' });
+    assert.equal(r.status, 200);
+    assert.equal(r.body.unlocked, false);
+    assert.equal(r.body.fengshui.length, 1);
+    assert.ok(r.body.extraFengshuiCount >= 1);
+  } finally {
+    await ctx.close();
+  }
+});
+
+test('26. 플러스 사용자의 GET /api/temples/:id/extras 요청은 추가 전설·풍수 전문을 반환한다', async () => {
+  const ctx = await startTestServer();
+  try {
+    await ctx.req('POST', '/api/dev/entitlement', { uid: 'u_plus_temple', body: { action: 'plus' } });
+    const r = await ctx.req('GET', '/api/temples/seongjusa/extras', { uid: 'u_plus_temple' });
+    assert.equal(r.status, 200);
+    assert.equal(r.body.unlocked, true);
+    assert.ok(r.body.fengshui.length > 1);
+  } finally {
+    await ctx.close();
+  }
+});
+
+test('27. 카탈로그에 없는 상품 ID로 들어온 RevenueCat 구매 이벤트는 무시(ignored_product)된다', async () => {
+  const ctx = await startTestServer();
+  try {
+    const w = await ctx.req('POST', '/api/webhooks/revenuecat', {
+      headers: { Authorization: 'Bearer secret-token' },
+      body: { event: { id: 'ev_unknown_prod', type: 'INITIAL_PURCHASE', app_user_id: 'u_unknown_prod', product_id: 'unknown_sku_999' } }
+    });
+    assert.equal(w.status, 200);
+    assert.equal(w.body.applied, 'ignored_product');
+    const me = await ctx.req('GET', '/api/me', { uid: 'u_unknown_prod' });
+    assert.equal(me.body.plus.active, false);
+  } finally {
+    await ctx.close();
+  }
+});
+
+test('28. RevenueCat 단품(NON_RENEWING_PURCHASE) 웹훅 수신 시 해당 팩이 packs 목록에 추가된다', async () => {
+  const ctx = await startTestServer();
+  try {
+    const w = await ctx.req('POST', '/api/webhooks/revenuecat', {
+      headers: { Authorization: 'Bearer secret-token' },
+      body: { event: { id: 'ev_pack_1', type: 'NON_RENEWING_PURCHASE', app_user_id: 'u_pack_buyer', product_id: 'guide-prayer' } }
+    });
+    assert.equal(w.status, 200);
+    assert.equal(w.body.applied, 'pack');
+    const me = await ctx.req('GET', '/api/me', { uid: 'u_pack_buyer' });
+    assert.ok(me.body.packs.includes('guide-prayer'));
+  } finally {
+    await ctx.close();
+  }
+});
+
+test('29. 운영 환경(production=true)에서 개발 권한 플래그가 켜져 있으면 서버 생성을 거부한다', () => {
+  assert.throws(() => createApp({ production: true, devEntitlement: true, devAdReward: false }), /ALLOW_DEV_ENTITLEMENT/);
+  assert.throws(() => createApp({ production: true, devEntitlement: false, devAdReward: true }), /ALLOW_DEV_AD_REWARD/);
+});

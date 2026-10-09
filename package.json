@@ -7,7 +7,7 @@
     "build": "node tools/build-seo.js",
     "build:seo": "node tools/build-seo.js",
     "build:mobile": "node tools/build-mobile.js",
-    "test": "node --test server/test/api.test.js",
+    "test": "node --test server/test/*.test.js",
     "start": "node server.js"
   },
   "dependencies": {
