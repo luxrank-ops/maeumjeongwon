@@ -1,0 +1,7 @@
+{
+  "name": "마음정원 — 사찰 순례 & 힐링 여행",
+  "description": "전국 사찰의 기원·역사·전설을 이야기로 읽고, 순례 미션으로 모으고, 여행을 계획하는 사찰 순례·힐링 여행 앱입니다.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
