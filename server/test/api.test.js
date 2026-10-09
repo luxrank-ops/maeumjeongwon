@@ -276,11 +276,11 @@ test('18. RevenueCat 해지(CANCELLATION) 후에도 만료 시각(기간 끝)까
     const exp = ctx.getNow() + 10 * 86400000;
     await ctx.req('POST', '/api/webhooks/revenuecat', {
       headers: { Authorization: 'Bearer secret-token' },
-      body: { event: { id: 'ev_buy_c', type: 'INITIAL_PURCHASE', app_user_id: 'u_cancel', expiration_at_ms: exp } }
+      body: { event: { id: 'ev_buy_c', type: 'INITIAL_PURCHASE', app_user_id: 'u_cancel', product_id: 'plus_yearly', expiration_at_ms: exp } }
     });
     await ctx.req('POST', '/api/webhooks/revenuecat', {
       headers: { Authorization: 'Bearer secret-token' },
-      body: { event: { id: 'ev_cancel_c', type: 'CANCELLATION', app_user_id: 'u_cancel', expiration_at_ms: exp } }
+      body: { event: { id: 'ev_cancel_c', type: 'CANCELLATION', app_user_id: 'u_cancel', product_id: 'plus_yearly', expiration_at_ms: exp } }
     });
 
     // 기간이 남아 있는 동안은 열려 있어야 함
@@ -302,11 +302,11 @@ test('19. RevenueCat 만료(EXPIRATION) 웹훅 수신 시 즉시 해제된다', 
     const exp = ctx.getNow() + 10 * 86400000;
     await ctx.req('POST', '/api/webhooks/revenuecat', {
       headers: { Authorization: 'Bearer secret-token' },
-      body: { event: { id: 'ev_buy_e', type: 'INITIAL_PURCHASE', app_user_id: 'u_exp_now', expiration_at_ms: exp } }
+      body: { event: { id: 'ev_buy_e', type: 'INITIAL_PURCHASE', app_user_id: 'u_exp_now', product_id: 'plus_yearly', expiration_at_ms: exp } }
     });
     await ctx.req('POST', '/api/webhooks/revenuecat', {
       headers: { Authorization: 'Bearer secret-token' },
-      body: { event: { id: 'ev_exp_e', type: 'EXPIRATION', app_user_id: 'u_exp_now', expiration_at_ms: ctx.getNow() } }
+      body: { event: { id: 'ev_exp_e', type: 'EXPIRATION', app_user_id: 'u_exp_now', product_id: 'plus_yearly', expiration_at_ms: ctx.getNow() } }
     });
 
     const st = await ctx.req('GET', '/api/stories/haeinsa-1', { uid: 'u_exp_now' });
@@ -322,7 +322,7 @@ test('20. 같은 웹훅 ID를 다시 보내도(중복 전송) 멱등하게 처�
     const exp = ctx.getNow() + 10 * 86400000;
     const first = await ctx.req('POST', '/api/webhooks/revenuecat', {
       headers: { Authorization: 'Bearer secret-token' },
-      body: { event: { id: 'ev_dup_1', type: 'INITIAL_PURCHASE', app_user_id: 'u_dup', expiration_at_ms: exp } }
+      body: { event: { id: 'ev_dup_1', type: 'INITIAL_PURCHASE', app_user_id: 'u_dup', product_id: 'plus_yearly', expiration_at_ms: exp } }
     });
     assert.equal(first.body.ok, true);
     assert.equal(first.body.duplicate, undefined);
@@ -330,13 +330,13 @@ test('20. 같은 웹훅 ID를 다시 보내도(중복 전송) 멱등하게 처�
     // 이후 만료 처리
     await ctx.req('POST', '/api/webhooks/revenuecat', {
       headers: { Authorization: 'Bearer secret-token' },
-      body: { event: { id: 'ev_dup_2', type: 'EXPIRATION', app_user_id: 'u_dup', expiration_at_ms: ctx.getNow() } }
+      body: { event: { id: 'ev_dup_2', type: 'EXPIRATION', app_user_id: 'u_dup', product_id: 'plus_yearly', expiration_at_ms: ctx.getNow() } }
     });
 
     // 처음 구매 웹훅(ev_dup_1)이 재전송되더라도 다시 활성화되지 않아야 함
     const dup = await ctx.req('POST', '/api/webhooks/revenuecat', {
       headers: { Authorization: 'Bearer secret-token' },
-      body: { event: { id: 'ev_dup_1', type: 'INITIAL_PURCHASE', app_user_id: 'u_dup', expiration_at_ms: exp } }
+      body: { event: { id: 'ev_dup_1', type: 'INITIAL_PURCHASE', app_user_id: 'u_dup', product_id: 'plus_yearly', expiration_at_ms: exp } }
     });
     assert.equal(dup.body.ok, true);
     assert.equal(dup.body.duplicate, true);

@@ -8,7 +8,9 @@
   const $view = document.getElementById('view');
 
   // ---------- 상태 ----------
-  const defaults = { uid: null, visits: [], journal: [], big: false, moodIdx: 0, plus: null, plan: 'yearly', packs: [], offline: [], adLog: {}, adUnlocks: {}, skin: null, moodLog: [] };
+  const SESS_KEY = 'maeumjeongwon.sess.v1';
+  const ENT_KEY = 'maeumjeongwon.ent.v1';
+  const defaults = { visits: [], journal: [], big: false, moodIdx: 0, plus: null, plan: 'yearly', packs: [], offline: [], adLog: {}, adUnlocks: {}, skin: null, moodLog: [] };
   const RAW_STORIES = window.STORIES || [], STORY_SOON = window.STORY_SOON || [];
   const STORIES = RAW_STORIES.map(st => {
     if (st.preview !== undefined) return st;
@@ -22,24 +24,56 @@
   });
   let S;
   try { S = Object.assign({}, defaults, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { S = Object.assign({}, defaults); }
-  if (!S.uid) { S.uid = 'u_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
   const CFG = window.MJ_CONFIG || { apiBase: '', demoPaywall: false };
   const API = CFG.apiBase || '';
   const MODE = { devEntitlement: true, devAdReward: true };
-  const ME = { plus: { active: false }, adUnlocks: {}, adToday: { used: 0, limit: 2 } };
+  let SESS = null;
+  try { SESS = JSON.parse(localStorage.getItem(SESS_KEY) || 'null'); } catch (e) { SESS = null; }
+  const ME = { plus: { active: false }, packs: [], adUnlocks: {}, adToday: { used: 0, limit: 2 } };
+  try {
+    const cachedEnt = JSON.parse(localStorage.getItem(ENT_KEY) || 'null');
+    if (cachedEnt && typeof cachedEnt === 'object') Object.assign(ME, cachedEnt);
+  } catch (e) {}
+  if (Array.isArray(S.packs) && S.packs.length) {
+    S.packs.forEach(p => { if (!ME.packs.includes(p)) ME.packs.push(p); });
+  }
   const DEMO_OK = () => !!CFG.demoPaywall && MODE.devEntitlement;
   const STORY_CACHE = {}, STORY_PENDING = {};
+  const TEMPLE_EXTRAS_CACHE = {}, TEMPLE_EXTRAS_PENDING = {};
 
-  function api(url, opts) {
-    opts = opts || {};
-    const headers = Object.assign({ 'X-MJ-UID': S.uid || '' }, opts.headers || {});
-    if (opts.body && typeof opts.body === 'object') {
-      headers['Content-Type'] = 'application/json';
-      opts.body = JSON.stringify(opts.body);
+  let sessPromise = null;
+  async function ensureSession() {
+    if (SESS && SESS.token) return SESS;
+    if (sessPromise) return sessPromise;
+    sessPromise = fetch(API + '/api/session', { method: 'POST' })
+      .then(r => r.json())
+      .then(d => {
+        sessPromise = null;
+        if (d && d.token) {
+          SESS = { uid: d.uid, token: d.token };
+          try { localStorage.setItem(SESS_KEY, JSON.stringify(SESS)); } catch (e) {}
+        }
+        return SESS;
+      })
+      .catch(() => { sessPromise = null; return null; });
+    return sessPromise;
+  }
+
+  async function api(path, opts = {}) {
+    await ensureSession();
+    if (opts.body && typeof opts.body === 'object') opts = Object.assign({}, opts, { body: JSON.stringify(opts.body) });
+    const send = () => fetch(API + path, Object.assign({}, opts, {
+      headers: Object.assign(SESS && SESS.token ? { Authorization: 'Bearer ' + SESS.token } : {}, opts.body ? { 'Content-Type': 'application/json' } : {})
+    }));
+    let res = await send();
+    if (res.status === 401 && SESS) {          // 토큰 무효 → 새 세션으로 한 번 재시도
+      SESS = null;
+      localStorage.removeItem(SESS_KEY); localStorage.removeItem(ENT_KEY);
+      await ensureSession();
+      res = await send();
     }
-    return fetch(API + url, Object.assign({}, opts, { headers }))
-      .then(async r => ({ ok: r.ok, status: r.status, body: await r.json().catch(() => ({})) }))
-      .catch(() => ({ ok: false, status: 0, body: {} }));
+    let body = {}; try { body = await res.json(); } catch (e) {}
+    return { ok: res.ok, status: res.status, body };
   }
 
   function syncMe() {
@@ -47,8 +81,13 @@
       if (!r.ok || !r.body) return;
       if (r.body.mode) Object.assign(MODE, r.body.mode);
       if (r.body.plus) ME.plus = r.body.plus;
+      if (Array.isArray(r.body.packs)) {
+        ME.packs = r.body.packs.slice();
+        (S.packs || []).forEach(p => { if (!ME.packs.includes(p)) ME.packs.push(p); });
+      }
       if (r.body.adUnlocks) ME.adUnlocks = r.body.adUnlocks;
       if (r.body.adToday) ME.adToday = r.body.adToday;
+      try { localStorage.setItem(ENT_KEY, JSON.stringify({ plus: ME.plus, packs: ME.packs, adUnlocks: ME.adUnlocks, adToday: ME.adToday })); } catch (e) {}
     });
   }
   syncMe();
@@ -124,7 +163,8 @@
     { id: 'skin-maple', kind: '꾸미기', icon: '📿', name: '염주 스킨 「단풍 염주」', price: '1,900원', plus: false, desc: '나의 순례 화면의 108 염주 색을 단풍빛으로 바꿔요 (디지털 꾸미기)', go: '#/missions' }
   ];
   const storeById = Object.fromEntries(STORE.map(x => [x.id, x]));
-  const owns = id => S.packs.includes(id) || (isPlus() && storeById[id] && storeById[id].plus);
+  // 단품 보유 판정은 서버 목록(ME.packs)만 본다
+  const owns = id => (ME.packs || []).includes(id) || (isPlus() && storeById[id] && storeById[id].plus);
   const PLUS_BENEFITS = [
     ['사찰 탐색·지도·전통사찰 991곳 검색', true, true],
     ['GPS 방문 인증·기본 스탬프·108 염주·등급·도감·미션', true, true],
@@ -227,7 +267,7 @@
       </ul></section>`;
   }
   function storeRow(o) {
-    const have = owns(o.id), bought = S.packs.includes(o.id);
+    const have = owns(o.id), bought = (ME.packs || []).includes(o.id) || S.packs.includes(o.id);
     const right = have ? `<a class="btn small ghost" style="text-decoration:none" href="${o.go}">${o.id === 'skin-maple' ? '보기' : '열기'}</a>` : `<button class="btn small" data-act="buy" data-id="${o.id}">${o.price}</button>`;
     return `<div class="titem"><div class="seal" style="background:var(--gold)">${o.icon}</div><div class="meta" style="flex:1"><b>${esc(o.name)}</b><div class="sub">${esc(o.desc)}</div>
       <div>${o.plus ? '<span class="tag">플러스 포함</span>' : '<span class="tag">단품 전용</span>'}${have ? `<span class="tag ok">${bought ? '보유' : '플러스로 이용 중'}</span>` : `<span class="tag">${o.price} · 1회</span>`}${o.id === 'skin-maple' && bought ? `<button class="btn ghost small" data-act="skin" style="margin-left:4px">${S.skin === 'maple' ? '기본으로' : '적용하기'}</button>` : ''}</div></div>${right}</div>`;
@@ -547,8 +587,29 @@
 
   // ---------- 화면: 사찰 상세 ----------
   const ETIQUETTE = ['법당 정면 가운데 문(어간문)은 피하고 옆문으로 드나들어요.', '예불·기도 중에는 촬영과 큰 소리를 삼가요.', '"촬영 금지" 표시가 있는 곳은 반드시 지켜 주세요.', '노출이 심한 옷은 피하고, 법당에서는 모자를 벗어요.', '스님·수행 공간(선원 등) 출입 제한 구역에 들어가지 않아요.', '개방 시간 외 야간 방문과 무리한 산행은 삼가요.'];
+  function ensureTempleExtras(id) {
+    if (TEMPLE_EXTRAS_CACHE[id] || TEMPLE_EXTRAS_PENDING[id]) return;
+    TEMPLE_EXTRAS_PENDING[id] = true;
+    api('/api/temples/' + encodeURIComponent(id) + '/extras').then(r => {
+      delete TEMPLE_EXTRAS_PENDING[id];
+      if (!r.ok) return;
+      TEMPLE_EXTRAS_CACHE[id] = r.body;
+      const cur = (location.hash || '').slice(2).split('/');
+      if (cur[0] === 'temple' && decodeURIComponent(cur[1] || '') === id) render();
+    }).catch(() => { delete TEMPLE_EXTRAS_PENDING[id]; });
+  }
+  function fengshuiHtml(t) {
+    if (!t.fengshui || !t.fengshui.length) return '';
+    const open = isPlus();
+    const ext = TEMPLE_EXTRAS_CACHE[t.id];
+    const shown = open ? ((ext && ext.unlocked && ext.fengshui) || t.fengshui) : t.fengshui.slice(0, 1);
+    const extraCnt = t.fengshui.length - 1;
+    return `<section class="card legend"><span class="lbl">풍수 이야기 · 전해지는 이야기</span><ul style="padding-left:18px;margin:8px 0 0">${shown.map(v => `<li style="margin-bottom:4px">${esc(v)}</li>`).join('')}</ul>${!open && extraCnt > 0 ? lockBlock('fengshui', `<p style="margin:0">추가 풍수 해설 ${extraCnt}편이 더 있어요.</p>`) : ''}
+      <p class="sub" style="font-size:.8em">풍수 해석은 영상 제작자의 개인 견해이자 전해지는 이야기예요. 효험이나 결과를 보장하지 않아요.</p></section>`;
+  }
   function viewTemple(id) {
     const t = byId[id]; if (!t) return `<p>사찰을 찾을 수 없어요.</p>`;
+    if (isPlus() && (!TEMPLE_EXTRAS_CACHE[id] || !TEMPLE_EXTRAS_CACHE[id].unlocked)) ensureTempleExtras(id);
     const vs = S.visits.filter(v => v.tid === id);
     return `
     <a href="javascript:history.back()" class="sub" style="text-decoration:none">← 뒤로</a>
@@ -577,8 +638,7 @@
     ${storyCards(id)}
     ${prayerHtml(t)}
     ${t.viewpoints && t.viewpoints.length ? `<section class="card"><h2>관람 포인트</h2><ul style="padding-left:18px;margin:0">${t.viewpoints.map(v => `<li style="margin-bottom:4px">${esc(v)}</li>`).join('')}</ul></section>` : ''}
-    ${t.fengshui && t.fengshui.length ? `<section class="card legend"><span class="lbl">풍수 이야기 · 전해지는 이야기</span><ul style="padding-left:18px;margin:8px 0 0">${(isPlus() ? t.fengshui : t.fengshui.slice(0, 1)).map(v => `<li style="margin-bottom:4px">${esc(v)}</li>`).join('')}</ul>${!isPlus() && t.fengshui.length > 1 ? lockBlock('fengshui', `<ul style="padding-left:18px;margin:0">${t.fengshui.slice(1).map(v => `<li>${esc(v)}</li>`).join('')}</ul>`) : ''}
-      <p class="sub" style="font-size:.8em">풍수 해석은 영상 제작자의 개인 견해이자 전해지는 이야기예요. 효험이나 결과를 보장하지 않아요.</p></section>` : ''}
+    ${fengshuiHtml(t)}
     <section class="card"><h2>관람 가이드 · 예절</h2><p>💡 ${esc(t.tip)}</p><ul style="padding-left:18px;margin:6px 0">${ETIQUETTE.map(e => `<li>${e}</li>`).join('')}</ul></section>
     <section class="card"><h2>방문 실용정보</h2><dl class="kv">
       <dt>주차</dt><dd>${val(t.practical.parking)}</dd><dt>입장료</dt><dd>${val(t.practical.fee)}</dd><dt>개방시간</dt><dd>${val(t.practical.hours)}</dd>
@@ -599,7 +659,7 @@
     const all = [t.legend].concat(t.legends || []).filter(Boolean);
     const one = l => `<h2 style="margin-top:8px">${esc(l.title)}</h2><p>${esc(l.text)}</p>`;
     if (isPlus() || all.length <= 1) return all.map(one).join('');
-    return one(all[0]) + lockBlock('legend', all.slice(1).map(l => `<b>${esc(l.title)}</b> ${esc(l.text)}`).join('<br>')) + `<p class="sub" style="font-size:.8em;margin:6px 0 0">이 사찰에는 이야기가 ${all.length}편 있어요. 첫 편은 누구나 무료예요.</p>`;
+    return one(all[0]) + lockBlock('legend', all.slice(1).map(l => `<b>${esc(l.title)}</b>`).join(' · ')) + `<p class="sub" style="font-size:.8em;margin:6px 0 0">이 사찰에는 이야기가 ${all.length}편 있어요. 첫 편은 누구나 무료예요.</p>`;
   }
   function prayerHtml(t) {
     const p = t.prayer; if (!p) return '';
@@ -821,7 +881,15 @@
       }
     }
     else if (act === 'buy') { const it = storeById[el.dataset.id]; if (!it) return; openModal(`<div class="sheet"><div class="row between"><h2 style="margin:0">${it.icon} ${esc(it.name)}</h2><span class="demo-ribbon">데모</span></div><p>${esc(it.desc)}</p><p><b>${it.price}</b> · 1회 결제 · 자동 갱신 없음${it.plus ? ' · 플러스 이용 중이면 포함돼 있어요' : ''}</p><p class="sub" style="font-size:.85em">디지털 콘텐츠는 열람을 시작하면 청약철회가 제한될 수 있어요. 데모에서는 실제 결제가 일어나지 않아요.</p><div class="grid2"><button class="btn ghost" data-act="close">취소</button><button class="btn" data-act="buy-ok" data-id="${it.id}">구매 (데모)</button></div></div>`); }
-    else if (act === 'buy-ok') { if (!S.packs.includes(el.dataset.id)) S.packs.push(el.dataset.id); save(); closeModal(); render(); toast('🧪 데모: 보유 목록에 넣었어요 (실제 결제 없음)'); }
+    else if (act === 'buy-ok') {
+      const pid = el.dataset.id;
+      if (!S.packs.includes(pid)) S.packs.push(pid);
+      if (!ME.packs.includes(pid)) ME.packs.push(pid);
+      save();
+      if (DEMO_OK()) api('/api/dev/entitlement', { method: 'POST', body: { action: 'pack', packId: pid } }).then(() => syncMe());
+      closeModal(); render();
+      toast('🧪 데모: 보유 목록에 넣었어요 (실제 결제 없음)');
+    }
     else if (act === 'ad') openAd(el.dataset.id);
     else if (act === 'ad-reward') {
       const sid = el.dataset.id;

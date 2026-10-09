@@ -30,10 +30,30 @@ function fullStory(st) {
   return Object.assign(baseFields(st), { chapters: st.chapters, preview: null });
 }
 
+// 사찰 추가 본문 (무료는 추가 전설 제목·개수만, 플러스만 전문)
+function templeExtras(t, unlocked) {
+  const extraLegends = Array.isArray(t.legends) ? t.legends : [];
+  const allFengshui = Array.isArray(t.fengshui) ? t.fengshui : [];
+  const extraFengshui = allFengshui.slice(1);
+  if (unlocked) {
+    return {
+      legends: extraLegends.map(l => ({ title: l.title, text: l.text })),
+      fengshui: allFengshui,
+      extraFengshuiCount: extraFengshui.length
+    };
+  }
+  return {
+    legends: extraLegends.map(l => ({ title: l.title })),
+    fengshui: allFengshui.slice(0, 1),
+    extraFengshuiCount: extraFengshui.length
+  };
+}
+
 module.exports = {
   FREE_CHAPTERS,
   PREVIEW_PARAGRAPHS,
   baseFields,
   publicStory,
-  fullStory
+  fullStory,
+  templeExtras
 };
