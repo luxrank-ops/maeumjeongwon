@@ -107,3 +107,9 @@ table.cmp td:nth-child(2),table.cmp td:nth-child(3),table.cmp th:nth-child(2),ta
 .statusbar{border-radius:12px;padding:10px 12px;background:#e6eedb;color:#3f5a26;font-size:.9em;margin-bottom:10px}
 .statusbar.trial{background:#fff3d6;color:#7a5410}
 .plusbanner{display:flex;gap:10px;align-items:center;text-decoration:none;color:var(--ink);background:linear-gradient(90deg,#fff6e3,#fbe9df);border:1px solid #ecd2b0}
+/* 콘텐츠 상점·보상 광고·가이드북 */
+.adbox{margin-top:10px;border:2px dashed #b9a98d;border-radius:12px;padding:22px 12px;background:repeating-linear-gradient(45deg,#faf6ee,#faf6ee 10px,#f3ecdf 10px,#f3ecdf 20px);font-weight:700;color:#6b5d4a}
+.adcount{margin:10px auto 0;width:44px;height:44px;border-radius:50%;background:#fff;border:2px solid #b9a98d;display:flex;align-items:center;justify-content:center;font-size:1.2em}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.guide-entry ul{padding-left:18px;margin:0 0 6px}
+@media print{.topbar,.tabbar,.noprint,#toast,.notice{display:none!important}body{background:#fff}.card{box-shadow:none;border:1px solid #ccc;break-inside:avoid}main{padding:0!important}}

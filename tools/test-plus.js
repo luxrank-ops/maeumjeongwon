@@ -63,7 +63,7 @@ const shots = process.argv[3] !== 'noshot';
   // one-time pack
   await p.goto(U + '#/missions'); await p.waitForTimeout(800);
   ok(await p.locator('text=계절 한정 스탬프').count() >= 1, 'season stamp section');
-  await p.click('[data-act=buy][data-id=pack-autumn2026]'); await p.waitForTimeout(300);
+  await p.click('[data-act=buy][data-id=pack-autumn2026]'); await p.click('[data-act=buy-ok]'); await p.waitForTimeout(300);
   ok((await p.evaluate(() => JSON.parse(localStorage.getItem('maeumjeongwon.v1')).packs)).includes('pack-autumn2026'), 'season pack demo purchase');
   // core free still works: demo check-in at new temple
   await p.goto(U + '#/temple/dosunsa'); await p.click('[data-act=demo]'); await p.click('[data-act=demo-ok]'); await p.waitForSelector('.stampbig');
