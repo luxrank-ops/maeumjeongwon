@@ -280,3 +280,11 @@
 - [v1-D] 점신·포스텔러: https://www.etoday.co.kr/news/view/2444751 , https://zdnet.co.kr/view/?no=20250203104315 , https://www.joongang.co.kr/article/25329791 , [점신 App Store](https://apps.apple.com/kr/app/id960571015) , [포스텔러 App Store](https://apps.apple.com/kr/app/id1262949138)
 - [v1-E] 애플 한국 제3자 결제 26%: https://www.newsis.com/view/NISX20260819_0003753482 · 구글 Play 수수료 개편: https://support.google.com/googleplay/android-developer/answer/16954621?hl=ko
 - [v1-F] 정기결제 유료전환 30일 내 동의: https://www.korea.kr/news/policyNewsView.do?newsId=148939436 · 다크패턴 해석기준(공정위): https://www.ftc.go.kr/www/selectBbsNttView.do?bordCd=3&key=12&nttSn=46527
+
+---
+
+## 9. 추가 검토 (2026-10-09): 불경 콘텐츠
+
+- 불경(독경·경전) 콘텐츠는 **무료 미끼(짧은 독송·오늘의 한 구절·수행 도구·입문 1편) + 유료(해설 시리즈·전권 음원·PDF·경전 × 사찰 코스팩)** 구조로 검토했습니다.
+- 원음 독경 단독은 질은 좋지만 무료 경쟁이 과잉이라 유료 상품으로는 약합니다. 해설·정확한 번역·출처가 붙은 콘텐츠가 유료에 맞습니다.
+- 저작권(CBETA 비상업 전용, 한글 번역·음원 권리)이 가장 큰 선결 과제이며, 상세 내용은 `docs/scripture-content.md`에 있습니다. 권리 확정 전까지 앱에는 불경 음원·해설 상품을 넣지 않았습니다.
