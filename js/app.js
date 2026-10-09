@@ -2,6 +2,7 @@
 (function () {
   'use strict';
   const TEMPLES = window.TEMPLES, THEMES = window.THEMES, LL = window.LIST_LABELS;
+  const YT_SRC = window.YT_SOURCE || { name: '', url: '#', host: '' };
   const byId = Object.fromEntries(TEMPLES.map(t => [t.id, t]));
   const KEY = 'maeumjeongwon.v1';
   const $view = document.getElementById('view');
@@ -103,7 +104,7 @@
         <div class="row between"><span class="lbl">처방</span><button class="btn ghost small" data-act="reshuffle">다른 곳 추천</button></div>
         <p style="margin:8px 0">${esc(MOODS[mi].line)}</p>
         <h3 style="margin:4px 0">${esc(t.name)} <span class="sub">${esc(t.sido)} ${esc(t.sgg)}</span></h3>
-        <p class="sub" style="margin:4px 0">📖 전해지는 이야기 — 「${esc(t.legend.title)}」</p>
+        ${t.legend ? `<p class="sub" style="margin:4px 0">📖 전해지는 이야기 — 「${esc(t.legend.title)}」</p>` : ''}
         <a class="btn small" href="#/temple/${t.id}" style="display:inline-block;text-decoration:none;margin-top:6px">이야기 열기 →</a>
       </div>
     </section>
@@ -133,7 +134,7 @@
     } else if (tab === 'theme') {
       const cur = arg || 'energy';
       body = `<div class="tabs">${Object.entries(THEMES).map(([k, th]) => `<a class="chip ${k === cur ? 'on' : ''}" style="text-decoration:none" href="#/explore/theme/${k}">${th.icon} ${th.name}</a>`).join('')}</div>
-      <p class="sub">${THEMES[cur].desc}</p>${cur === 'wish' || cur === 'energy' ? '<p class="notice">이야기로 전해 내려오는 내용이며 효험을 보장하지 않아요.</p>' : ''}
+      <p class="sub">${THEMES[cur].desc}</p>${cur === 'wish' || cur === 'energy' || cur === 'fengshui' ? '<p class="notice">이야기로 전해 내려오는 내용이며 효험을 보장하지 않아요.</p>' : ''}
       <div class="tlist">${TEMPLES.filter(t => t.themes.includes(cur)).map(t => templeItem(t)).join('')}</div>`;
     } else if (tab === 'region') {
       const sidos = SIDO_ORDER.filter(s => TEMPLES.some(t => t.sido === s));
@@ -185,15 +186,21 @@
       <dt>종단</dt><dd>${esc(t.order)}</dd><dt>소재지</dt><dd>${esc(t.addr)}</dd><dt>창건</dt><dd>${esc(t.founded)}</dd>
       <dt>대표 문화재</dt><dd>${t.treasures.map(esc).join('<br>')}</dd><dt>관람 소요</dt><dd>${val(t.duration)}</dd></dl></section>
     <section class="card"><h2>기원·역사</h2><ul class="timeline">${t.timeline.map(([y, d]) => `<li><b>${esc(y)}</b>${esc(d)}</li>`).join('')}</ul></section>
-    <section class="card legend"><span class="lbl">전해지는 이야기</span><h2 style="margin-top:8px">${esc(t.legend.title)}</h2><p>${esc(t.legend.text)}</p>
-      <p class="sub" style="font-size:.8em">설화·전승은 역사적 사실과 다를 수 있으며 효험을 보장하지 않습니다. (전문가 감수 예정)</p></section>
+    ${(t.legend || (t.legends && t.legends.length)) ? `<section class="card legend"><span class="lbl">전해지는 이야기</span>
+      ${[t.legend].concat(t.legends || []).filter(Boolean).map(l => `<h2 style="margin-top:8px">${esc(l.title)}</h2><p>${esc(l.text)}</p>`).join('')}
+      <p class="sub" style="font-size:.8em">설화·전승은 역사적 사실과 다를 수 있으며 효험을 보장하지 않습니다. (전문가 감수 예정)</p></section>` : ''}
+    ${t.viewpoints && t.viewpoints.length ? `<section class="card"><h2>관람 포인트</h2><ul style="padding-left:18px;margin:0">${t.viewpoints.map(v => `<li style="margin-bottom:4px">${esc(v)}</li>`).join('')}</ul></section>` : ''}
+    ${t.fengshui && t.fengshui.length ? `<section class="card legend"><span class="lbl">풍수 이야기 · 전해지는 이야기</span><ul style="padding-left:18px;margin:8px 0 0">${t.fengshui.map(v => `<li style="margin-bottom:4px">${esc(v)}</li>`).join('')}</ul>
+      <p class="sub" style="font-size:.8em">풍수 해석은 영상 제작자의 개인 견해이자 전해지는 이야기예요. 효험이나 결과를 보장하지 않아요.</p></section>` : ''}
     <section class="card"><h2>관람 가이드 · 예절</h2><p>💡 ${esc(t.tip)}</p><ul style="padding-left:18px;margin:6px 0">${ETIQUETTE.map(e => `<li>${e}</li>`).join('')}</ul></section>
     <section class="card"><h2>방문 실용정보</h2><dl class="kv">
       <dt>주차</dt><dd>${val(t.practical.parking)}</dd><dt>입장료</dt><dd>${val(t.practical.fee)}</dd><dt>개방시간</dt><dd>${val(t.practical.hours)}</dd>
       <dt>대중교통</dt><dd>${val(t.practical.transit)}</dd><dt>템플스테이</dt><dd>${val(t.practical.templestay)}</dd><dt>좌표</dt><dd>${t.lat.toFixed(5)}, ${t.lng.toFixed(5)}</dd></dl>
       <p class="notice" style="margin-top:8px">방문 전 사찰·국립공원 공지에서 개방시간·통제 여부를 꼭 확인하세요.</p></section>
+    ${t.videos && t.videos.length ? `<section class="card" id="ref-videos"><h2>▶ 참고 영상</h2><ul class="vlist" style="padding-left:0;margin:0;list-style:none">${t.videos.map(v => `<li style="margin:0 0 10px"><a href="https://www.youtube.com/watch?v=${encodeURIComponent(v.id)}" target="_blank" rel="noopener">${esc(v.title)}</a><div class="sub" style="font-size:.85em">${esc((v.date || '').replace(/-/g, '.'))}${v.note ? ' · ' + esc(v.note) : ''}</div></li>`).join('')}</ul>
+      <p class="sub" style="font-size:.8em;margin:4px 0 0">출처: YouTube <a href="${YT_SRC.url}" target="_blank" rel="noopener">${esc(YT_SRC.name)}</a> (${esc(YT_SRC.host)}). 영상 내용을 요약했으며, 사찰의 공식 입장이 아니에요.</p></section>` : ''}
     ${t.verify.length ? `<section class="card"><h2>확인 필요 항목</h2><ul style="padding-left:18px;margin:0">${t.verify.map(v => `<li class="needs">${esc(v)}</li>`).join('')}</ul></section>` : ''}
-    <p class="notice">자료: 주소·종단 = 「전통사찰 현황」(2026.6.1.) · 좌표 = OpenStreetMap · 연혁 = 공개 자료 요약(감수 전)</p>`;
+    <p class="notice">자료: 주소·종단 = 「전통사찰 현황」(2026.6.1.) · 좌표 = OpenStreetMap · 연혁 = 공개 자료 요약(감수 전)${t.videos && t.videos.length ? ' · 영상 보강 = 유튜브 풍생풍사TV' : ''}</p>`;
   }
 
   // ---------- 체크인 ----------
