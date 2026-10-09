@@ -4,7 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "node server.js",
-    "build": "echo 'Static site - no build step required'",
+    "build": "node tools/build-seo.js",
+    "build:seo": "node tools/build-seo.js",
+    "build:mobile": "node tools/build-mobile.js",
+    "test": "node --test server/test/api.test.js",
     "start": "node server.js"
   },
   "dependencies": {

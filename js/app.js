@@ -8,10 +8,50 @@
   const $view = document.getElementById('view');
 
   // ---------- 상태 ----------
-  const defaults = { visits: [], journal: [], big: false, moodIdx: 0, plus: null, plan: 'yearly', packs: [], offline: [], adLog: {}, adUnlocks: {}, skin: null, moodLog: [] };
-  const STORIES = window.STORIES || [], STORY_SOON = window.STORY_SOON || [];
+  const defaults = { uid: null, visits: [], journal: [], big: false, moodIdx: 0, plus: null, plan: 'yearly', packs: [], offline: [], adLog: {}, adUnlocks: {}, skin: null, moodLog: [] };
+  const RAW_STORIES = window.STORIES || [], STORY_SOON = window.STORY_SOON || [];
+  const STORIES = RAW_STORIES.map(st => {
+    if (st.preview !== undefined) return st;
+    const free = (st.chapters || []).slice(0, 1);
+    const next = (st.chapters || [])[1];
+    return Object.assign({}, st, {
+      totalChapters: (st.chapters || []).length,
+      chapters: free,
+      preview: next ? { h: next.h, legend: !!next.legend, body: (next.body || []).slice(0, 1) } : null
+    });
+  });
   let S;
   try { S = Object.assign({}, defaults, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { S = Object.assign({}, defaults); }
+  if (!S.uid) { S.uid = 'u_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+  const CFG = window.MJ_CONFIG || { apiBase: '', demoPaywall: false };
+  const API = CFG.apiBase || '';
+  const MODE = { devEntitlement: true, devAdReward: true };
+  const ME = { plus: { active: false }, adUnlocks: {}, adToday: { used: 0, limit: 2 } };
+  const DEMO_OK = () => !!CFG.demoPaywall && MODE.devEntitlement;
+  const STORY_CACHE = {}, STORY_PENDING = {};
+
+  function api(url, opts) {
+    opts = opts || {};
+    const headers = Object.assign({ 'X-MJ-UID': S.uid || '' }, opts.headers || {});
+    if (opts.body && typeof opts.body === 'object') {
+      headers['Content-Type'] = 'application/json';
+      opts.body = JSON.stringify(opts.body);
+    }
+    return fetch(API + url, Object.assign({}, opts, { headers }))
+      .then(async r => ({ ok: r.ok, status: r.status, body: await r.json().catch(() => ({})) }))
+      .catch(() => ({ ok: false, status: 0, body: {} }));
+  }
+
+  function syncMe() {
+    return api('/api/me').then(r => {
+      if (!r.ok || !r.body) return;
+      if (r.body.mode) Object.assign(MODE, r.body.mode);
+      if (r.body.plus) ME.plus = r.body.plus;
+      if (r.body.adUnlocks) ME.adUnlocks = r.body.adUnlocks;
+      if (r.body.adToday) ME.adToday = r.body.adToday;
+    });
+  }
+  syncMe();
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify(S)); }
     catch (e) { toast('저장 공간이 부족해요. 사진 크기를 줄이거나 오래된 기록을 지워 주세요.'); }
@@ -195,29 +235,51 @@
 
   // ---------- 심화 스토리 (원작 프리미엄 콘텐츠) ----------
   const DAY = 86400000, AD_DAILY = 2;
-  const adLeft = () => AD_DAILY - ((S.adLog || {})[today()] || 0);
-  const adUnlocked = id => (S.adUnlocks || {})[id] && S.adUnlocks[id] > Date.now();
-  const storyOpen = st => isPlus() || adUnlocked(st.id);
+  const adLeft = () => AD_DAILY - Math.max(((S.adLog || {})[today()] || 0), (ME.adToday && ME.adToday.used) || 0);
+  const adUnlocked = id => {
+    const t = Math.max(((S.adUnlocks || {})[id] || 0), ((ME.adUnlocks || {})[id] || 0));
+    return t > Date.now() ? t : 0;
+  };
+  const storyOpen = st => isPlus() || !!adUnlocked(st.id) || !!(STORY_CACHE[st.id] && STORY_CACHE[st.id].unlocked);
   function chapterHtml(c) {
     return `<section class="card ${c.legend ? 'legend' : ''}">${c.legend ? '<span class="lbl">전해지는 이야기</span>' : ''}<h2 style="margin-top:${c.legend ? '8px' : '0'}">${esc(c.h)}</h2>${c.body.map(x => `<p>${esc(x)}</p>`).join('')}</section>`;
   }
+  // 잠긴 장이 포함된 전체 본문은 서버가 허용할 때만 내려온다. 여기서는 요청만 한다.
+  function ensureStory(id) {
+    if (STORY_CACHE[id] || STORY_PENDING[id]) return;
+    STORY_PENDING[id] = true;
+    api('/api/stories/' + encodeURIComponent(id)).then(r => {
+      delete STORY_PENDING[id];
+      if (!r.ok) return;
+      STORY_CACHE[id] = r.body;
+      const cur = (location.hash || '').slice(2).split('/');
+      if (cur[0] === 'story' && decodeURIComponent(cur[1] || '') === id) render();
+    }).catch(() => { delete STORY_PENDING[id]; });
+  }
   function viewStory(id) {
     const st = STORIES.find(x => x.id === id); if (!st) return '<p>이야기를 찾을 수 없어요.</p>';
-    const t = byId[st.tid], open = storyOpen(st), adOn = !isPlus() && adUnlocked(st.id);
-    const left = adOn ? Math.max(1, Math.round((S.adUnlocks[st.id] - Date.now()) / 3600000)) : 0;
+    const rawFull = RAW_STORIES.find(x => x.id === id);
+    const full = STORY_CACHE[id] || (storyOpen(st) && rawFull ? Object.assign({}, rawFull, { unlocked: true }) : null);
+    const open = !!(full && full.unlocked) || storyOpen(st);
+    if (!STORY_CACHE[id] || (!STORY_CACHE[id].unlocked && open)) ensureStory(id);
+    const chapters = (open && full && full.chapters) ? full.chapters : (open && rawFull ? rawFull.chapters : st.chapters);
+    const t = byId[st.tid], adUntil = adUnlocked(st.id), adOn = !isPlus() && !!adUntil;
+    const left = adOn ? Math.max(1, Math.round((adUntil - Date.now()) / 3600000)) : 0;
     return `<a href="javascript:history.back()" class="sub" style="text-decoration:none">← 뒤로</a>
       <section class="card hero" style="margin-top:8px"><div class="sub">📖 마음정원사 : 절로가 심화 스토리 · ${esc(st.series)} ${st.ep}편 · 약 ${st.minutes}분</div>
         <h1 style="margin:6px 0">${esc(st.title)}</h1><p style="margin:0">${esc(st.hook)}</p>
         ${t ? `<p class="sub" style="margin:8px 0 0"><a href="#/temple/${t.id}">${esc(t.name)} 상세 보기 →</a></p>` : ''}
         ${adOn ? `<p class="statusbar trial" style="margin:8px 0 0">📺 광고 보상으로 열림 · 약 ${left}시간 남음</p>` : ''}</section>
-      ${open ? st.chapters.map(chapterHtml).join('') : chapterHtml(st.chapters[0]) + storyLock(st)}
+      ${open ? chapters.map(chapterHtml).join('') : chapterHtml(st.chapters[0]) + storyLock(st)}
       <section class="card"><h2>이 글은 이렇게 만들었어요</h2><p class="sub">공개된 역사 기록·백과사전의 <b>사실</b>을 바탕으로 이 앱이 직접 쓴 글이에요. 다른 글·영상의 문장을 옮기지 않았고, '전해지는 이야기' 표시가 있는 부분은 역사적 사실과 다를 수 있어요. 출시 전 전문가 감수를 받을 예정이에요.</p>
         <div class="src">참고: ${st.sources.map(x => `<a href="${x.u}" target="_blank" rel="noopener">${esc(x.t)}</a>`).join(' · ')}</div></section>
       <section class="card"><h2>다음 이야기 <span class="sub">제작 예정</span></h2><div class="tlist">${STORY_SOON.map(x => `<div class="titem"><div class="seal off">${esc((byId[x.tid] || { name: '?' }).name.charAt(0))}</div><div class="meta"><b>${esc(x.title)}</b><div class="sub">${esc((byId[x.tid] || {}).name || '')} ${x.ep}편</div></div></div>`).join('')}</div></section>`;
   }
   function storyLock(st) {
-    const nxt = st.chapters[1], rest = st.chapters.length - 1, n = adLeft();
-    return `<div class="locked"><div class="preview"><b>${esc(nxt.h)}</b><br>${esc(nxt.body[0])}</div>
+    const nxt = st.preview || (st.chapters && st.chapters[1]) || { h: '', body: [''] };
+    const total = st.totalChapters || (RAW_STORIES.find(x => x.id === st.id) || { chapters: [] }).chapters.length || 2;
+    const rest = Math.max(1, total - 1), n = adLeft();
+    return `<div class="locked"><div class="preview"><b>${esc(nxt.h)}</b><br>${esc((nxt.body && nxt.body[0]) || '')}</div>
       <div style="margin-top:8px"><p style="margin:0 0 8px">🔒 나머지 <b>${rest}개 장</b>은 플러스에서 이어서 읽을 수 있어요.</p>
       <div class="grid2"><button class="btn ghost" data-act="ad" data-id="${st.id}" ${n > 0 ? '' : 'disabled'}>📺 광고 보고 24시간 열기<br><span class="sub" style="font-size:.8em">${n > 0 ? `오늘 ${n}회 남음 · 데모` : '오늘은 모두 사용했어요'}</span></button>
       <button class="btn" data-act="paywall" data-feat="story">플러스 알아보기<br><span style="font-size:.8em;opacity:.85">7일 무료 체험</span></button></div></div></div>`;
@@ -738,13 +800,42 @@
     else if (act === 'jdel') { if (confirm('이 기록을 삭제할까요?')) { S.journal = S.journal.filter(j => j.id !== el.dataset.id); save(); render(); } }
     else if (act === 'paywall') openPaywall(el.dataset.feat);
     else if (act === 'plan') { S.plan = el.dataset.plan; save(); document.querySelectorAll('.plan').forEach(x => x.classList.toggle('on', x.dataset.plan === S.plan)); }
-    else if (act === 'trial-start') { const ex = plusState().expired; S.plus = ex ? { status: 'plus', start: new Date().toISOString(), plan: S.plan } : { status: 'trial', start: new Date().toISOString(), plan: S.plan }; save(); closeModal(); render(); toast(ex ? '🧪 데모: 플러스를 시작했어요 (실제 결제 없음)' : '🧪 데모: 7일 무료 체험을 시작했어요. 자동 결제되지 않아요.'); }
-    else if (act === 'plus-on') { S.plus = { status: 'plus', start: new Date().toISOString(), plan: S.plan }; save(); render(); toast('🧪 데모: 플러스를 켰어요 (실제 결제 없음)'); }
-    else if (act === 'plus-off') { if (confirm('구독을 해지할까요? (데모 — 무료 기능과 기록은 그대로 남아요)')) { S.plus = null; save(); render(); toast('해지했어요. 순례 기록은 그대로예요.'); } }
+    else if (act === 'trial-start') {
+      const ex = plusState().expired;
+      S.plus = ex ? { status: 'plus', start: new Date().toISOString(), plan: S.plan } : { status: 'trial', start: new Date().toISOString(), plan: S.plan };
+      save();
+      if (DEMO_OK()) api('/api/dev/entitlement', { method: 'POST', body: { action: ex ? 'plus' : 'trial', plan: S.plan } }).then(() => { Object.keys(STORY_CACHE).forEach(k => delete STORY_CACHE[k]); syncMe(); });
+      closeModal(); render();
+      toast(ex ? '🧪 데모: 플러스를 시작했어요 (실제 결제 없음)' : '🧪 데모: 7일 무료 체험을 시작했어요. 자동 결제되지 않아요.');
+    }
+    else if (act === 'plus-on') {
+      S.plus = { status: 'plus', start: new Date().toISOString(), plan: S.plan }; save();
+      if (DEMO_OK()) api('/api/dev/entitlement', { method: 'POST', body: { action: 'plus', plan: S.plan } }).then(() => { Object.keys(STORY_CACHE).forEach(k => delete STORY_CACHE[k]); syncMe(); });
+      render(); toast('🧪 데모: 플러스를 켰어요 (실제 결제 없음)');
+    }
+    else if (act === 'plus-off') {
+      if (confirm('구독을 해지할까요? (데모 — 무료 기능과 기록은 그대로 남아요)')) {
+        S.plus = null; save();
+        if (DEMO_OK()) api('/api/dev/entitlement', { method: 'POST', body: { action: 'off' } }).then(() => { Object.keys(STORY_CACHE).forEach(k => delete STORY_CACHE[k]); syncMe(); });
+        render(); toast('해지했어요. 순례 기록은 그대로예요.');
+      }
+    }
     else if (act === 'buy') { const it = storeById[el.dataset.id]; if (!it) return; openModal(`<div class="sheet"><div class="row between"><h2 style="margin:0">${it.icon} ${esc(it.name)}</h2><span class="demo-ribbon">데모</span></div><p>${esc(it.desc)}</p><p><b>${it.price}</b> · 1회 결제 · 자동 갱신 없음${it.plus ? ' · 플러스 이용 중이면 포함돼 있어요' : ''}</p><p class="sub" style="font-size:.85em">디지털 콘텐츠는 열람을 시작하면 청약철회가 제한될 수 있어요. 데모에서는 실제 결제가 일어나지 않아요.</p><div class="grid2"><button class="btn ghost" data-act="close">취소</button><button class="btn" data-act="buy-ok" data-id="${it.id}">구매 (데모)</button></div></div>`); }
     else if (act === 'buy-ok') { if (!S.packs.includes(el.dataset.id)) S.packs.push(el.dataset.id); save(); closeModal(); render(); toast('🧪 데모: 보유 목록에 넣었어요 (실제 결제 없음)'); }
     else if (act === 'ad') openAd(el.dataset.id);
-    else if (act === 'ad-reward') { S.adLog = S.adLog || {}; S.adLog[today()] = (S.adLog[today()] || 0) + 1; S.adUnlocks = S.adUnlocks || {}; S.adUnlocks[el.dataset.id] = Date.now() + DAY; save(); closeModal(); render(); toast('📺 데모: 24시간 동안 이 이야기를 끝까지 읽을 수 있어요'); }
+    else if (act === 'ad-reward') {
+      const sid = el.dataset.id;
+      S.adLog = S.adLog || {}; S.adLog[today()] = (S.adLog[today()] || 0) + 1;
+      S.adUnlocks = S.adUnlocks || {}; S.adUnlocks[sid] = Date.now() + DAY;
+      save();
+      api('/api/ads/' + encodeURIComponent(sid) + '/reward', { method: 'POST' }).then(r => {
+        if (r.ok && r.body && r.body.unlockedUntil) ME.adUnlocks[sid] = r.body.unlockedUntil;
+        delete STORY_CACHE[sid];
+        ensureStory(sid);
+      });
+      closeModal(); render();
+      toast('📺 데모: 24시간 동안 이 이야기를 끝까지 읽을 수 있어요');
+    }
     else if (act === 'skin') { S.skin = S.skin === 'maple' ? null : 'maple'; save(); render(); toast(S.skin ? '단풍 염주를 적용했어요' : '기본 염주로 돌아왔어요'); }
     else if (act === 'print') window.print();
     else if (act === 'offline') { if (!isPlus()) openPaywall('offline'); else { if (!S.offline.includes(el.dataset.id)) S.offline.push(el.dataset.id); save(); render(); toast('이 기기에 저장해 두었어요 (데모: 앱 출시 때 실제 오프라인 캐시로 구현)'); } }

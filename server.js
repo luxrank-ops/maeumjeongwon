@@ -1,15 +1,14 @@
-const express = require('express');
-const path = require('path');
+'use strict';
 
-const app = express();
-const PORT = 3000;
+const { createApp } = require('./server/app');
 
-app.use(express.static(path.join(__dirname)));
+const PORT = Number(process.env.PORT) || 3000;
+const app = createApp();
 
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
+if (require.main === module) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running at http://0.0.0.0:${PORT}`);
+  });
+}
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running at http://0.0.0.0:${PORT}`);
-});
+module.exports = app;
