@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#f6f1e7" />
+<title>마음정원 — 사찰 순례 & 힐링 여행</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E🪷%3C/text%3E%3C/svg%3E" />
+<link rel="stylesheet" href="vendor/leaflet.css" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <button class="logo" data-go="#/home" aria-label="홈으로">🪷 <b>마음정원</b></button>
+    <button id="bigToggle" class="chip" aria-pressed="false" title="큰 글씨·간편 모드">가 큰글씨</button>
+  </header>
+  <main id="view" tabindex="-1"></main>
+  <nav class="tabbar" aria-label="주요 메뉴">
+    <a href="#/home" data-tab="home"><span>🏠</span>홈</a>
+    <a href="#/explore" data-tab="explore"><span>🧭</span>탐색</a>
+    <a href="#/map" data-tab="map"><span>🗺️</span>지도</a>
+    <a href="#/missions" data-tab="missions"><span>🏅</span>순례</a>
+    <a href="#/journal" data-tab="journal"><span>📔</span>수첩</a>
+  </nav>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true"></div>
+</div>
+<script src="vendor/leaflet.js"></script>
+<script src="js/data-temples.js"></script>
+<script src="js/data-traditional.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
