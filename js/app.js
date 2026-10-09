@@ -38,6 +38,7 @@
     S.packs.forEach(p => { if (!ME.packs.includes(p)) ME.packs.push(p); });
   }
   const DEMO_OK = () => !!CFG.demoPaywall && MODE.devEntitlement;
+  const AN = window.MJ_ANALYTICS || { shouldPrompt: () => false, setConsent: () => {}, track: () => {} };
   const STORY_CACHE = {}, STORY_PENDING = {};
   const TEMPLE_EXTRAS_CACHE = {}, TEMPLE_EXTRAS_PENDING = {};
 
@@ -218,6 +219,7 @@
     return `<div class="plans">${Object.entries(PLANS).map(([k, p]) => `<button class="plan ${S.plan === k ? 'on' : ''}" data-act="plan" data-plan="${k}">${p.best ? `<span class="best">${p.best}</span>` : ''}<div class="sub">${p.name}</div><div class="price">${p.price}</div><div class="sub" style="font-size:.78em">${p.sub}</div></button>`).join('')}</div>`;
   }
   function openPaywall(feat) {
+    AN.track('paywall_view', { feat: feat || 'general' });
     const f = FEAT[feat] || FEAT.general, ps = plusState();
     openModal(`<div class="sheet"><div class="row between"><h2 style="margin:0">✨ ${f.t}</h2><span class="demo-ribbon">데모</span></div>
       <p>${f.d}</p>
@@ -483,12 +485,21 @@
   }
 
   // ---------- 화면: 홈 ----------
+  function consentCard() {
+    if (!AN.shouldPrompt()) return '';
+    return `<section class="card simple-hide" id="consentCard">
+      <div class="row between"><b>📊 서비스 개선을 위한 익명 통계</b><span class="tag">선택</span></div>
+      <p class="sub" style="margin:6px 0">어떤 사찰과 이야기를 많이 보는지 익명으로 집계해요. 기도 내용·수첩 글·정밀 위치 좌표는 절대 수집하지 않아요.</p>
+      <div class="grid2"><button class="btn ghost small" data-act="consent-deny">거부</button><button class="btn small" data-act="consent-allow">허용</button></div>
+    </section>`;
+  }
   function viewHome() {
     const v = visited(), g = gradeInfo(v.size);
     const mi = S.moodIdx || 0; const t = prescribe(mi, S.shift || 0);
     const near = MISSIONS.filter(m => m.ids).map(m => ({ m, p: missionProgress(m) })).filter(x => x.p.done < x.p.total).sort((a, b) => (a.p.total - a.p.done) - (b.p.total - b.p.done))[0];
     const top = ['bulguksa', 'naksansa', 'tongdosa'].map(id => byId[id]);
     return `
+    ${consentCard()}
     <section class="card hero">
       <div class="sub">${g.cur ? `현재 등급` : '순례를 시작해 보세요'}</div>
       <div class="row between"><div class="grade">${g.cur ? g.cur.name : '첫걸음 전'}</div><div class="sub">염주 ${beads()}/108</div></div>
@@ -676,7 +687,9 @@
     const before = visited().size, g0 = gradeInfo(before).cur;
     if (S.visits.some(v => v.tid === tid && v.date.slice(0, 10) === today())) { toast('오늘은 이미 인증했어요. 내일 다시 만나요 🙏'); return; }
     const now = new Date(); const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 19);
+    const isFirstGps = method === 'gps' && !S.visits.some(v => v.method === 'gps');
     S.visits.push({ tid, date: local, method, dist: dist == null ? null : Math.round(dist) }); save();
+    AN.track('checkin', { tid, method, first: isFirstGps ? '1' : '0' });
     const after = visited().size, g1 = gradeInfo(after).cur;
     const t = byId[tid]; const completed = MISSIONS.filter(m => m.ids && m.ids.includes(tid)).filter(m => { const p = missionProgress(m); return p.done === p.total; });
     openModal(`<div class="sheet" style="text-align:center">
@@ -837,6 +850,11 @@
     $view.innerHTML = html;
     document.querySelectorAll('.tabbar a').forEach(x => x.classList.toggle('on', x.dataset.tab === tab));
     updatePlusChip();
+    const pageName = (!r || r === 'home') ? 'home' : r;
+    AN.track('page_view', { page: pageName });
+    if (r === 'temple' && a) AN.track('temple_open', { tid: a });
+    if (r === 'story' && a) AN.track('story_open', { sid: a });
+    if (r === 'plus') AN.track('paywall_view', { feat: 'plus_page' });
     if ('speechSynthesis' in window) speechSynthesis.cancel();
     if (r === 'map') { mapObj = initMap(a); }
     if (r === 'missions') { mapObj = initMap(null, 'pmap', true); }
@@ -858,6 +876,8 @@
     else if (act === 'close') { clearInterval(openAd._t); closeModal(); if (el.tagName !== 'A') render(); }
     else if (act === 'locate' && mapObj) { mapObj.locate({ setView: true, maxZoom: 11 }); mapObj.once('locationfound', ev => L.circleMarker(ev.latlng, { radius: 8, color: '#2b6cb0' }).addTo(mapObj).bindPopup('내 위치').openPopup()); mapObj.once('locationerror', () => toast('위치를 가져오지 못했어요.')); }
     else if (act === 'jdel') { if (confirm('이 기록을 삭제할까요?')) { S.journal = S.journal.filter(j => j.id !== el.dataset.id); save(); render(); } }
+    else if (act === 'consent-allow') { AN.setConsent('allow'); render(); toast('익명 통계 수집을 허용했어요.'); }
+    else if (act === 'consent-deny') { AN.setConsent('deny'); render(); toast('익명 통계 수집을 거부했어요.'); }
     else if (act === 'paywall') openPaywall(el.dataset.feat);
     else if (act === 'plan') { S.plan = el.dataset.plan; save(); document.querySelectorAll('.plan').forEach(x => x.classList.toggle('on', x.dataset.plan === S.plan)); }
     else if (act === 'trial-start') {

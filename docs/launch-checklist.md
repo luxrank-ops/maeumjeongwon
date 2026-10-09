@@ -19,3 +19,9 @@
 - [ ] `https://도메인/ads.txt` 응답에 `google.com, pub-..., DIRECT, f08c47fec0942fa0` 노출 확인
 - [ ] 사찰 SEO 페이지(`/temple/:id/`)에만 하단 광고 1칸이 들어가고, 스토리 페이지(`/story/:id/`)와 앱 셸(`index.html`)에는 애드센스 코드가 없는지 확인 (`npm test`)
 - [ ] 개인정보 처리방침에 Google 쿠키 및 맞춤형 광고 안내 반영
+
+## H. 웹 분석 및 이벤트 추적 (`docs/analytics-plan.md` 참고)
+- [ ] GA4 웹 스트림 생성 후 `js/config.js`에 측정 ID(`gaId: 'G-XXXXXXX'`) 설정 여부 결정
+- [ ] 홈 화면 동의 카드에서 '허용' 전에는 `googletagmanager.com` 요청이 발생하지 않는지 확인
+- [ ] Clarity 세션 녹화 도입 여부 및 수첩/위치 화면 마스킹·개인정보 처리방침 고지 결정
+

@@ -1,1 +1,1 @@
-window.MJ_CONFIG = { apiBase: '', demoPaywall: true };
+window.MJ_CONFIG = { apiBase: '', demoPaywall: true, gaId: '' };
