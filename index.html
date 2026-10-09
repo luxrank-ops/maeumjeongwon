@@ -13,7 +13,7 @@
 <div id="app">
   <header class="topbar">
     <button class="logo" data-go="#/home" aria-label="홈으로">🪷 <b>마음정원</b></button>
-    <button id="bigToggle" class="chip" aria-pressed="false" title="큰 글씨·간편 모드">가 큰글씨</button>
+    <div class="topright"><a class="chip pluschip" href="#/plus" id="plusChip">✨ 플러스</a><button id="bigToggle" class="chip" aria-pressed="false" title="큰 글씨·간편 모드">가 큰글씨</button></div>
   </header>
   <main id="view" tabindex="-1"></main>
   <nav class="tabbar" aria-label="주요 메뉴">
@@ -27,8 +27,9 @@
   <div id="modal" class="modal hidden" role="dialog" aria-modal="true"></div>
 </div>
 <script src="vendor/leaflet.js"></script>
-<script src="js/data-temples.js?v=20261009yt"></script>
+<script src="js/data-temples.js?v=20261009plus"></script>
+<script src="js/data-prayer.js?v=20261009plus"></script>
 <script src="js/data-traditional.js"></script>
-<script src="js/app.js?v=20261009yt"></script>
+<script src="js/app.js?v=20261009plus"></script>
 </body>
 </html>
