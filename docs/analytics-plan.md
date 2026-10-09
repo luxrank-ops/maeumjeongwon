@@ -2,38 +2,39 @@
 
 ## 1. 원칙: 동의 전 수집 금지 및 민감 정보 배제
 
-- **동의 후 로드 (`js/analytics.js`)**: 강의에서는 모든 페이지 `<head>`에 `gtag.js` 스니펫을 바로 넣는 방법을 안내하지만, 마음정원사 : 절로가는 **사용자가 홈 화면 동의 카드에서 '허용'을 누르기 전에는 외부 스크립트를 로드하지 않습니다.**
-- **측정 ID 미설정 시 비활성**: `js/config.js`의 `gaId`가 비어 있으면 동의 카드도 뜨지 않고 아무 동작도 하지 않습니다.
+- **동의 후 로드 (`js/analytics.js`)**: 앱 셸(`index.html`)과 정적 SEO 페이지(`/temple/:id/`, `/story/:id/`) 모두 **사용자가 '허용'을 누르기 전에는 `googletagmanager.com` 외부 스크립트를 절대 로드하지 않습니다.**
+- **측정 ID 미설정 시 비활성**:
+  - 앱 셸: `js/config.js`의 `gaId`가 비어 있으면 비활성
+  - 정적 SEO 페이지: 빌드 환경 변수 `GA_MEASUREMENT_ID`가 없으면 `<meta name="mj-ga-id">`, `data-mj-page`, `<script src="/js/analytics.js">`, 푸터의 「분석 설정」 링크가 전혀 생성되지 않음
 - **웹 전용**: Capacitor 네이티브 앱 환경에서는 웹 GA4를 로드하지 않습니다.
-- **민감 데이터 원천 차단**: 기도 내용, 사찰 수첩 메모 본문, GPS 정밀 위경도 좌표는 절대 수집하지 않습니다. 허용된 이벤트와 짧은 영숫자(`a-zA-Z0-9_-`, 최대 40자) 파라미터만 전송됩니다.
+- **민감 데이터 원천 차단**: 허용 키는 `page`, `item`, `feature`, `method` 4개뿐이며, 값도 `^[a-z0-9_-]{1,40}$` 형식만 통과합니다. 기도 내용, 사찰 수첩 메모 본문, GPS 위경도 좌표는 절대 전송되지 않습니다.
 
-## 2. GA4 설치 및 설정 절차 (강의 본문 확인 완료)
+## 2. 앱 셸과 정적 SEO 페이지의 동의 공유
 
-1. Google Analytics 4 계정 및 웹 데이터 스트림 생성 → 측정 ID(`G-XXXXXXX`) 발급
-2. `js/config.js`의 `gaId` 필드에 측정 ID 입력
-3. 홈 화면(`#/home`) 상단 동의 카드에서 '허용' 선택 시 `https://www.googletagmanager.com/gtag/js?id=G-...` 동적 로드 및 `anonymize_ip: true` 설정 적용
+- 저장소 키: `localStorage['maeumjeongwon.analytics']` (`'true'` / `'false'`)
+- 정적 사찰·스토리 페이지에 처음 들어오면 하단에 동의 배너(`#mj-consent-banner`)가 표시됩니다.
+  - **허용**: 즉시 GA4를 로드하고 현재 정적 페이지의 `page_view` 및 `temple_open` / `story_open` (`{ page, item }`)을 전송합니다.
+  - **허용 안 함**: 배너를 닫고 아무것도 로드하지 않습니다.
+  - 푸터의 **「분석 설정」** 링크(`data-mj-consent-open`)를 눌러 언제든 선택을 바꿀 수 있습니다.
 
 ## 3. AARRR 퍼널 이벤트 매핑
 
-| 단계 | 이벤트 이름 | 허용 파라미터 | 설명 | 비고 |
+| 단계 | 이벤트 이름 | 파라미터 (`page`, `item`, `feature`, `method`) | 설명 | 비고 |
 |---|---|---|---|---|
-| **Acquisition (획득)** | `page_view` | `page` (`home`, `explore`, `map`, `missions`, `journal` 등) | 화면별 진입 확인 (수첩 진입도 `page=journal`로 확인) | 구현 완료 |
-| **Activation (활성화)** | `temple_open`, `story_open` | `tid` (사찰 ID), `sid` (스토리 ID) | 사찰 상세 열람 및 원작 심화 스토리 열람 | 구현 완료 |
-| **Retention / 아하 모먼트** | `checkin` | `tid`, `method` (`gps`/`demo`), `first` (`1`/`0`) | 첫 GPS 방문 인증(`first=1`)을 핵심 아하 모먼트 후보로 추적 | **「가정」** |
-| **Revenue (수익)** | `paywall_view` | `feat` (`story`, `fengshui`, `plus_page` 등) | 어떤 기능에서 페이월이 열리고 플러스 화면을 보는지 확인 | 구현 완료 |
-| **Referral (추천)** | - | - | 연말 결산 카드 공유 등 추후 도입 시 추가 | 추후 과제 |
+| **Acquisition (획득)** | `page_view` | `{ page }` (정적 페이지는 `{ page, item }`) | 앱 화면 및 검색 유입 정적 페이지 진입 확인 | 구현 완료 |
+| **Activation (활성화)** | `temple_open`, `story_open` | `{ page: 'temple', item: tid }`, `{ page: 'story', item: sid }` | 사찰 상세 및 심화 스토리 열람 | 구현 완료 |
+| **Retention / 아하 모먼트** | `checkin` | `{ method: 'gps' \| 'demo' }` | 사찰 방문 인증 (`method=gps`를 아하 모먼트 후보로 추적) | **「가정」** |
+| **Revenue (수익)** | `paywall_view` | `{ feature: 'story' \| 'fengshui' \| 'plus_page' ... }` | 페이월 및 플러스 안내 열람 | 구현 완료 |
 
-## 4. 아하 모먼트 가설 및 목표 수치 (「가정」)
+## 4. 빌드 방법 (정적 SEO 페이지)
 
-- **아하 모먼트 가설 (「가정」)**: 가입/첫 방문 후 7일 이내에 **실제 사찰에서 첫 GPS 체크인(`checkin`, `method=gps`, `first=1`)을 경험한 사용자** 또는 **심화 스토리 1편을 끝까지 읽은 사용자**의 30일 잔존율이 일반 방문자보다 2배 이상 높을 것이다.
-- **초기 목표 수치 (「가정」)**:
-  - 사찰 상세 → 심화 스토리 클릭률: 15% 이상
-  - 무료 1장 열람 → 보상형 광고 또는 페이월 열람 전환율: 10% 이상
+```bash
+SITE_URL=https://실제도메인 \
+GA_MEASUREMENT_ID=G-XXXXXXXXXX \
+npm run build:seo
+```
 
-## 5. 강의 후반부 항목 (목차만 확인 · 세부 내용 「확인 필요」)
+## 5. 아하 모먼트 가설 및 미확인 항목
 
-- **Microsoft Clarity 세션 녹화 (「확인 필요」)**:
-  - 사찰 수첩 입력란과 GPS 위치 인증 화면 등이 녹화될 수 있어 현재 코드에는 넣지 않았습니다.
-  - 도입 시 입력 필드 마스킹 설정과 개인정보 처리방침 고지가 선행되어야 합니다.
-- **PMF(Product-Market Fit) 및 멤버십/구독 상세 강의 내용 (「확인 필요」)**:
-  - 강의 chunk 3 본문(Clarity 설치~멤버십) 자막 또는 요약 확인 후 보강 예정입니다.
+- **아하 모먼트 가설 (「가정」)**: 첫 방문 후 7일 이내에 GPS 방문 인증(`checkin`, `method=gps`) 또는 심화 스토리 열람(`story_open`)을 경험한 사용자의 잔존율이 높을 것이다.
+- **Microsoft Clarity 세션 녹화 (「확인 필요」)**: 수첩 입력란과 위치 인증 화면 보호를 위해 아직 넣지 않았습니다.

@@ -21,7 +21,8 @@
 - [ ] 개인정보 처리방침에 Google 쿠키 및 맞춤형 광고 안내 반영
 
 ## H. 웹 분석 및 이벤트 추적 (`docs/analytics-plan.md` 참고)
-- [ ] GA4 웹 스트림 생성 후 `js/config.js`에 측정 ID(`gaId: 'G-XXXXXXX'`) 설정 여부 결정
-- [ ] 홈 화면 동의 카드에서 '허용' 전에는 `googletagmanager.com` 요청이 발생하지 않는지 확인
+- [ ] GA4 웹 스트림 생성 후 앱 셸(`js/config.js`의 `gaId`) 및 정적 빌드(`GA_MEASUREMENT_ID`)에 `G-XXXXXXX` 설정
+- [ ] 앱 홈 동의 카드 및 정적 페이지 하단 동의 배너에서 '허용' 전에는 `googletagmanager.com` 요청이 발생하지 않는지 확인 (`npm test`)
 - [ ] Clarity 세션 녹화 도입 여부 및 수첩/위치 화면 마스킹·개인정보 처리방침 고지 결정
+
 
