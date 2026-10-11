@@ -7,6 +7,7 @@ const identity = require('./identity');
 const ssv = require('./ssv');
 const { listStories, findStory, listSoon } = require('./content/stories');
 const { findTemple } = require('./content/temples');
+const { listTraditional, findTraditionalByNo } = require('./content/traditional');
 const { publicStory, fullStory, templeExtras } = require('./content/project');
 const { createStore } = require('./store');
 
@@ -184,6 +185,19 @@ function createApp(opts = {}) {
     if (!t) return res.status(404).json({ error: 'not_found' });
     const unlocked = entitled(req.uid);
     res.json(Object.assign({ unlocked }, templeExtras(t, unlocked)));
+  });
+
+  // 전통사찰 현황 (2026.6.1. 현재) 991곳 조회 API
+  app.get('/api/traditional-temples', (req, res) => {
+    const { sido, sgg, order, q } = req.query || {};
+    const items = listTraditional({ sido, sgg, order, q });
+    res.json({ total: items.length, items });
+  });
+
+  app.get('/api/traditional-temples/:no', (req, res) => {
+    const item = findTraditionalByNo(req.params.no);
+    if (!item) return res.status(404).json({ error: 'not_found' });
+    res.json(item);
   });
 
   // 공개 스토리 목록
