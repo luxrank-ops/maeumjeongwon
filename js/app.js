@@ -918,6 +918,15 @@
 
   // ---------- 지도 ----------
   let mapObj = null;
+  // 화면 회전 · 창 리사이즈 · 모바일 브라우저 툴바 접힘 → 지도가 잘리지 않게 다시 맞춤
+  let mapFitT = null;
+  function fitMap() {
+    clearTimeout(mapFitT);
+    mapFitT = setTimeout(() => { if (mapObj && mapObj.invalidateSize) mapObj.invalidateSize({ animate: false }); }, 140);
+  }
+  window.addEventListener('resize', fitMap);
+  window.addEventListener('orientationchange', fitMap);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', fitMap);
   function viewMap() {
     return `<h1>사찰 지도</h1><div class="tabs" id="mapf"><button class="chip on" data-f="">전체</button>${Object.entries(LL).map(([k, n]) => `<button class="chip" data-f="${k}">${n}</button>`).join('')}<button class="chip" data-f="visited">방문한 곳</button></div>
       <div id="map"></div><div class="row" style="margin-top:10px"><button class="btn small" data-act="locate">📍 내 위치</button><span class="sub"><b style="color:#7a8f5c">●</b> 방문 <b style="color:#e0a77e">●</b> 미방문</span></div>
@@ -940,6 +949,7 @@
     draw(''); m._draw = draw;
     if (focusId && byId[focusId]) { const t = byId[focusId]; m.setView([t.lat, t.lng], 13); }
     setTimeout(() => m.invalidateSize(), 50);
+    setTimeout(() => { if (mapObj === m) m.invalidateSize({ animate: false }); }, 380);  // 폰트·레이아웃이 자리 잡은 뒤 한 번 더
     return m;
   }
 
@@ -1757,9 +1767,19 @@
     </div>`);
   }
 
-  // ---------- 모달 ----------
-  function openModal(html) { const m = document.getElementById('modal'); m.innerHTML = html; m.classList.remove('hidden'); }
-  function closeModal() { const m = document.getElementById('modal'); m.classList.add('hidden'); m.innerHTML = ''; }
+  // ---------- 모달 (화면 크기별: 모바일 하단 시트 · 데스크톱 중앙 대화상자) ----------
+  function openModal(html) {
+    const m = document.getElementById('modal');
+    m.innerHTML = html; m.classList.remove('hidden');
+    document.body.classList.add('modal-open');   // 배경 스크롤 잠금 — 시트가 화면 높이만큼만 스크롤되게
+    const sheet = m.querySelector('.sheet');
+    if (sheet) { sheet.setAttribute('tabindex', '-1'); sheet.focus({ preventScroll: true }); }
+  }
+  function closeModal() {
+    const m = document.getElementById('modal');
+    m.classList.add('hidden'); m.innerHTML = '';
+    document.body.classList.remove('modal-open');
+  }
 
   // ---------- 라우터 ----------
   function render() {
@@ -1767,6 +1787,11 @@
     const [r, a, b] = parts;
     if (mapObj) { mapObj.remove(); mapObj = null; }
     let html, tab = r;
+    // 화면(라우트)별 배치 규칙이 CSS에서 고를 수 있도록 태깅 — 넓은 화면에서 카드를 몇 열로 둘지 결정
+    const route = String(r || 'home').toLowerCase().replace(/[^a-z-]/g, '');
+    const WIDE_FLOW = ['home', 'missions', 'store', 'planner', 'journal', 'fengshui', 'explore', 'map', 'report', 'mind'];
+    $view.dataset.route = route;
+    $view.dataset.flow = WIDE_FLOW.includes(route) && a !== 'new' ? 'cards' : '';
     switch (r) {
       case 'explore': html = viewExplore(a, b); break;
       case 'fengshui': html = viewFengshuiAtlas(); tab = 'explore'; break;
@@ -1967,6 +1992,13 @@
     }
   });
   document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+  // 웹(키보드)에서는 Esc로도 닫는다 — 하단 시트를 쓰는 모바일과 동일하게 종료 경로 보장
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    const m = document.getElementById('modal');
+    if (m.classList.contains('hidden')) return;
+    clearInterval(openAd._t); closeModal();
+  });
 
   function updatePlusChip() { const c = document.getElementById('plusChip'); if (!c) return; const ps = plusState(); c.textContent = ps.on ? (ps.trial ? `✨ 체험 ${ps.left}일` : '✨ 플러스 이용 중') : '✨ 플러스'; }
   const bt = document.getElementById('bigToggle');

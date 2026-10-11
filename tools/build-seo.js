@@ -56,7 +56,8 @@ function page({ base, urlPath, title, desc, body, ld, ads = null, ga = null, tra
 <html lang="ko">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#f6f1e7" />
 <title>${esc(title)} — 마음정원사 : 절로가</title>
 <meta name="description" content="${esc(desc)}" />
 <link rel="canonical" href="${esc(url)}" />
@@ -66,7 +67,7 @@ function page({ base, urlPath, title, desc, body, ld, ads = null, ga = null, tra
 ${gaMeta}${jsonLd}${adLoader}${analyticsJs}<link rel="stylesheet" href="/css/style.css" />
 </head>
 <body${bodyAttr}>
-<main style="max-width:680px;margin:0 auto;padding:16px">
+<main style="width:min(100% - 32px, 780px);max-width:100%;margin-inline:auto;padding:clamp(14px,3.4vw,26px) 0 calc(36px + env(safe-area-inset-bottom))">
 ${body}
 ${adBlock}
 <footer style="margin-top:24px;padding-top:12px;border-top:1px solid #e3d8c4;font-size:.85em;color:#7a6f62">
