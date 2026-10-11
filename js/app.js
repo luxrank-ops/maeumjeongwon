@@ -2,7 +2,8 @@
 (function () {
   'use strict';
   const TEMPLES = window.TEMPLES, THEMES = window.THEMES, LL = window.LIST_LABELS;
-  const PRAYER_VIDEO_INDEX = window.PRAYER_VIDEO_INDEX || { videos: [], byTemple: {}, criteria: [], limitations: [] };
+  const PRAYER_CRITERIA = window.PRAYER_CRITERIA || [];
+  const PRAYER_LIMITATIONS = window.PRAYER_LIMITATIONS || [];
   const TRAD = (window.TRADITIONAL_TEMPLES || []).map(r => ({
     no: r[0], sido: r[1], sgg: r[2], addr: r[3], name: r[4], order: r[5], id: 'trad-' + r[0]
   }));
@@ -236,7 +237,7 @@
   ];
   const FEAT = {
     legend: { t: '전설 심화 이야기', d: '사찰마다 전해지는 이야기를 모두 읽을 수 있어요.' },
-    fengshui: { t: '풍수 심화 해설', d: '풍수 해설 전체를 볼 수 있어요. (전해지는 이야기·영상 속 견해를 직접 정리)' },
+    fengshui: { t: '풍수 심화 해설', d: '풍수 해설 전체를 볼 수 있어요. (전해지는 이야기·개인 견해를 직접 정리)' },
     story: { t: '원작 심화 스토리', d: '이 앱이 공개 자료를 바탕으로 직접 쓴 사찰 이야기 시리즈를 끝까지 읽어요.' },
     audio: { t: '오디오 순례 가이드', d: '걸으면서 이야기와 관람 동선을 귀로 들어요.' },
     offline: { t: '오프라인 저장', d: '산속처럼 통신이 약한 곳에서도 사찰 정보를 볼 수 있어요.' },
@@ -610,7 +611,7 @@
     } else if (tab === 'theme') {
       const cur = arg || 'energy';
       body = `<div class="tabs">${Object.entries(THEMES).map(([k, th]) => `<a class="chip ${k === cur ? 'on' : ''}" style="text-decoration:none" href="#/explore/theme/${k}">${th.icon} ${th.name}</a>`).join('')}</div>
-      <p class="sub">${THEMES[cur].desc}</p>${cur === 'wish' || cur === 'energy' || cur === 'fengshui' || cur === 'prayer' ? '<p class="notice">기도·풍수 관련 소개는 종교적 전승이나 영상 제작자의 견해이며, 효험·기운을 보장하지 않아요.</p>' : ''}
+      <p class="sub">${THEMES[cur].desc}</p>${cur === 'wish' || cur === 'energy' || cur === 'fengshui' || cur === 'prayer' ? '<p class="notice">기도·풍수 관련 소개는 종교적 전승이나 전해지는 이야기이며, 효험·기운을 보장하지 않아요.</p>' : ''}
       ${themeBody(cur)}`;
     } else if (tab === 'region') {
       const sidos = SIDO_ORDER.filter(s => TEMPLES.some(t => t.sido === s));
@@ -642,10 +643,10 @@
       const order = (window.PRAYER_ORDER || {}).prayer || [];
       const sourced = order.map(id => byId[id]).filter(t => t && t.themes.includes('prayer'));
       const E = window.PRAYER_ETIQUETTE;
-      const criteria = PRAYER_VIDEO_INDEX.criteria || [];
-      const limitations = PRAYER_VIDEO_INDEX.limitations || [];
+      const criteria = PRAYER_CRITERIA;
+      const limitations = PRAYER_LIMITATIONS;
       return `<section class="card"><h2 style="margin-top:0">🧭 추천 기준</h2>
-          <p class="sub">'기도 기운 좋은 곳'을 효험 점수로 매기지 않고, 확인 가능한 기도 전통·현장 영상·여행 안전을 분리해 추천합니다.</p>
+          <p class="sub">'기도 기운 좋은 곳'을 효험 점수로 매기지 않고, 확인 가능한 기도 전통과 여행 안전·실용정보를 나눠서 안내합니다.</p>
           <ol style="padding-left:20px;margin:6px 0">${criteria.map(x => `<li>${esc(x)}</li>`).join('')}</ol>
           <p class="notice" style="margin:6px 0 0">${limitations.map(esc).join('<br>')}</p>
         </section>
@@ -654,14 +655,12 @@
           <p class="notice" style="margin:6px 0 0">${esc(E.note)}</p>
           <div class="src">출처: <a href="${E.src.u}" target="_blank" rel="noopener">${esc(E.src.t)}</a></div>
         </section>
-        ${prayerVideoLibraryHtml()}
-        <h2>기도처·순례 사찰 <span class="sub">${sourced.length}곳 · 영상 색인 연결 ${sourced.filter(t => prayerVideosForTempleIds([t.id]).length).length}곳</span></h2>
+        <h2>기도처·순례 사찰 <span class="sub">출처 확인 ${sourced.length}곳</span></h2>
         <div class="tlist">${sourced.map(t => {
           const target = t.prayer ? t.prayer.target.split(' (')[0].split(' —')[0] : '기도·순례 이야기';
-          const videoCount = prayerVideosForTempleIds([t.id]).length;
-          return templeItem(t, `🙏 ${target} · 영상 ${videoCount}편`);
+          return templeItem(t, `🙏 ${target}`);
         }).join('')}</div>
-        <p class="sub" style="font-size:.85em">각 사찰 상세에서 기도 안내·출처·관련 영상과 여행 실용정보를 확인할 수 있어요.</p>
+        <p class="sub" style="font-size:.85em">각 사찰 상세에서 기도 안내·출처와 여행 실용정보를 확인할 수 있어요.</p>
         <a class="btn small" style="display:inline-block;text-decoration:none" href="#/planner/theme/prayer">🗓️ 기도·기운 추천 여행 계획 보기 →</a>
         ${courses.length ? `<h2>테마 순례 코스</h2>${courses.map(courseCard).join('')}` : ''}`;
     }
@@ -679,7 +678,7 @@
       <div class="tlist">${sourced.map(t => templeItem(t, t.prayer ? '🙏 ' + esc(t.prayer.target.split(' (')[0].split(' —')[0]) : '')).join('')}</div>
       ${sourced.length ? `<p class="sub" style="font-size:.85em">각 사찰 상세의 "기도 안내"에서 왜 알려졌는지와 출처를 볼 수 있어요.</p>` : ''}
       ${courses.length ? `<h2>테마 순례 코스 <span class="tag">플러스</span></h2>${courses.map(courseCard).join('')}` : ''}
-      ${rest.length ? `<h2>함께 보기 <span class="sub">${rest.length}곳</span></h2><p class="sub" style="font-size:.85em">풍수 유튜브 영상 속 견해 등으로 분류된 곳이에요.</p><div class="tlist">${rest.map(t => templeItem(t)).join('')}</div>` : ''}`;
+      ${rest.length ? `<h2>함께 보기 <span class="sub">${rest.length}곳</span></h2><p class="sub" style="font-size:.85em">풍수 이야기 등으로 분류된 곳이에요.</p><div class="tlist">${rest.map(t => templeItem(t)).join('')}</div>` : ''}`;
   }
   function bindTrad() {
     const q = document.getElementById('tq'); if (!q) return;
@@ -738,53 +737,13 @@
     const shown = open ? ((ext && ext.unlocked && ext.fengshui) || t.fengshui) : t.fengshui.slice(0, 1);
     const extraCnt = t.fengshui.length - 1;
     return `<section class="card legend"><span class="lbl">풍수 이야기 · 전해지는 이야기</span><ul style="padding-left:18px;margin:8px 0 0">${shown.map(v => `<li style="margin-bottom:4px">${esc(v)}</li>`).join('')}</ul>${!open && extraCnt > 0 ? lockBlock('fengshui', `<p style="margin:0">추가 풍수 해설 ${extraCnt}편이 더 있어요.</p>`) : ''}
-      <p class="sub" style="font-size:.8em">풍수 해석은 영상 제작자의 개인 견해이자 전해지는 이야기예요. 효험이나 결과를 보장하지 않아요.</p></section>`;
-  }
-  function prayerVideosForTempleIds(ids) {
-    const wanted = new Set((Array.isArray(ids) ? ids : [ids]).filter(Boolean));
-    return (PRAYER_VIDEO_INDEX.videos || []).filter(v => (v.templeIds || []).some(id => wanted.has(id)));
-  }
-  function prayerVideoRowsHtml(videos, limit) {
-    const cap = limit || 8;
-    return videos.slice(0, cap).map(v => {
-      const meta = [v.date || v.publishedAt || '', v.channel || '', v.kind || ''].filter(Boolean).join(' · ');
-      return `<li style="margin:0 0 10px"><a href="https://www.youtube.com/watch?v=${encodeURIComponent(v.id)}" target="_blank" rel="noopener">${esc(v.title)}</a>
-        ${meta ? `<div class="sub" style="font-size:.82em">${esc(meta)}</div>` : ''}${v.note ? `<div class="sub" style="font-size:.82em">${esc(v.note)}</div>` : ''}</li>`;
-    }).join('');
-  }
-  function prayerVideoEvidenceHtml(ids, limit) {
-    const videos = prayerVideosForTempleIds(ids);
-    if (!videos.length) return '';
-    const cap = limit || 5;
-    return `<details class="video-evidence"><summary>▶ 유튜브 참고 영상 ${videos.length}편</summary>
-      <ul style="padding-left:18px;margin:8px 0">${prayerVideoRowsHtml(videos, cap)}</ul>
-      ${videos.length > cap ? `<p class="sub">최근·관련 영상 ${cap}편을 표시해요. 상세 사찰 화면에서 나머지 참고 자료를 볼 수 있어요.</p>` : ''}
-      <p class="notice">영상은 현장·여행·전승을 살펴보는 참고 자료예요. 개인의 풍수 해석이나 소원 성취 주장을 사실·효험의 증거로 보지 않습니다.</p></details>`;
-  }
-  function prayerVideoSection(t) {
-    const videos = prayerVideosForTempleIds([t.id]);
-    if (!videos.length) return '';
-    const cap = 20;
-    return `<section class="card" id="ref-videos"><h2>▶ 참고 영상 <span class="tag">${videos.length}편</span></h2>
-      <ul class="vlist" style="padding-left:0;margin:0;list-style:none">${prayerVideoRowsHtml(videos, cap)}</ul>
-      ${videos.length > cap ? `<p class="sub">최근·관련 영상 ${cap}편을 표시해요.</p>` : ''}
-      <p class="notice">공개 검색 결과의 제목·설명과 사찰 참고 영상으로 만든 색인이에요. 영상 제작자의 관점일 수 있으며, 사찰의 공식 입장이나 기도 효험을 보증하지 않습니다. 전체 기준: <a href="#/explore/theme/prayer">기도·기운 테마</a></p></section>`;
-  }
-  function prayerVideoLibraryHtml() {
-    const videos = PRAYER_VIDEO_INDEX.videos || [];
-    if (!videos.length) return '';
-    const cap = 30;
-    return `<section class="card"><h2>▶ YouTube 조사 자료 <span class="tag">${videos.length}편 색인</span></h2>
-      <p class="sub">사찰명·기도처·순례 경로가 제목이나 공개 설명에 나타나는 영상을 중심으로 연결했어요. 영상 수는 영험함 점수가 아닙니다.</p>
-      <details><summary>최근 영상 ${Math.min(cap, videos.length)}편 보기</summary><ul style="padding-left:18px;margin:8px 0">${prayerVideoRowsHtml(videos, cap)}</ul>
-      ${videos.length > cap ? `<p class="sub">전체 ${videos.length}편 중 최근 ${cap}편을 표시해요. 사찰별 상세 화면에는 해당 사찰 영상이 연결됩니다.</p>` : ''}</details></section>`;
+      <p class="sub" style="font-size:.8em">풍수 해석은 개인의 견해이자 전해지는 이야기예요. 효험이나 결과를 보장하지 않아요.</p></section>`;
   }
   function viewTemple(id) {
     const t = resolveTemple(id); if (!t) return `<p>사찰을 찾을 수 없어요.</p>`;
     if (!t.isTradOnly && isPlus() && (!TEMPLE_EXTRAS_CACHE[id] || !TEMPLE_EXTRAS_CACHE[id].unlocked)) ensureTempleExtras(id);
     const vs = S.visits.filter(v => v.tid === t.id);
     const mapQuery = encodeURIComponent(`${t.addr} ${t.name}`);
-    const videoRefs = prayerVideoSection(t);
     return `
     <a href="javascript:history.back()" class="sub" style="text-decoration:none">← 뒤로</a>
     <section class="card hero" style="margin-top:8px">
@@ -819,9 +778,8 @@
       <dt>주차</dt><dd>${val(t.practical.parking)}</dd><dt>입장료</dt><dd>${val(t.practical.fee)}</dd><dt>개방시간</dt><dd>${val(t.practical.hours)}</dd>
       <dt>대중교통</dt><dd>${val(t.practical.transit)}</dd><dt>템플스테이</dt><dd>${val(t.practical.templestay)}</dd><dt>좌표</dt><dd>${t.lat.toFixed(5)}, ${t.lng.toFixed(5)}</dd></dl>
       <p class="notice" style="margin-top:8px">방문 전 사찰·국립공원 공지에서 개방시간·통제 여부를 꼭 확인하세요.</p></section>
-    ${videoRefs}
     ${t.verify.length ? `<section class="card"><h2>확인 필요 항목</h2><ul style="padding-left:18px;margin:0">${t.verify.map(v => `<li class="needs">${esc(v)}</li>`).join('')}</ul></section>` : ''}
-    <p class="notice">자료: 주소·종단 = 「전통사찰 현황」(2026.6.1.) · 좌표 = OpenStreetMap · 연혁 = 공개 자료 요약(감수 전)${videoRefs ? ' · 영상 = YouTube 공개 검색·사찰 참고 자료(제작자 관점, 효험 보장 아님)' : ''}${t.prayer ? ' · 기도 안내 = 언론·백과사전·지자체·사찰 공식 자료(위 출처)' : ''}</p>`;
+    <p class="notice">자료: 주소·종단 = 「전통사찰 현황」(2026.6.1.) · 좌표 = OpenStreetMap · 연혁 = 공개 자료 요약(감수 전)${t.prayer ? ' · 기도 안내 = 언론·백과사전·지자체·사찰 공식 자료(위 출처)' : ''}</p>`;
   }
 
 
@@ -1077,7 +1035,7 @@
         '1일차 오후 — 경산 불굴사 적멸보궁 참배 · 홍주암은 날씨와 길 상태를 확인한 뒤 무리 없이 방문 (약 1시간 30분)',
         '2일차 오전 — 청도 운문사 사리암 나반존자 기도처 순례 · 계단길과 체력에 맞춰 일정 조정 (약 2시간)'
       ],
-      tip: '기도 전통을 다룬 공개 자료와 현장·여행 영상을 참고한 코스예요. 갓바위·홍주암·사리암은 계단과 비탈 구간이 있으니 기상·개방·안전 공지를 확인하세요. 소원 성취나 기운의 효험을 약속하지 않습니다.'
+      tip: '기도 전통을 다룬 공개 자료를 참고한 코스예요. 갓바위·홍주암·사리암은 계단과 비탈 구간이 있으니 기상·개방·안전 공지를 확인하세요. 소원 성취나 기운의 효험을 약속하지 않습니다.'
     },
     {
       id: 'tpl-prayer-seoul-1d',
@@ -1092,7 +1050,7 @@
         '오후 — 은평 수국사 황금법당과 경내 참배 · 대중교통 이동에 여유 두기',
         '늦은 오후 — 진관사 경내와 계곡길 산책 · 수륙재 등 의례 일정은 사찰 공지에서 확인'
       ],
-      tip: '서울의 기도 도량·사찰 문화를 소개하는 공개 영상과 공공기관·불교방송 자료를 함께 연결했어요. 도심 횡단 이동이 있으니 실제 대중교통 시간과 개방 구역을 출발 전에 확인하세요.'
+      tip: '서울의 기도 도량·사찰 문화를 다룬 공공기관·불교방송 자료를 참고했어요. 도심 횡단 이동이 있으니 실제 대중교통 시간과 개방 구역을 출발 전에 확인하세요.'
     },
     {
       id: 'tpl-prayer-namhae-1n2d',
@@ -1106,7 +1064,7 @@
         '1일차 — 금산 보리암 참배 · 탑대와 바다 조망, 산길·계단은 천천히 이동 (약 2시간)',
         '2일차 — 호구산 남해 용문사 경내 참배와 숲길 산책 · 사찰 행사와 개방 구역 확인 (약 1시간 30분)'
       ],
-      tip: '보리암의 기도 전승·금산 산행 영상과 남해 지역 사찰 자료를 참고한 코스예요. 금산 진입·주차·탐방로 통제와 계절별 혼잡을 확인하고, 영상의 풍수·효험 표현은 제작자 의견으로만 살펴보세요.'
+      tip: '보리암의 기도 전승과 남해 지역 사찰 자료를 참고한 코스예요. 금산 진입·주차·탐방로 통제와 계절별 혼잡을 확인하세요.'
     },
 
     {
@@ -1422,7 +1380,6 @@
             <div class="sub" style="margin:4px 0">📍 코스: ${sum.stops.map(t => esc(t.name)).join(' → ')} (총 직선 ${sum.totalStraightKm}km · 예상 ${fmtMin(sum.totalMin)})</div>
             <ol style="padding-left:18px;margin:6px 0;font-size:.92em">${tpl.schedule.map(s => `<li>${esc(s)}</li>`).join('')}</ol>
             <div class="sub">💡 ${esc(tpl.tip)}</div>
-            ${tpl.theme === 'prayer' ? prayerVideoEvidenceHtml(tpl.stops, 5) : ''}
             ${sum.relatedMissions.length ? `<div class="sub" style="margin-top:4px">🏅 연계 미션: ${sum.relatedMissions.map(m => m.icon + ' ' + m.name).join(', ')}</div>` : ''}
             <div class="row wrap" style="margin-top:8px">
               <button class="btn small" data-act="tpl-adopt" data-id="${esc(tpl.id)}">📥 내 여행 계획으로 담기</button>
