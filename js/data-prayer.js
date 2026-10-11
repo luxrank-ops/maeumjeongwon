@@ -10,6 +10,7 @@
   // ---- 테마 이름·설명 정리 ----
   TH.energy = { icon: '🔋', name: '기운 좋은 사찰', desc: '명당·풍수 이야기나 진신사리·미륵 신앙처럼 "기운이 좋다"고 전해지는 곳 (전해지는 이야기, 효험 보장 아님)' };
   TH.wish = { icon: '🙏', name: '한 가지 소원 기도처', desc: '"한 가지 소원은 들어준다"는 이야기가 전해지는 이름난 기도처 (전해지는 이야기, 효험 보장 아님)' };
+  TH.prayer = { icon: '🕯️', name: '기도·기운 좋은 곳', desc: '기도 전통이 확인되는 사찰과 공개 영상의 현장 소개를 함께 살펴보는 테마 (기운·효험 보장 아님)' };
 
   // ---- 출처 ----
   const S = {
@@ -220,9 +221,11 @@
   // 테마 반영 (출처가 있는 곳만)
   const WISH = ['gatbawi', 'boriam', 'hyangiram', 'naksansa', 'bomunsa', 'sariam', 'dosunsa', 'chiljangsa', 'suguksa', 'jeju_gwaneumsa', 'wangsansa', 'maneosa', 'yonggungsa', 'tapsa'];
   const ENERGY = ['tongdosa', 'sangwonsa', 'jeongamsa', 'bongjeongam', 'beopheungsa', 'boriam', 'gatbawi', 'geumsansa', 'namhae_yongmunsa', 'tapsa', 'bomunsa', 'hyangiram', 'dosunsa'];
+  const PRAYER = Array.from(new Set([...WISH, ...ENERGY]));
   WISH.forEach(id => { const t = byId[id]; if (t && !t.themes.includes('wish')) t.themes.push('wish'); });
   ENERGY.forEach(id => { const t = byId[id]; if (t && !t.themes.includes('energy')) t.themes.push('energy'); });
-  window.PRAYER_ORDER = { wish: WISH, energy: ENERGY };
+  PRAYER.forEach(id => { const t = byId[id]; if (t && !t.themes.includes('prayer')) t.themes.push('prayer'); });
+  window.PRAYER_ORDER = { wish: WISH, energy: ENERGY, prayer: PRAYER };
 
   // 일부 사실 보강
   if (byId.hyangiram) byId.hyangiram.practical = Object.assign({}, byId.hyangiram.practical, { transit: '여수엑스포역·이순신광장에서 시내버스 111·111-1·116번 → 임포(향일암) 정류장 하차 (여수시 관광문화 안내 기준)' });

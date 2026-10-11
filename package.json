@@ -7,6 +7,7 @@
     "build": "node tools/build-seo.js",
     "build:seo": "node tools/build-seo.js",
     "build:mobile": "node tools/build-mobile.js",
+    "crawl:prayer-videos": "node tools/collect-prayer-videos.js",
     "test": "node --test server/test/*.test.js",
     "push": "node tools/git-push.js",
     "start": "node server.js"
