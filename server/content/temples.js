@@ -10,6 +10,7 @@ function loadTemples() {
   vm.createContext(sandbox);
   vm.runInContext(fs.readFileSync(path.join(root, 'data-temples.js'), 'utf-8'), sandbox);
   vm.runInContext(fs.readFileSync(path.join(root, 'data-prayer.js'), 'utf-8'), sandbox);
+  vm.runInContext(fs.readFileSync(path.join(root, 'data-fengshui.js'), 'utf-8'), sandbox);
   return sandbox.window.TEMPLES || [];
 }
 

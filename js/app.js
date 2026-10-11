@@ -4,6 +4,9 @@
   const TEMPLES = window.TEMPLES, THEMES = window.THEMES, LL = window.LIST_LABELS;
   const PRAYER_CRITERIA = window.PRAYER_CRITERIA || [];
   const PRAYER_LIMITATIONS = window.PRAYER_LIMITATIONS || [];
+  const FENGSHUI_ATLAS = window.FENGSHUI_ATLAS || { regions: [], entries: [] };
+  const FENGSHUI_MATRIX = window.FENGSHUI_MATRIX || [];
+  const FENGSHUI_VISIT_TIPS = window.FENGSHUI_VISIT_TIPS || [];
   const TRAD = (window.TRADITIONAL_TEMPLES || []).map(r => ({
     no: r[0], sido: r[1], sgg: r[2], addr: r[3], name: r[4], order: r[5], id: 'trad-' + r[0]
   }));
@@ -664,6 +667,16 @@
         <a class="btn small" style="display:inline-block;text-decoration:none" href="#/planner/theme/prayer">🗓️ 기도·기운 추천 여행 계획 보기 →</a>
         ${courses.length ? `<h2>테마 순례 코스</h2>${courses.map(courseCard).join('')}` : ''}`;
     }
+    if (cur === 'fengshui') {
+      return `<section class="card hero"><div class="sub">🧭 풍수 대백과</div>
+          <b>전국 명당 사찰 풍수 대백과</b>
+          <p class="sub" style="margin:4px 0 8px">용맥·지기·장풍득수·형국론 관점에서 정리한 명당 사찰을 권역별·목적별로 한눈에 살펴보세요. (전해지는 이야기·개인 견해, 효험 보장 아님)</p>
+          <div class="row wrap">${FENGSHUI_MATRIX.slice(0, 3).map(m => `<span class="tag">${m.icon} ${esc(m.purpose)}</span>`).join('')}<span class="tag">…</span></div>
+          <a class="btn small" style="display:inline-block;text-decoration:none;margin-top:8px" href="#/fengshui">대백과 열기 →</a>
+        </section>
+        <h2>풍수 답사 사찰 <span class="sub">${list.length}곳</span></h2>
+        <div class="tlist">${list.map(t => templeItem(t)).join('')}</div>${courses.length ? `<h2>테마 순례 코스</h2>${courses.map(courseCard).join('')}` : ''}`;
+    }
     if (cur !== 'wish' && cur !== 'energy') return `<div class="tlist">${list.map(t => templeItem(t)).join('')}</div>${courses.length ? `<h2>테마 순례 코스</h2>${courses.map(courseCard).join('')}` : ''}`;
     const order = (window.PRAYER_ORDER || {})[cur] || [];
     const sourced = order.map(id => byId[id]).filter(t => t && t.themes.includes(cur));
@@ -717,6 +730,66 @@
     run(true);
   }
 
+  // ---------- 화면: 전국 명당 사찰 풍수 대백과 ----------
+  const NUMPAD = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩', '⑪', '⑫', '⑬', '⑭', '⑮', '⑯', '⑰', '⑱', '⑲', '⑳'];
+  function viewFengshuiAtlas() {
+    const A = FENGSHUI_ATLAS;
+    if (!A || !A.entries || !A.entries.length) return `<p>풍수 대백과 데이터를 불러오지 못했어요.</p>`;
+    const regionName = k => { const r = (A.regions || []).find(x => x.key === k); return r ? r.name : ''; };
+    const templeChips = ids => `<div class="row wrap" style="margin-top:6px">${(ids || []).map(id => {
+      const t = resolveTemple(id);
+      return t ? `<a class="chip" style="text-decoration:none" href="#/temple/${t.id}">📍 ${esc(t.name)}</a>` : '';
+    }).join('')}</div>`;
+
+    const matrixHtml = FENGSHUI_MATRIX.length ? `<section class="card">
+      <h2 style="margin-top:0">🎯 목적별 맞춤 사찰 매트릭스</h2>
+      <p class="sub" style="margin:0 0 8px">방문 목적에 맞춰 풍수 해설에서 꼽은 최우선 추천 사찰이에요. (전해지는 이야기, 효험 보장 아님)</p>
+      ${FENGSHUI_MATRIX.map(m => `<div class="course" style="margin-bottom:8px">
+        <div class="row between"><b>${m.icon} ${esc(m.purpose)}</b></div>
+        <div class="sub" style="margin-top:2px">${esc(m.reason)}</div>
+        ${templeChips(m.temples)}
+      </div>`).join('')}
+    </section>` : '';
+
+    const regionHtml = (A.regions || []).map(r => {
+      const items = A.entries.filter(e => e.region === r.key);
+      if (!items.length) return '';
+      return `<h2>${esc(r.name)} <span class="sub">${items.length}곳</span></h2>` + items.map((e, i) => {
+        const no = NUMPAD[A.entries.indexOf(e)] || (A.entries.indexOf(e) + 1) + '.';
+        return `<section class="card">
+          <div class="row between"><b>${no} ${esc(e.name)}</b><span class="tag">${esc(r.name)}</span></div>
+          ${e.sub ? `<div class="sub" style="margin:2px 0 0">${esc(e.sub)}</div>` : ''}
+          <p style="margin:8px 0 2px"><b>형국</b> · ${esc(e.hyeong)}</p>
+          <div class="row wrap" style="margin:4px 0">${e.power.map(p => `<span class="tag">💡 ${esc(p)}</span>`).join('')}</div>
+          <p class="sub" style="margin:4px 0 0">${esc(e.story)}</p>
+          ${templeChips(e.temples)}
+        </section>`;
+      }).join('');
+    }).join('');
+
+    const tipsHtml = FENGSHUI_VISIT_TIPS.length ? `<section class="card">
+      <h2 style="margin-top:0">🌿 사찰에서 마음을 여는 방문법</h2>
+      <p class="sub" style="margin:0 0 8px">풍생풍사TV가 소개한 사찰 방문법을 정리했어요. 개인의 견해·전해지는 이야기이며 효험을 보장하지 않아요.</p>
+      <ul style="padding-left:18px;margin:0">${FENGSHUI_VISIT_TIPS.map(tp => `<li style="margin-bottom:8px"><b>${esc(tp.title)}</b><br><span class="sub">${esc(tp.text)}</span></li>`).join('')}</ul>
+    </section>` : '';
+
+    return `<a href="#/explore/theme/fengshui" class="sub" style="text-decoration:none">← 풍수 답사 사찰</a>
+      <h1>🧭 ${esc(A.title)}</h1>
+      <p class="sub" style="margin:4px 0 8px">${esc(A.subtitle)} — ${esc(A.intro)}</p>
+      <p class="notice">${(A.disclaimer || []).map(esc).join('<br>')}</p>
+      ${matrixHtml}
+      ${regionHtml}
+      ${tipsHtml}
+      <section class="card"><h2 style="margin-top:0">🗓️ 함께 떠나는 기도·풍수 여행</h2>
+        <p class="sub" style="margin:0 0 8px">명당 사찰·소원성지 추천 코스를 여행 계획에 한 번에 담을 수 있어요.</p>
+        <div class="row wrap">
+          <a class="btn small" style="text-decoration:none" href="#/planner/theme/prayer">🙏 기도·기운 추천 코스</a>
+          <a class="btn ghost small" style="text-decoration:none" href="#/planner/new">+ 새 여행 계획 만들기</a>
+        </div>
+      </section>
+      <p class="notice">${esc(A.sourceNote || '')}<br>전설·풍수 이야기는 '전해지는 이야기'로 소개하며, 효험을 보장하지 않습니다.</p>`;
+  }
+
   // ---------- 화면: 사찰 상세 ----------
   const ETIQUETTE = ['법당 정면 가운데 문(어간문)은 피하고 옆문으로 드나들어요.', '예불·기도 중에는 촬영과 큰 소리를 삼가요.', '"촬영 금지" 표시가 있는 곳은 반드시 지켜 주세요.', '노출이 심한 옷은 피하고, 법당에서는 모자를 벗어요.', '스님·수행 공간(선원 등) 출입 제한 구역에 들어가지 않아요.', '개방 시간 외 야간 방문과 무리한 산행은 삼가요.'];
   function ensureTempleExtras(id) {
@@ -736,7 +809,11 @@
     const ext = TEMPLE_EXTRAS_CACHE[t.id];
     const shown = open ? ((ext && ext.unlocked && ext.fengshui) || t.fengshui) : t.fengshui.slice(0, 1);
     const extraCnt = t.fengshui.length - 1;
-    return `<section class="card legend"><span class="lbl">풍수 이야기 · 전해지는 이야기</span><ul style="padding-left:18px;margin:8px 0 0">${shown.map(v => `<li style="margin-bottom:4px">${esc(v)}</li>`).join('')}</ul>${!open && extraCnt > 0 ? lockBlock('fengshui', `<p style="margin:0">추가 풍수 해설 ${extraCnt}편이 더 있어요.</p>`) : ''}
+    const atlas = t.fengshuiAtlas;
+    const atlasHead = atlas ? `<p style="margin:8px 0 2px"><b>형국</b> · ${esc(atlas.hyeong)}</p>
+      <div class="row wrap" style="margin:4px 0 2px">${atlas.power.map(p => `<span class="tag">💡 ${esc(p)}</span>`).join('')}</div>` : '';
+    return `<section class="card legend"><span class="lbl">풍수 이야기 · 전해지는 이야기</span>${atlasHead}<ul style="padding-left:18px;margin:8px 0 0">${shown.map(v => `<li style="margin-bottom:4px">${esc(v)}</li>`).join('')}</ul>${!open && extraCnt > 0 ? lockBlock('fengshui', `<p style="margin:0">추가 풍수 해설 ${extraCnt}편이 더 있어요.</p>`) : ''}
+      ${atlas ? `<p style="margin:8px 0 0"><a class="sub" href="#/fengshui">🧭 전국 명당 사찰 풍수 대백과에서 권역별 전체 보기 →</a></p>` : ''}
       <p class="sub" style="font-size:.8em">풍수 해석은 개인의 견해이자 전해지는 이야기예요. 효험이나 결과를 보장하지 않아요.</p></section>`;
   }
   function viewTemple(id) {
@@ -1066,6 +1143,21 @@
       ],
       tip: '보리암의 기도 전승과 남해 지역 사찰 자료를 참고한 코스예요. 금산 진입·주차·탐방로 통제와 계절별 혼잡을 확인하세요.'
     },
+    {
+      id: 'tpl-yeongnam-sowon-1n2d',
+      theme: 'prayer',
+      title: '영남 영험 소원성지 1박 2일 기도 순례',
+      days: '1박 2일',
+      transport: '자가용',
+      companion: '기도효험 좋은 곳',
+      stops: ['gatbawi', 'bulgulsa', 'sariam'],
+      schedule: [
+        '1일차 오전 — 팔공산 선본사 갓바위(관봉 석조여래좌상) 참배 · 한 가지 소원을 비는 대표 기도처 (선본사 쪽 왕복 산행 약 3시간, 계단 구간 주의)',
+        '1일차 오후 — 경산 불굴사 적멸보궁 참배 · 절벽 위 홍주암 독성각 소원성지는 날씨·길 상태를 확인한 뒤 무리 없이 방문 (약 2시간)',
+        '2일차 오전 — 청도 운문사 사리암 나반존자 기도처 · 1,008 돌계단을 올라 소원 기도 (편도 약 30~40분, 체력에 맞춰 조정)'
+      ],
+      tip: '풍생풍사TV 등에서 꼽는 영남 대표 소원성지 세 곳을 잇는 코스예요. 갓바위·홍주암·사리암 모두 계단과 비탈 산행이 필요하니 기상·개방·안전 공지를 확인하세요. 소원 성취나 효험을 약속하지 않아요.'
+    },
 
     {
       id: 'tpl-autumn-naejang-1d',
@@ -1209,7 +1301,7 @@
   const DRAFT_DEFAULTS = { days: '당일치기', transport: '자가용', companion: '혼자 조용히' };
   const DAYS_OPTS = ['반나절·당일', '당일치기', '1박 2일', '2박 3일', '3박 4일 이상'];
   const TRANSPORT_OPTS = ['자가용', '대중교통', '대중교통·도보', '산행·트레킹'];
-  const COMPANION_OPTS = ['혼자 조용히', '가족·부모님과', '연인·친구와', '아이와 함께', '불자·순례 모임', '기도처 중심 일정'];
+  const COMPANION_OPTS = ['혼자 조용히', '가족·부모님과', '연인·친구와', '아이와 함께', '불자·순례 모임', '기도처 중심 일정', '기도효험 좋은 곳'];
   let draftStops = [];
   let draftForm = {};       // 사용자가 직접 고친 입력값만 보관 (없으면 사찰 구성에 따른 자동값 사용)
   let draftCleared = false; // 초기화한 뒤에는 예시 사찰을 다시 채우지 않음
@@ -1677,6 +1769,7 @@
     let html, tab = r;
     switch (r) {
       case 'explore': html = viewExplore(a, b); break;
+      case 'fengshui': html = viewFengshuiAtlas(); tab = 'explore'; break;
       case 'temple': html = viewTemple(a); tab = 'explore'; break;
       case 'map': html = viewMap(); break;
       case 'missions': html = viewMissions(); break;
