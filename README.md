@@ -33,6 +33,7 @@ GPS 인증은 브라우저 보안상 `localhost` 또는 HTTPS에서만 동작합
 - `js/data-traditional.js` — 첨부 PDF「전통사찰 현황」(2026.6.1.) 991곳 전체 목록
 - `vendor/` — Leaflet 1.9.4
 - `docs/monetization.md` — 콘텐츠 전용 유료화 설계 v2(경쟁 분석·가격·페이월 지도·제작 로드맵·1년 매출 시나리오·법적 리스크)
+- `docs/paid-success-playbook.md` — 유료·상업 성공 플레이북(2026-10): 성공 유료앱 10개 해부, 2026 실측 벤치마크, 전환·리텐션·유입·수익 구조 추가 제안 15개(우선순위·공수·근거), 90일 실행 로드맵, KPI 대시보드
 - `docs/scripture-content.md` — 불경(경전) 콘텐츠 검토(2026-10): 시장 근거, 유형별 품질 분석, 저작권·번역·음원 조건, 무료 미끼 + 유료 상품 설계, 로드맵
 - `docs/responsive-layout.md` — 화면(모바일·태블릿·웹)별 구성 배치 설계: 브레이크포인트 표, 셸 그리드 구조, 유동 타이포·여백 토큰, 지도·모달·SEO 페이지 대응, 알려진 한계
 - `tools/test-content.js` — 심화 스토리·보상 광고·콘텐츠 상점·순례 리포트 테스트, `tools/test-plus.js` — 플러스(유료화 데모)·기도처 테마 테스트, `tools/smoke-test.js` — Playwright 스모크 테스트/스크린샷, `tools/geocode.py` — 좌표 조회 스크립트

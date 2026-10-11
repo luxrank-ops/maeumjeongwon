@@ -67,7 +67,7 @@
   // ---------- 상태 ----------
   const SESS_KEY = 'maeumjeongwon.sess.v1';
   const ENT_KEY = 'maeumjeongwon.ent.v1';
-  const defaults = { visits: [], journal: [], big: false, moodIdx: 0, plus: null, plan: 'yearly', packs: [], offline: [], adLog: {}, adUnlocks: {}, skin: null, moodLog: [], trips: [], tripChecks: {} };
+  const defaults = { visits: [], journal: [], big: false, moodIdx: 0, plus: null, plan: 'yearly', packs: [], offline: [], adLog: {}, adUnlocks: {}, skin: null, moodLog: [], trips: [], tripChecks: {}, streak: 0, streakDate: null, streakFreezes: 1, onboarded: false, onboardPrefs: {} };
   const RAW_STORIES = window.STORIES || [], STORY_SOON = window.STORY_SOON || [];
   const STORIES = RAW_STORIES.map(st => {
     if (st.preview !== undefined) return st;
@@ -96,6 +96,114 @@
   }
   const DEMO_OK = () => !!CFG.demoPaywall && MODE.devEntitlement;
   const MJAnalytics = window.MJAnalytics || window.MJ_ANALYTICS || { shouldPrompt: () => false, setConsent: () => {}, track: () => {} };
+
+  // ---------- 매일 리추얼·스트릭 ----------
+  const DAILY_VERSES = [
+    { text: '스스로를 등불로 삼고, 스스로에게 의지하라.', src: '열반경' },
+    { text: '천 개의 촛불을 밝히는 것보다 하나의 촛불을 켜는 것이 어둠을 없애기에 더 낫다.', src: '법구경' },
+    { text: '마음이 청정하면 세계도 청정하다.', src: '유마경' },
+    { text: '어리석은 자가 현명한 이를 만나면 항상 그를 섬기되, 달이 별을 따르듯 하라.', src: '법구경' },
+    { text: '한 번 일어난 생각이 온 세상을 뒤흔든다.', src: '화엄경' },
+    { text: '모든 것은 변한다. 완전한 것은 아무것도 없다. 그것이 해탈의 길이다.', src: '법구경' },
+    { text: '중생이 고통받을 때 부처도 고통받느니라.', src: '법화경' },
+    { text: '한 손뼉 소리가 무엇인가?', src: '선어록' },
+    { text: '꽃이 피는 것은 자연의 이치요, 꽃이 지는 것도 자연의 이치이다.', src: '법구경' },
+    { text: '지금 이 한 생각이 곧 부처의 마음이다.', src: '육조단경' },
+    { text: '사방으로 둘러보아도 이보다 더할 수 없이 훌륭한 곳, 이곳에 앉으리라.', src: '좌선의(儀)' },
+    { text: '모든 중생에게 불성이 있다.', src: '열반경' },
+    { text: '부지런히 정진하라. 게으르지 마라.', src: '법구경' },
+    { text: '물이 소리에 구애되지 않고 흐르듯, 마음도 집착에 구애되지 않아야 한다.', src: '반야심경 강설' },
+    { text: '작은 일도 소중히 여기는 것이 큰 길을 여는 첫걸음이다.', src: '화엄경' }
+  ];
+  function getDailyVerse() {
+    const seed = Number(today().replace(/-/g, ''));
+    return DAILY_VERSES[seed % DAILY_VERSES.length];
+  }
+  function updateStreak() {
+    const td = today();
+    if (!S.streakDate) { S.streak = 0; return; }
+    const diff = Math.floor((new Date(td) - new Date(S.streakDate)) / 86400000);
+    if (diff > 1) {
+      if (S.streakFreezes > 0 && diff === 2) {
+        S.streakFreezes--;
+        S.streakDate = td;
+        save();
+        return;
+      }
+      S.streak = 0;
+    }
+  }
+  function recordRitual() {
+    const td = today();
+    if (S.streakDate === td) return;
+    const diff = S.streakDate ? Math.floor((new Date(td) - new Date(S.streakDate)) / 86400000) : 1;
+    S.streak = diff <= 1 ? (S.streak || 0) + 1 : 1;
+    S.streakDate = td;
+    save();
+    MJAnalytics.track('ritual_complete', { feature: 'daily' });
+  }
+  function ritualDoneToday() { return S.streakDate === today(); }
+  function streakMilestoneHTML(n) {
+    if (n >= 100) return '🏆';
+    if (n >= 30) return '🔥';
+    if (n >= 7) return '✨';
+    return '📿';
+  }
+
+  // ---------- 온보딩 ----------
+  const ONBOARD_STEPS = [
+    { q: '어떤 것이 궁금하세요?', opts: [{ k: 'healing', label: '🧘 힐링·쉼' }, { k: 'history', label: '📜 역사·이야기' }, { k: 'prayer', label: '🙏 기도·기원' }, { k: 'photo', label: '📷 사진 명소' }, { k: 'course', label: '🗺️ 코스·여행' }] },
+    { q: '어디에 계세요?', opts: [{ k: 'seoul', label: '서울·경기' }, { k: 'busan', label: '부산·경남' }, { k: 'daegu', label: '대구·경북' }, { k: 'gangwon', label: '강원' }, { k: 'jeonnam', label: '전남·광주' }, { k: 'other', label: '기타 지역' }] },
+    { q: '어떤 분과 함께하세요?', opts: [{ k: 'solo', label: '혼자 조용히' }, { k: 'family', label: '가족·부모님' }, { k: 'couple', label: '연인·친구' }, { k: 'group', label: '모임·단체' }] }
+  ];
+  let onboardingStep = 0;
+  let onboardingChoices = {};
+  function onboardingInterestToThemes(interest) {
+    const map = { healing: ['quiet', 'autumn'], history: ['history', 'legend'], prayer: ['prayer', 'wish', 'energy'], photo: ['photo', 'sea'], course: ['hike', 'sea', 'fengshui'] };
+    return map[interest] || ['quiet'];
+  }
+  function onboardingRegionToSido(region) {
+    const map = { seoul: ['서울', '경기', '인천'], busan: ['부산', '경남', '울산'], daegu: ['대구', '경북'], gangwon: ['강원'], jeonnam: ['전남', '광주', '전북'], other: null };
+    return map[region] || null;
+  }
+  function onboardingRecommend() {
+    const themes = onboardingInterestToThemes(onboardingChoices[0]);
+    const sidos = onboardingRegionToSido(onboardingChoices[1]);
+    let pool = TEMPLES.filter(t => t.themes.some(th => themes.includes(th)));
+    if (sidos) {
+      const near = pool.filter(t => sidos.includes(t.sido));
+      if (near.length >= 2) pool = near;
+    }
+    const seed = Number(today().replace(/-/g, ''));
+    return pool.slice(0, 10).sort((a, b) => ((seed + a.name.length) % 7) - ((seed + b.name.length) % 7)).slice(0, 3);
+  }
+  function viewOnboarding() {
+    const step = ONBOARD_STEPS[onboardingStep];
+    if (!step) return '';
+    const chosen = onboardingChoices[onboardingStep];
+    const isLast = onboardingStep === ONBOARD_STEPS.length - 1;
+    return `<div class="onboard-card">
+      <div class="onboard-progress">${ONBOARD_STEPS.map((_, i) => `<span class="${i <= onboardingStep ? 'on' : ''}"></span>`).join('')}</div>
+      <h2>${esc(step.q)}</h2>
+      <div class="onboard-opts">${step.opts.map(o => `<button class="onboard-opt ${chosen === o.k ? 'on' : ''}" data-act="onboard-pick" data-key="${o.k}" data-step="${onboardingStep}">${esc(o.label)}</button>`).join('')}</div>
+      <div class="onboard-nav">
+        ${onboardingStep > 0 ? '<button class="btn ghost" data-act="onboard-back">이전</button>' : ''}
+        ${isLast ? '<button class="btn" data-act="onboard-done" disabled>마음정원 시작 🪷</button>' : '<button class="btn" data-act="onboard-next" disabled>다음</button>'}
+      </div>
+    </div>`;
+  }
+  function viewOnboardingResult() {
+    const picks = onboardingRecommend();
+    const interest = ONBOARD_STEPS[0].opts.find(o => o.k === onboardingChoices[0]);
+    return `<div class="onboard-card onboard-result">
+      <div class="onboard-progress">${ONBOARD_STEPS.map(() => '<span class="on"></span>').join('')}</div>
+      <h2>${interest ? interest.label.split(' ').slice(1).join(' ') : ''}에 어울리는 사찰 3곳</h2>
+      <p class="sub">오늘 가기 좋은 곳을 골라 봤어요. 이야기를 읽고 직접 순례해 보세요.</p>
+      <div class="tlist">${picks.map(t => templeItem(t)).join('')}</div>
+      <button class="btn block" data-act="onboard-enter" style="margin-top:12px">마음정원 시작 🪷</button>
+      <p class="sub" style="text-align:center;margin-top:8px;font-size:.82em">나중에 언제든 설정을 바꿀 수 있어요</p>
+    </div>`;
+  }
   const STORY_CACHE = {}, STORY_PENDING = {};
   const TEMPLE_EXTRAS_CACHE = {}, TEMPLE_EXTRAS_PENDING = {};
 
@@ -208,7 +316,9 @@
   // ---------- 마음정원 플러스 (유료화 프런트엔드 데모 · 실제 결제 없음) ----------
   const PLANS = {
     monthly: { name: '월간', price: '월 4,900원', sub: '언제든 해지 가능' },
-    yearly: { name: '연간', price: '연 39,000원', sub: '월 3,250원꼴 · 월간 대비 34% 절약', best: '추천' }
+    yearly: { name: '연간', price: '연 39,000원', sub: '월 3,250원꼴 · 월간 대비 34% 절약', best: '추천' },
+    webYearly: { name: '웹 전용 연간', price: '연 29,000원', sub: '월 2,417원꼴 · 웹 결제 46%↓ · 카드·간편결제', best: '최저가', badge: 'web' },
+    lifetime: { name: '평생 이용권', price: '89,000원', sub: '한 번만 · 영구 이용 · 한정 판매', badge: 'lifetime' }
   };
   // 콘텐츠 상점: 앱 안의 원작 정보·콘텐츠만 판매 (사찰 제휴·수수료·실물 굿즈 없음)
   const STORE = [
@@ -251,9 +361,10 @@
   };
   function plusState() {
     const p = S.plus; if (!p) return { on: false };
+    const trialDays = 14;
     if (p.status === 'trial') {
       const used = Math.floor((Date.now() - new Date(p.start).getTime()) / 86400000);
-      const left = 7 - used;
+      const left = trialDays - used;
       if (left <= 0) return { on: false, expired: true };
       return { on: true, trial: true, left, plan: p.plan };
     }
@@ -273,17 +384,24 @@
       <li>청약철회·환불은 전자상거래법과 앱 마켓 정책을 따르며, 출시 전 법률 검토를 거쳐 확정해요.</li>
     </ul>`;
   function planCards() {
-    return `<div class="plans">${Object.entries(PLANS).map(([k, p]) => `<button class="plan ${S.plan === k ? 'on' : ''}" data-act="plan" data-plan="${k}">${p.best ? `<span class="best">${p.best}</span>` : ''}<div class="sub">${p.name}</div><div class="price">${p.price}</div><div class="sub" style="font-size:.78em">${p.sub}</div></button>`).join('')}</div>`;
+    const main = ['monthly', 'yearly'].map(([k]) => [k, PLANS[k]]);
+    const extra = ['webYearly', 'lifetime'].map(k => [k, PLANS[k]]);
+    return `<div class="plans">${main.map(([k, p]) => `<button class="plan ${S.plan === k ? 'on' : ''}" data-act="plan" data-plan="${k}">${p.best ? `<span class="best">${p.best}</span>` : ''}<div class="sub">${p.name}</div><div class="price">${p.price}</div><div class="sub" style="font-size:.78em">${p.sub}</div></button>`).join('')}</div>
+      <div class="plans" style="margin-top:8px">${extra.map(([k, p]) => `<button class="plan ${S.plan === k ? 'on' : ''}" data-act="plan" data-plan="${k}">${p.best ? `<span class="best">${p.best}</span>` : ''}${p.badge === 'web' ? '<span class="tag">💳 웹 결제</span> ' : p.badge === 'lifetime' ? '<span class="tag">🎁 영구</span> ' : ''}<div class="sub">${p.name}</div><div class="price">${p.price}</div><div class="sub" style="font-size:.78em">${p.sub}</div></button>`).join('')}</div>`;
   }
   function openPaywall(feat) {
     MJAnalytics.track('paywall_view', { feature: feat || 'general' });
     const f = FEAT[feat] || FEAT.general, ps = plusState();
+    const webNote = S.plan === 'webYearly' || S.plan === 'lifetime' ? `<p class="notice" style="margin:6px 0 0">💳 <b>웹 결제</b>: 앱스토어 수수료(15~30%) 없이 카드·간편결제로 직접 결제해요. 같은 상품, 더 저렴한 가격.</p>` : '';
+    const trialLabel = ps.expired ? '플러스 시작 (데모)' : '14일 무료 체험 (데모)';
     openModal(`<div class="sheet"><div class="row between"><h2 style="margin:0">✨ ${f.t}</h2><span class="demo-ribbon">데모</span></div>
       <p>${f.d}</p>
       <ul style="padding-left:18px;margin:6px 0">${PLUS_BENEFITS.filter(b => b[1] !== true && b[2] === true).map(b => `<li>${b[0]}</li>`).join('')}</ul>
       ${planCards()}
+      ${webNote}
       ${ps.expired ? '<p class="notice">체험 기간이 끝났어요. 계속 이용하려면 아래에서 직접 선택해 주세요. (자동으로 결제되지 않았어요)</p>' : ''}
-      <div class="grid2" style="margin-top:6px"><button class="btn ghost" data-act="close">무료로 계속하기</button><button class="btn" data-act="trial-start">${ps.expired ? '플러스 시작 (데모)' : '7일 무료 체험 (데모)'}</button></div>
+      <div class="grid2" style="margin-top:6px"><button class="btn ghost" data-act="close">무료로 계속하기</button><button class="btn" data-act="trial-start">${trialLabel}</button></div>
+      <div class="row" style="margin-top:8px;justify-content:center"><button class="btn ghost small" data-act="gift-open">🎁 선물하기 (부모님·친구)</button></div>
       ${LEGAL}
       <p class="sub" style="text-align:center;margin:8px 0 0"><a href="#/plus" data-act="close">요금제·혜택 자세히 보기</a> · <a href="#/store" data-act="close">구독 없이 단품 보기</a></p></div>`);
   }
@@ -565,6 +683,19 @@
       <div class="progress" style="margin-top:6px"><i style="width:${Math.min(100, v.size)}%"></i></div>
       ${near ? `<p class="sub" style="margin:10px 0 0">${near.m.icon} ${near.m.name.replace(/ 완주| 순례/, '')} 완주까지 <b>${near.p.total - near.p.done}곳</b> 남았어요</p>` : ''}
     </section>
+    ${!S.onboarded ? `<section class="card onboard-hint"><div class="row between"><h2 style="margin:0">🪷 마음정원에 오신 것을 환영해요</h2></div><p class="sub" style="margin:6px 0">관심 분야를 알려주시면 오늘 가기 좋은 사찰을 추천해 드려요.</p><button class="btn" data-act="start-onboarding">추천 받기 (3문항)</button></section>` : ''}
+    ${(() => { updateStreak(); const done = ritualDoneToday(); const verse = getDailyVerse(); const n = S.streak || 0; return `<section class="card">
+      <div class="row between"><h2 style="margin:0">${streakMilestoneHTML(n)} 매일 리추얼</h2>${n > 0 ? `<span class="tag ok">🔥 ${n}일 연속</span>` : '<span class="tag">시작해 보세요</span>'}</div>
+      <div class="card legend" style="margin:8px 0;background:var(--bg)">
+        <span class="lbl">📖 오늘의 한 구절 · ${esc(verse.src)}</span>
+        <p style="margin:8px 0 4px;font-size:1.05em;line-height:1.7">"${esc(verse.text)}"</p>
+      </div>
+      <div class="grid2" style="margin-top:6px">
+        <button class="btn ${done ? 'ghost' : ''}" data-act="daily-ritual" ${done ? 'disabled' : ''}>${done ? '✅ 오늘 완료' : '📿 108 염주·기도'} </button>
+        <button class="btn ghost" data-act="daily-breathing">🧘 3분 호흡</button>
+      </div>
+      ${S.streakFreezes > 0 ? `<p class="sub" style="margin:6px 0 0;font-size:.82em">프리즈 ${S.streakFreezes}개 보유 (하루 안 켜도 스트릭 유지)</p>` : ''}
+    </section>`; })()}
     <section class="card">
       <h2>오늘의 마음 처방전</h2>
       <p class="sub">지금 기분을 골라 보세요. 어울리는 사찰과 이야기를 골라 드려요.</p>
@@ -1842,7 +1973,56 @@
     else if (act === 'jdel') { if (confirm('이 기록을 삭제할까요?')) { S.journal = S.journal.filter(j => j.id !== el.dataset.id); save(); render(); } }
     else if (act === 'consent-allow') { MJAnalytics.setConsent(true); render(); toast('익명 통계 수집을 허용했어요.'); }
     else if (act === 'consent-deny') { MJAnalytics.setConsent(false); render(); toast('익명 통계 수집을 거부했어요.'); }
+    else if (act === 'daily-ritual') { recordRitual(); render(); toast('오늘의 리추얼을 완료했어요 📿'); }
+    else if (act === 'daily-breathing') {
+      openModal(`<div class="sheet" style="text-align:center"><h2>🧘 3분 호흡 명상</h2><p>천천히 숨을 들이쉬고, 내쉬세요.</p><div id="breathCircle" style="width:120px;height:120px;border-radius:50%;background:var(--accent);opacity:.3;margin:20px auto;display:flex;align-items:center;justify-content:center;font-size:2em;color:white;transition:transform 1.5s ease-in-out">🪷</div><p id="breathText" class="sub">들이쉬세요…</p><button class="btn ghost" data-act="close" style="margin-top:12px">닫기</button></div>`);
+      let phase = 0; const c = document.getElementById('breathCircle'), t = document.getElementById('breathText');
+      if (c && t) { const iv = setInterval(() => { phase++; if (!c.parentElement) { clearInterval(iv); return; } if (phase % 2 === 0) { c.style.transform = 'scale(1.3)'; t.textContent = '들이쉬세요…'; } else { c.style.transform = 'scale(0.8)'; t.textContent = '내쉬세요…'; } }, 3000); }
+    }
+    else if (act === 'start-onboarding') {
+      onboardingStep = 0; onboardingChoices = {};
+      openModal(`<div class="sheet onboard-sheet">${viewOnboarding()}</div>`);
+    }
+    else if (act === 'onboard-pick') {
+      const step = +el.dataset.step; const key = el.dataset.key;
+      onboardingChoices[step] = key;
+      document.querySelectorAll('.onboard-opt').forEach(o => o.classList.toggle('on', o.dataset.key === key && +o.dataset.step === step));
+      const nextBtn = document.querySelector('[data-act="onboard-next"],[data-act="onboard-done"]');
+      if (nextBtn) nextBtn.disabled = false;
+    }
+    else if (act === 'onboard-back') {
+      onboardingStep = Math.max(0, onboardingStep - 1);
+      const sheet = document.querySelector('.onboard-sheet');
+      if (sheet) sheet.innerHTML = viewOnboarding();
+    }
+    else if (act === 'onboard-next') {
+      if (onboardingChoices[onboardingStep] == null) { toast('항목을 골라 주세요.'); return; }
+      onboardingStep++;
+      const sheet = document.querySelector('.onboard-sheet');
+      if (sheet) sheet.innerHTML = viewOnboarding();
+    }
+    else if (act === 'onboard-done') {
+      if (onboardingChoices[onboardingStep] == null) { toast('항목을 골라 주세요.'); return; }
+      const sheet = document.querySelector('.onboard-sheet');
+      if (sheet) sheet.innerHTML = viewOnboardingResult();
+    }
+    else if (act === 'onboard-enter') {
+      S.onboarded = true; S.onboardPrefs = { interest: onboardingChoices[0], region: onboardingChoices[1], companion: onboardingChoices[2] }; save();
+      closeModal(); render(); toast('마음정원에 오신 것을 환영해요 🪷');
+    }
     else if (act === 'paywall') openPaywall(el.dataset.feat);
+    else if (act === 'gift-open') {
+      openModal(`<div class="sheet"><h2>🎁 선물하기</h2><p>마음정원 플러스를 소중한 분에게 선물해 보세요.</p>
+        <div class="grid2" style="margin:12px 0">
+          <button class="plan on" data-act="gift-pick" data-plan="yearly"><div class="sub">연간 구독</div><div class="price">연 39,000원</div><div class="sub" style="font-size:.78em">14일 무료 체험 포함</div></button>
+          <button class="plan" data-act="gift-pick" data-plan="lifetime"><div class="sub">평생 이용권</div><div class="price">89,000원</div><div class="sub" style="font-size:.78em">한 번만 · 영구</div></button>
+        </div>
+        <label>받는 분 연락처 (카카오톡·문자 전송)</label><input placeholder="010-XXXX-XXXX 또는 카카오톡 ID" />
+        <label>선물 메시지</label><textarea placeholder="부모님의 마음을 담은 사찰 순례를 선물해요 🪷" maxlength="200"></textarea>
+        <div class="grid2" style="margin-top:10px"><button class="btn ghost" data-act="close">닫기</button><button class="btn" data-act="gift-send">선물 보내기 (데모)</button></div>
+        <p class="notice" style="margin-top:8px">🧪 데모 화면이에요. 출시 후 카카오톡 선물하기·직접 전송으로 실제 선물을 보낼 수 있어요.</p></div>`);
+    }
+    else if (act === 'gift-send') { closeModal(); toast('🧪 데모: 선물을 보냈어요 (실제 전송 아님)'); }
     else if (act === 'plan') { S.plan = el.dataset.plan; save(); document.querySelectorAll('.plan').forEach(x => x.classList.toggle('on', x.dataset.plan === S.plan)); }
     else if (act === 'trial-start') {
       const ex = plusState().expired;
@@ -1850,7 +2030,7 @@
       save();
       if (DEMO_OK()) api('/api/dev/entitlement', { method: 'POST', body: { action: ex ? 'plus' : 'trial', plan: S.plan } }).then(() => { Object.keys(STORY_CACHE).forEach(k => delete STORY_CACHE[k]); syncMe(); });
       closeModal(); render();
-      toast(ex ? '🧪 데모: 플러스를 시작했어요 (실제 결제 없음)' : '🧪 데모: 7일 무료 체험을 시작했어요. 자동 결제되지 않아요.');
+      toast(ex ? '🧪 데모: 플러스를 시작했어요 (실제 결제 없음)' : '🧪 데모: 14일 무료 체험을 시작했어요. 자동 결제되지 않아요.');
     }
     else if (act === 'plus-on') {
       S.plus = { status: 'plus', start: new Date().toISOString(), plan: S.plan }; save();
