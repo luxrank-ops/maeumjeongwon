@@ -4,6 +4,7 @@
   const TEMPLES = window.TEMPLES, THEMES = window.THEMES, LL = window.LIST_LABELS;
   const PRAYER_CRITERIA = window.PRAYER_CRITERIA || [];
   const PRAYER_LIMITATIONS = window.PRAYER_LIMITATIONS || [];
+  const PLAN_RECO = window.PLANNER_RECO || null;   // 사찰 여행 추천 계획 엔진 (js/planner-reco.js)
   const FENGSHUI_ATLAS = window.FENGSHUI_ATLAS || { regions: [], entries: [] };
   const FENGSHUI_MATRIX = window.FENGSHUI_MATRIX || [];
   const FENGSHUI_VISIT_TIPS = window.FENGSHUI_VISIT_TIPS || [];
@@ -1447,6 +1448,14 @@
   let draftForm = {};       // 사용자가 직접 고친 입력값만 보관 (없으면 사찰 구성에 따른 자동값 사용)
   let draftCleared = false; // 초기화한 뒤에는 예시 사찰을 다시 채우지 않음
 
+  // 추천 계획 검색 상자 상태 (저장하지 않는 화면 상태)
+  let recoSido = '';
+  let recoTheme = '';
+  let recoSeed = 0;
+  let recoAvoid = [];       // '다른 코스 추천'에서 앞서 보여 준 사찰을 다시 담지 않도록 누적
+  let recoResult = null;
+  let refreshTempleOptions = null;  // 사찰 추가 상자의 검색 실행기 (bindPlannerForm에서 연결)
+
   function parseDurationMin(str) {
     if (!str) return 60;
     const m = String(str).match(/(\d+)\s*시간/);
@@ -1456,19 +1465,25 @@
     return 60;
   }
 
+  // 두 사찰 사이의 예상 이동 (직선거리 → 도로거리·소요시간). 추천 엔진에도 같은 추정을 넘겨요.
+  function legEstimate(a, b, transport) {
+    const pub = transport === '대중교통' || transport === '대중교통·도보';
+    const factor = pub ? 1.45 : 1.3;
+    const speedKmh = pub ? 42 : 55;
+    const dKm = haversine(a.lat, a.lng, b.lat, b.lng) / 1000;
+    const roadKm = Math.max(1, Math.round(dKm * factor));
+    return { straightKm: Math.round(dKm), roadKm, driveMin: Math.max(10, Math.round((roadKm / speedKmh) * 60)) };
+  }
+
   function calcRouteSummary(stopIds, transport) {
     const stops = (stopIds || []).map(id => resolveTemple(id)).filter(Boolean);
     let totalStraightKm = 0;
     const legs = [];
-    const factor = transport === '대중교통' || transport === '대중교통·도보' ? 1.45 : 1.3;
-    const speedKmh = transport === '대중교통' || transport === '대중교통·도보' ? 42 : 55;
     for (let i = 0; i < stops.length - 1; i++) {
       const a = stops[i], b = stops[i + 1];
-      const dKm = haversine(a.lat, a.lng, b.lat, b.lng) / 1000;
-      totalStraightKm += dKm;
-      const roadKm = Math.max(1, Math.round(dKm * factor));
-      const driveMin = Math.max(10, Math.round((roadKm / speedKmh) * 60));
-      legs.push({ from: a, to: b, straightKm: Math.round(dKm), roadKm, driveMin });
+      const leg = legEstimate(a, b, transport);
+      totalStraightKm += leg.straightKm;
+      legs.push({ from: a, to: b, straightKm: leg.straightKm, roadKm: leg.roadKm, driveMin: leg.driveMin });
     }
     const stayMin = stops.reduce((acc, t) => acc + parseDurationMin(t.duration), 0);
     const moveMin = legs.reduce((acc, l) => acc + l.driveMin, 0);
@@ -1539,6 +1554,8 @@
     draftStops = [];
     draftForm = {};
     draftCleared = true;
+    recoResult = null;   // 추천 결과 상자도 함께 비운다 (조건은 기억)
+    recoAvoid = [];
   }
 
   // 지울 내용이 없으면 초기화 버튼을 비활성 상태로 둔다
@@ -1559,6 +1576,141 @@
     if (location.hash !== '#/planner/new') location.hash = '#/planner/new';
     else render();
     toast('작성 중이던 여행 계획을 초기화했어요 🧹');
+  }
+
+  // ---------- 추천 계획 검색 (조건 → 추천 코스) ----------
+  const RECO_THEME_ORDER = ['history', 'quiet', 'photo', 'autumn', 'sea', 'hike', 'legend', 'family', 'city', 'energy', 'wish', 'fengshui', 'prayer'];
+
+  function currentTransport() {
+    const sel = document.getElementById('planTransport');
+    if (sel && sel.value) return sel.value;
+    return draftValue('transport') || DRAFT_DEFAULTS.transport;
+  }
+
+  function recoSidoOptions() {
+    const sidos = SIDO_ORDER.filter(s => TEMPLES.some(t => t.sido === s));
+    return `<option value="">전체 지역</option>` + sidos.map(s =>
+      `<option value="${esc(s)}"${s === recoSido ? ' selected' : ''}>${esc(s)} (${TEMPLES.filter(t => t.sido === s).length}곳)</option>`).join('');
+  }
+
+  function recoThemeOptions() {
+    const keys = RECO_THEME_ORDER.filter(k => THEMES[k]).concat(Object.keys(THEMES).filter(k => RECO_THEME_ORDER.indexOf(k) < 0));
+    return `<option value="">테마 전체</option>` + keys.map(k =>
+      `<option value="${esc(k)}"${k === recoTheme ? ' selected' : ''}>${THEMES[k].icon} ${esc(THEMES[k].name)}</option>`).join('');
+  }
+
+  function recoConditionText(r) {
+    const parts = [r.sido || '전체 지역', r.theme && THEMES[r.theme] ? THEMES[r.theme].name : '테마 전체', r.days, r.transport];
+    if (r.companion) parts.push(r.companion);
+    return parts.join(' · ');
+  }
+
+  function recoBoxHtml() {
+    if (!recoResult) return '';
+    if (!recoResult.ok) return `<p class="notice" style="margin-top:8px">${esc(recoResult.message || '추천 코스를 만들지 못했어요. 조건을 바꿔 다시 시도해 주세요.')}</p>`;
+    const r = recoResult;
+    const sum = calcRouteSummary(r.stops, currentTransport());
+    return `<div class="card reco-card" style="background:#f9f5ec;margin-top:10px">
+      <div class="row between"><b>✨ 추천 코스</b><span class="tag ok">${sum.stops.length}곳 · 약 ${fmtMin(sum.totalMin)}</span></div>
+      <h3 style="margin:6px 0 2px">${esc(r.title)}</h3>
+      <div class="sub">조건: ${esc(recoConditionText(r))}</div>
+      <ul class="route-line" style="margin-top:8px">
+        ${sum.stops.map((t, idx) => {
+          const leg = idx < sum.legs.length ? sum.legs[idx] : null;
+          return `<li data-step="${idx + 1}">
+            <div><b>${esc(t.name)}</b> <span class="sub">${esc(t.sido)} ${esc(t.sgg)} · ${esc(t.mountain)}</span></div>
+            <div class="row wrap" style="margin-top:2px">${(r.reasons[t.id] || []).map(x => `<span class="tag">${x.icon} ${esc(x.text)}</span>`).join('')}</div>
+            <div class="sub" style="margin-top:2px">권장 관람: ${esc(t.duration || '약 1시간')}</div>
+            ${leg ? `<div class="sub">🚗 다음 사찰(${esc(leg.to.name)})까지 도로 약 ${leg.roadKm}km · 약 ${leg.driveMin}분</div>` : ''}
+          </li>`;
+        }).join('')}
+      </ul>
+      <div class="sub">총 예상 ${fmtMin(sum.totalMin)} (관람 ${fmtMin(sum.stayMin)} + 이동 ${fmtMin(sum.moveMin)}) · 구간 직선거리 합 ${sum.totalStraightKm}km</div>
+      ${sum.relatedMissions.length ? `<div class="sub" style="margin-top:2px">🏅 함께 채워지는 순례 미션: ${sum.relatedMissions.map(m => m.icon + ' ' + esc(m.name)).join(', ')}</div>` : ''}
+      ${(r.notices || []).map(n => `<p class="notice" style="margin-top:6px">ℹ️ ${esc(n)}</p>`).join('')}
+      <p class="notice" style="margin-top:6px">${(r.cautions || []).join(' ')}</p>
+      <div class="row wrap" style="margin-top:8px">
+        <button type="button" class="btn small" data-act="reco-apply">📥 이 코스로 계획 채우기</button>
+        <button type="button" class="btn ghost small" data-act="reco-again">🔄 다른 코스 추천</button>
+        <button type="button" class="btn ghost small" data-act="reco-dismiss">닫기</button>
+      </div>
+      <div class="sub" style="margin-top:4px">채운 뒤에는 경유 사찰 순서·제목·일정표를 자유롭게 고칠 수 있어요.</div>
+    </div>`;
+  }
+
+  function refreshRecoBox() {
+    const box = document.getElementById('recoBox');
+    if (box) box.innerHTML = recoBoxHtml();
+  }
+
+  function runRecommendation(reroll) {
+    const box = document.getElementById('recoBox');
+    if (!box) return;
+    if (!PLAN_RECO) { box.innerHTML = '<p class="notice" style="margin-top:8px">추천 엔진을 불러오지 못했어요. 새로고침 후 다시 시도해 주세요.</p>'; return; }
+    const form = document.getElementById('planForm');
+    const fd = form ? new FormData(form) : null;
+    const regionSel = document.getElementById('recoRegion');
+    const themeSel = document.getElementById('recoTheme');
+    if (regionSel) recoSido = regionSel.value;
+    if (themeSel) recoTheme = themeSel.value;
+    const cond = {
+      sido: recoSido,
+      theme: recoTheme,
+      days: (fd && fd.get('days')) || draftValue('days'),
+      transport: (fd && fd.get('transport')) || draftValue('transport'),
+      companion: (fd && fd.get('companion')) || draftValue('companion')
+    };
+    const prevStops = recoResult && recoResult.ok ? recoResult.stops.slice() : null;
+    if (reroll) recoSeed++;
+    else { recoSeed = 0; recoAvoid = []; }
+
+    const btn = document.querySelector('[data-act="reco-run"]');
+    const btnLabel = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ 추천 코스를 계산하는 중…'; }
+    box.innerHTML = '<p class="notice" style="margin-top:8px">⏳ 조건에 맞는 사찰과 동선을 찾는 중이에요…</p>';
+
+    // 계산은 곧바로 끝나지만, 무엇으로 골랐는지 잠깐 보여 준 뒤 결과를 띄운다
+    setTimeout(() => {
+      recoResult = PLAN_RECO.recommend(Object.assign({}, cond, {
+        temples: TEMPLES,
+        themes: THEMES,
+        seed: recoSeed,
+        avoidIds: recoAvoid.slice(),
+        visitedIds: Array.from(visited()),
+        estimate: (a, b, tp) => legEstimate(a, b, tp)
+      }));
+      if (recoResult.ok) recoAvoid = recoAvoid.concat(recoResult.stops);
+      if (!document.getElementById('recoBox')) return;   // 계산 중 다른 화면으로 이동한 경우
+      if (btn && document.body.contains(btn)) { btn.disabled = false; btn.textContent = btnLabel; }
+      refreshRecoBox();
+      MJAnalytics.track('planner_reco', { feature: 'reco', method: recoResult.ok ? 'ok' : 'fail' });
+      const sameAsBefore = recoResult.ok && prevStops && prevStops.join(',') === recoResult.stops.join(',');
+      if (!recoResult.ok) toast('추천 코스를 만들지 못했어요. 조건을 바꿔 보세요.');
+      else if (sameAsBefore) toast('조건에 맞는 사찰이 적어 같은 코스예요. 지역을 넓히거나 테마를 바꿔 보세요.');
+      else toast(`추천 코스 ${recoResult.stops.length}곳을 만들었어요 ✨`);
+      const card = document.querySelector('.reco-card');
+      if (card && card.scrollIntoView) card.scrollIntoView({ block: 'center' });
+    }, 450);
+  }
+
+  function applyRecommendation() {
+    if (!recoResult || !recoResult.ok) return;
+    draftStops = recoResult.stops.slice();
+    draftCleared = false;
+    draftForm.title = recoResult.title;
+    draftForm.memo = recoResult.memo;
+    recoResult = null;
+    recoAvoid = [];
+    toast('추천 코스를 계획표에 채웠어요 ✨ 아래에서 자유롭게 고치세요');
+    render();
+    const el = document.getElementById('draftStopList');
+    if (el && el.scrollIntoView) el.scrollIntoView({ block: 'center' });
+  }
+
+  function dismissRecommendation() {
+    recoResult = null;
+    refreshRecoBox();
+    toast('추천 결과를 닫았어요. 언제든 다시 받을 수 있어요.');
   }
 
   // 추천 템플릿을 사찰 특징(테마)별로 골라 보는 필터 (화면 상태, 저장하지 않음)
@@ -1700,6 +1852,17 @@
           <div><label>동행 스타일</label><select name="companion">${selOpts(COMPANION_OPTS, draftValue('companion'))}</select></div>
         </div>
 
+        <section class="card reco-panel" style="background:#f9f5ec;margin-top:12px">
+          <div class="row between"><b>🔎 추천 계획 검색</b><span class="sub">지역·테마를 고르고 실행하세요</span></div>
+          <p class="sub" style="margin:4px 0 0">기간·이동 수단·동행 스타일까지 함께 반영해 사찰과 동선을 골라 드려요.</p>
+          <div class="grid2" style="margin-top:8px">
+            <div><label>지역</label><select id="recoRegion">${recoSidoOptions()}</select></div>
+            <div><label>테마</label><select id="recoTheme">${recoThemeOptions()}</select></div>
+          </div>
+          <button type="button" class="btn block" style="margin-top:10px" data-act="reco-run">✨ 추천 계획 받기</button>
+          <div id="recoBox" aria-live="polite">${recoBoxHtml()}</div>
+        </section>
+
         <label style="margin-top:12px">📍 경유 사찰 구성 (${draftStops.length}곳 선택됨)</label>
         <div id="draftStopList">${draftStopsHtml(sum)}</div>
 
@@ -1711,6 +1874,7 @@
               ${sidos.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('')}
             </select>
             <input id="addTempleSearch" placeholder="사찰명 검색 (예: 보문사, 청량사)" style="flex:1" />
+            <button type="button" class="btn small" data-act="draft-search">🔍 검색</button>
           </div>
           <div class="row" style="margin-top:6px">
             <select id="addTempleSelect" style="flex:1">
@@ -1719,6 +1883,7 @@
             </select>
             <button type="button" class="btn small" data-act="draft-add">+ 추가</button>
           </div>
+          <div class="sub" id="addTempleCount" aria-live="polite" style="margin-top:6px"></div>
           <div class="sub" id="draftSummary" style="margin-top:6px">${draftSummaryHtml(sum)}</div>
         </div>
 
@@ -1824,16 +1989,41 @@
         templeSel.innerHTML =
           featList.map(t => `<option value="${t.id}">[주요·${esc(t.sido)}] ${esc(t.name)} (${esc(t.sgg)})</option>`).join('') +
           tradList.map(r => `<option value="${r.id}">[전통No.${r.no}·${esc(r.sido)}] ${esc(r.name)} (${esc(r.sgg)} · ${esc(r.order)})</option>`).join('');
+        const total = featList.length + tradList.length;
+        const searching = !!kw || !!sd;
+        const countEl = document.getElementById('addTempleCount');
+        if (countEl) countEl.innerHTML = !total
+          ? `조건에 맞는 사찰이 없어요. 지역을 '전체 지역'으로 바꾸거나 다른 이름으로 검색해 보세요.`
+          : (searching
+            ? `🔍 <b>${total}</b>곳 찾음 · 목록에서 고르고 <b>+ 추가</b>를 누르세요.`
+            : `전체 <b>${total}</b>곳 · 사찰명을 입력하거나 지역을 고른 뒤 <b>🔍 검색</b>을 누르세요.`);
+        const addBtn = document.querySelector('[data-act="draft-add"]');
+        if (addBtn) { addBtn.disabled = !total; addBtn.setAttribute('aria-disabled', String(!total)); }
+        return total;
       };
+      refreshTempleOptions = updateOptions;
       filterSel.addEventListener('change', updateOptions);
-      if (searchInp) searchInp.addEventListener('input', updateOptions);
+      if (searchInp) {
+        searchInp.addEventListener('input', updateOptions);
+        // Enter는 계획 저장이 아니라 '검색 실행'으로 — 실수로 저장되는 걸 막는다
+        searchInp.addEventListener('keydown', e => {
+          if (e.key !== 'Enter') return;
+          e.preventDefault();
+          updateOptions();
+          if (templeSel.options.length) templeSel.focus();
+        });
+      }
+      updateOptions();
     }
     if (!f) return;
-    // 사찰 추가·삭제로 화면을 다시 그려도 입력하던 값이 날아가지 않도록 초안에 보관
+    // 사찰 추가·삭제로 화면을 다시 그려도 입력하던 값은 초안에 남고, 추천 조건도 기억한다
     f.addEventListener('input', e => { captureDraftField(e); syncDraftResetButtons(); });
     f.addEventListener('change', e => {
       captureDraftField(e);
       if (e.target && e.target.name === 'transport') refreshDraftEstimates();
+      if (e.target && e.target.id === 'recoRegion') { recoSido = e.target.value; recoResult = null; recoAvoid = []; refreshRecoBox(); }
+      if (e.target && e.target.id === 'recoTheme') { recoTheme = e.target.value; recoResult = null; recoAvoid = []; refreshRecoBox(); }
+      if (e.target && e.target.name === 'transport' && recoResult) refreshRecoBox();
       syncDraftResetButtons();
     });
     f.addEventListener('submit', e => {
@@ -1954,7 +2144,7 @@
     if (r === 'planner' && a === 'view') { const tr = (S.trips || []).find(x => x.id === b); if (tr) mapObj = initPlanMap(tr.stops); }
     if (r === 'explore' && a === 'all') bindTrad();
     if (r === 'journal' && a === 'new') bindJournalForm();
-    if (r === 'planner' && a === 'new') bindPlannerForm();
+    if (r === 'planner' && a === 'new') bindPlannerForm(); else refreshTempleOptions = null;
     window.scrollTo(0, 0);
   }
 
@@ -2107,6 +2297,17 @@
       draftCleared = false;
       toast(`「${c.name}」 사찰들을 여행 계획에 불러왔어요`);
       location.hash = '#/planner/new';
+    }
+    else if (act === 'reco-run') runRecommendation(false);
+    else if (act === 'reco-again') runRecommendation(true);
+    else if (act === 'reco-apply') applyRecommendation();
+    else if (act === 'reco-dismiss') dismissRecommendation();
+    else if (act === 'draft-search') {
+      if (!refreshTempleOptions) { toast('검색 상자를 찾지 못했어요. 화면을 새로고침해 주세요.'); return; }
+      const found = refreshTempleOptions();
+      const sel = document.getElementById('addTempleSelect');
+      if (found && sel && sel.options.length) { sel.focus(); toast(`${found}곳을 찾았어요. 목록에서 고르고 '+ 추가'를 누르세요.`); }
+      else toast('조건에 맞는 사찰이 없어요. 지역이나 검색어를 바꿔 보세요.');
     }
     else if (act === 'draft-add') {
       const sel = document.getElementById('addTempleSelect');
