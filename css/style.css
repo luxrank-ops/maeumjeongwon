@@ -72,6 +72,10 @@ p{overflow-wrap:anywhere}
 /* ---------- ⑤ 공통 컴포넌트 ---------- */
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin:0 0 12px}
 .hero{background:linear-gradient(160deg,#fffaf0,#efe6d3);position:relative;overflow:hidden}
+/* 추천 계획 검색 — 실행 버튼을 누르면 조건에 맞춘 코스가 아래 카드로 나온다 */
+.reco-panel .row.between b{font-size:1.02em}
+.reco-card{border:2px solid var(--accent)}
+.reco-card h3{font-size:1.05em;line-height:1.35}
 .hero:after{content:"🪷";position:absolute;right:-8px;bottom:-18px;font-size:90px;opacity:.12;pointer-events:none}
 .row{display:flex;gap:8px;align-items:center;min-width:0}
 .wrap{flex-wrap:wrap}.between{justify-content:space-between}
