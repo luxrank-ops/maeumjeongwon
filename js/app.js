@@ -10,7 +10,7 @@
   // ---------- 상태 ----------
   const SESS_KEY = 'maeumjeongwon.sess.v1';
   const ENT_KEY = 'maeumjeongwon.ent.v1';
-  const defaults = { visits: [], journal: [], big: false, moodIdx: 0, plus: null, plan: 'yearly', packs: [], offline: [], adLog: {}, adUnlocks: {}, skin: null, moodLog: [] };
+  const defaults = { visits: [], journal: [], big: false, moodIdx: 0, plus: null, plan: 'yearly', packs: [], offline: [], adLog: {}, adUnlocks: {}, skin: null, moodLog: [], trips: [], tripChecks: {} };
   const RAW_STORIES = window.STORIES || [], STORY_SOON = window.STORY_SOON || [];
   const STORIES = RAW_STORIES.map(st => {
     if (st.preview !== undefined) return st;
@@ -441,7 +441,8 @@
       <div class="sub">순서대로 구간 직선거리: ${legs.map((d, i) => `${esc(stops[i].name)}→${esc(stops[i + 1].name)} 약 ${d}km`).join(' · ')} <br>(실제 이동 시간은 길찾기로 확인하세요)</div>
       ${ms.length ? `<div class="sub" style="margin-top:4px">🏅 함께 채워지는 미션: ${ms.map(m => m.icon + ' ' + m.name).join(', ')}</div>` : ''}
       <div class="sub" style="margin-top:4px">${esc(c.note)}</div>
-      <div class="row wrap" style="margin-top:6px">${stops.map(t => `<a class="chip" style="text-decoration:none" href="#/temple/${t.id}">${esc(t.name)}</a>`).join('')}</div></div>`;
+      <div class="row wrap" style="margin-top:6px">${stops.map(t => `<a class="chip" style="text-decoration:none" href="#/temple/${t.id}">${esc(t.name)}</a>`).join('')}</div>
+      <div class="row" style="margin-top:8px"><button class="btn small ghost" data-act="course-to-plan" data-course="${esc(c.id)}">🗓️ 내 여행 계획으로 담기</button></div></div>`;
   }
 
   // ---------- 계절 한정 스탬프 ----------
@@ -520,6 +521,14 @@
       </div>
     </section>
     ${isPlus() ? '' : `<a class="card plusbanner simple-hide" href="#/plus"><span style="font-size:1.6em">✨</span><span><b>마음정원사 : 절로가 플러스</b> <span class="demo-ribbon">데모</span><br><span class="sub">원작 심화 스토리·오디오·코스 플래너·순례 리포트 · 7일 무료 체험</span></span></a>`}
+    <section class="card">
+      <div class="row between"><h2 style="margin:0">🗓️ 사찰 여행 계획 짜기</h2><a class="sub" href="#/planner">전체 보기 →</a></div>
+      <p class="sub" style="margin:4px 0 8px">당일치기부터 2박 3일까지 — 사찰 동선·거리·소요시간·준비물을 한눈에 계획해요.</p>
+      <div class="row wrap">
+        <a class="btn small" style="text-decoration:none" href="#/planner/new">+ 새 여행 계획 만들기</a>
+        <a class="btn ghost small" style="text-decoration:none" href="#/planner">추천 코스·내 일정 (${(S.trips || []).length})</a>
+      </div>
+    </section>
     ${STORIES[0] ? `<section class="card legend simple-hide"><div class="row between"><span class="lbl">이번 주 심화 스토리</span>${isPlus() ? '' : '<span class="tag">첫 장 무료</span>'}</div><h3 style="margin:8px 0 4px">${esc(STORIES[0].title)}</h3><p class="sub" style="margin:0">${esc(byId[STORIES[0].tid].name)} · ${esc(STORIES[0].series)} ${STORIES[0].ep}편 · 약 ${STORIES[0].minutes}분</p><a class="btn small" href="#/story/${STORIES[0].id}" style="display:inline-block;text-decoration:none;margin-top:8px">읽기 →</a></section>` : ''}
     <section class="card simple-hide"><div class="row between"><h2 style="margin:0">🛍 콘텐츠 상점</h2><a class="sub" href="#/store">전체 보기 →</a></div><p class="sub" style="margin:4px 0 8px">구독 없이 필요한 것만 · 1회 결제 · 데모</p><div class="row wrap">${STORE.slice(0, 4).map(o => `<a class="chip" style="text-decoration:none" href="${owns(o.id) ? o.go : '#/store'}">${o.icon} ${esc(o.name.split(' (')[0])}</a>`).join('')}</div></section>
     <section class="card simple-hide">
@@ -636,7 +645,8 @@
         <a class="btn ghost" style="text-align:center;text-decoration:none" href="#/map/${id}">🗺️ 지도</a>
       </div>
       <div class="grid2" style="margin-top:8px"><button class="btn ghost" data-act="offline" data-id="${id}">${S.offline.includes(id) && isPlus() ? '✅ 오프라인 저장됨' : '⬇ 오프라인 저장' + (isPlus() ? '' : ' 🔒')}</button>
-        ${STORIES.some(x => x.tid === id) ? `<a class="btn ghost" style="text-align:center;text-decoration:none" href="#/story/${STORIES.find(x => x.tid === id).id}">📖 심화 스토리</a>` : `<a class="btn ghost" style="text-align:center;text-decoration:none" href="#/store">🛍 콘텐츠 상점</a>`}</div>
+        <button class="btn ghost" data-act="plan-pick" data-id="${id}">🗓️ 여행 계획에 담기</button></div>
+      <div class="row" style="margin-top:8px">${STORIES.some(x => x.tid === id) ? `<a class="btn ghost block" style="text-align:center;text-decoration:none" href="#/story/${STORIES.find(x => x.tid === id).id}">📖 심화 스토리 읽기</a>` : `<a class="btn ghost block" style="text-align:center;text-decoration:none" href="#/store">🛍 콘텐츠 상점</a>`}</div>
       <p class="sub" style="margin:8px 0 0;font-size:.8em">GPS 인증 반경 ${t.radius}m · 하루 1회</p>
     </section>
     <section class="card"><h2>한눈에 보기</h2><dl class="kv">
@@ -788,7 +798,8 @@
   // ---------- 사찰 수첩 ----------
   function viewJournal() {
     const list = S.journal.slice().sort((a, b) => b.date.localeCompare(a.date));
-    return `<div class="row between"><h1>사찰 수첩</h1><a class="btn small" style="text-decoration:none" href="#/journal/new/">+ 기록</a></div>
+    const trips = (S.trips || []).slice();
+    return `<div class="row between"><h1>사찰 수첩</h1><div class="row"><a class="btn ghost small" style="text-decoration:none" href="#/planner">🗓️ 여행 계획 (${trips.length})</a><a class="btn small" style="text-decoration:none" href="#/journal/new/">+ 기록</a></div></div>
       <p class="sub">사진·날씨·다짐을 남겨 두면 나중에 \'1년 전 오늘\'로 다시 만나요. (이 기기에만 저장)</p>
       ${list.length ? list.map(j => { const t = byId[j.tid]; return `<article class="card jentry"><div class="row between"><b>${t ? esc(t.name) : '기타'}</b><span class="sub">${fmtDate(j.date)} ${esc(j.weather || '')}</span></div><p style="white-space:pre-wrap;margin:6px 0">${esc(j.note)}</p>${j.photo ? `<img src="${j.photo}" alt="${t ? esc(t.name) : ''} 사진">` : ''}<div class="row" style="margin-top:8px"><button class="btn ghost small" data-act="jdel" data-id="${j.id}">삭제</button></div></article>`; }).join('') : '<div class="card"><p>아직 기록이 없어요. 첫 사찰 수첩을 남겨 보세요 📔</p></div>'}`;
   }
@@ -820,6 +831,410 @@
     });
   }
 
+  // ---------- 사찰 여행 계획 (Trip Planner) ----------
+  const TRIP_TEMPLATES = [
+    {
+      id: 'tpl-gyeongju-day',
+      title: '경주·양산 천년고찰 당일 순례',
+      days: '당일치기',
+      transport: '자가용',
+      companion: '가족·부모님과',
+      stops: ['bulguksa', 'seokguram', 'tongdosa'],
+      schedule: [
+        '오전 09:00 — 경주 불국사 도착 · 청운교·백운교, 다보탑·석가탑 참배 (약 1시간 30분)',
+        '오전 11:00 — 토함산 석굴암 이동 · 본존불 참배 및 동해 조망 (약 1시간)',
+        '오후 12:30 — 경주 보문단지 또는 양산 이동 후 점심 공양·식사',
+        '오후 14:30 — 양산 통도사 무풍한송로 산책 · 대웅전 및 금강계단 참배 (약 2시간)'
+      ],
+      tip: '석굴암과 불국사는 아침 일찍 방문하면 한결 고즈넉해요. 통도사 무풍한송로는 평탄해 부모님과 걷기 좋습니다.'
+    },
+    {
+      id: 'tpl-jogyesan-1n2d',
+      title: '순천 조계산 삼보·산사 1박 2일 힐링 여행',
+      days: '1박 2일',
+      transport: '대중교통·도보',
+      companion: '혼자 조용히',
+      stops: ['songgwangsa', 'seonamsa', 'hwaeomsa'],
+      schedule: [
+        '1일차 오전 — 순천 송광사 도착 · 침계루·대웅보전·국사전 참배 및 무소유길 산책',
+        '1일차 오후 — 조계산 굴목재 숲길 트레킹(약 2~3시간) 또는 차량 이동 → 선암사 승선교·대웅전 관람',
+        '2일차 오전 — 구례 화엄사 이동 · 각황전·사사자 삼층석탑 참배 및 지리산 자락 산책'
+      ],
+      tip: '송광사~선암사 굴목재 코스를 걸으실 때는 편한 등산화와 생수를 꼭 챙기세요.'
+    },
+    {
+      id: 'tpl-eastsea-1n2d',
+      title: '강원 동해·오대산 관음·적멸보궁 1박 2일',
+      days: '1박 2일',
+      transport: '자가용',
+      companion: '연인·친구와',
+      stops: ['naksansa', 'woljeongsa', 'sangwonsa'],
+      schedule: [
+        '1일차 오후 — 양양 낙산사 도착 · 의상대·홍련암 바다 조망 및 해수관음상 참배',
+        '2일차 오전 — 평창 오대산 월정사 전나무 숲길 맨발·산책 (약 1시간) 및 팔각구층석탑 관람',
+        '2일차 오후 — 오대산 상원사·중대 적멸보궁 참배 (동양 최고 상원사 동종 관람)'
+      ],
+      tip: '낙산사 홍련암은 일출 시간대 풍경이 특히 아름답습니다. 오대산은 기온이 낮으니 겉옷을 준비하세요.'
+    },
+    {
+      id: 'tpl-seoul-half',
+      title: '도심 속 반나절 마음 비우기 사찰 산책',
+      days: '반나절·당일',
+      transport: '대중교통',
+      companion: '혼자 조용히',
+      stops: ['jogyesa', 'bongeunsa', 'jingwansa'],
+      schedule: [
+        '오전 10:00 — 종로 조계사 대웅전·백송 참배 및 인사동 산책',
+        '오후 13:30 — 은평 한옥마을 & 북한산 진관사 계곡길 산책 · 차담 휴식',
+        '오후 16:30 — 강남 봉은사 미륵대불 및 명상길 저녁 산책'
+      ],
+      tip: '전철과 버스만으로 편리하게 다닐 수 있는 서울 대표 힐링 코스예요.'
+    },
+    {
+      id: 'tpl-unesco-2n3d',
+      title: '경북·충청 유네스코 산사 2박 3일 기행',
+      days: '2박 3일',
+      transport: '자가용',
+      companion: '가족·부모님과',
+      stops: ['buseoksa', 'bongjeongsa', 'beopjusa', 'magoksa'],
+      schedule: [
+        '1일차 — 영주 부석사 무량수전 배흘림기둥 및 석양 감상 → 안동 숙박',
+        '2일차 — 안동 봉정사 극락전·영산암 참배 → 보은 속리산 법주사 팔상전·정이품송 관람',
+        '3일차 — 공주 마곡사 백범 명상길 산책 및 대웅보전·대광보전 참배'
+      ],
+      tip: '유네스코 세계유산으로 등재된 한국 전통 산사의 건축미를 깊이 있게 비교하며 둘러보는 일정입니다.'
+    }
+  ];
+
+  const TRIP_CHECKLIST = [
+    { id: 'shoes', cat: '복장·신발', text: '벗고 신기 편한 신발·양말 (법당 참배 시 필수)' },
+    { id: 'clothes', cat: '복장·신발', text: '단정하고 편안한 복장 & 산중 체온 유지용 겉옷' },
+    { id: 'water', cat: '산행·이동', text: '개인 물병(텀블러) 및 가벼운 간식' },
+    { id: 'cash', cat: '참배·실용', text: '소액 현금 (시주·불전함·산중 자판기 등)' },
+    { id: 'hours', cat: '사전 확인', text: '사찰 개방시간·주차장 위치 및 산불방지 입산통제 확인' },
+    { id: 'etiquette', cat: '사찰 예절', text: '법당 어간문(가운데 문) 피하기 · 묵언 및 촬영 매너 숙지' }
+  ];
+
+  let draftStops = [];
+
+  function parseDurationMin(str) {
+    if (!str) return 60;
+    const m = String(str).match(/(\d+)\s*시간/);
+    const m2 = String(str).match(/(\d+)\s*분/);
+    if (m) return parseInt(m[1], 10) * 60 + (m2 ? parseInt(m2[1], 10) : 0);
+    if (m2) return parseInt(m2[1], 10);
+    return 60;
+  }
+
+  function calcRouteSummary(stopIds, transport) {
+    const stops = (stopIds || []).map(id => byId[id]).filter(Boolean);
+    let totalStraightKm = 0;
+    const legs = [];
+    const factor = transport === '대중교통' || transport === '대중교통·도보' ? 1.45 : 1.3;
+    const speedKmh = transport === '대중교통' || transport === '대중교통·도보' ? 42 : 55;
+    for (let i = 0; i < stops.length - 1; i++) {
+      const a = stops[i], b = stops[i + 1];
+      const dKm = haversine(a.lat, a.lng, b.lat, b.lng) / 1000;
+      totalStraightKm += dKm;
+      const roadKm = Math.max(1, Math.round(dKm * factor));
+      const driveMin = Math.max(10, Math.round((roadKm / speedKmh) * 60));
+      legs.push({ from: a, to: b, straightKm: Math.round(dKm), roadKm, driveMin });
+    }
+    const stayMin = stops.reduce((acc, t) => acc + parseDurationMin(t.duration), 0);
+    const moveMin = legs.reduce((acc, l) => acc + l.driveMin, 0);
+    const relatedMissions = MISSIONS.filter(m => m.ids && m.ids.some(id => stopIds.includes(id)));
+    return { stops, legs, totalStraightKm: Math.round(totalStraightKm), stayMin, moveMin, totalMin: stayMin + moveMin, relatedMissions };
+  }
+
+  function fmtMin(m) {
+    if (m < 60) return `${m}분`;
+    const h = Math.floor(m / 60), r = m % 60;
+    return r ? `${h}시간 ${r}분` : `${h}시간`;
+  }
+
+  function ensureDefaultTrips() {
+    if (!Array.isArray(S.trips)) S.trips = [];
+    if (!S.tripChecks || typeof S.tripChecks !== 'object') S.tripChecks = {};
+  }
+
+  function viewPlanner(sub, arg) {
+    ensureDefaultTrips();
+    if (sub === 'new') return viewPlannerNew(arg);
+    if (sub === 'view') return viewPlannerDetail(arg);
+
+    const trips = S.trips.slice().sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+    const checks = S.tripChecks || {};
+    const doneCnt = TRIP_CHECKLIST.filter(c => checks[c.id]).length;
+
+    return `<div class="row between"><h1>🗓️ 사찰 여행 계획</h1><a class="btn small" style="text-decoration:none" href="#/planner/new">+ 새 계획 짜기</a></div>
+      <p class="sub">가고 싶은 사찰을 골라 동선·소요시간·연계 순례 미션·준비물을 한눈에 계획해 보세요.</p>
+
+      <section class="card hero">
+        <div class="row between"><b>나의 사찰 여행 일정</b><span class="tag">${trips.length}개</span></div>
+        ${trips.length ? `<div class="tlist" style="margin-top:8px">${trips.map(tr => {
+          const sum = calcRouteSummary(tr.stops, tr.transport);
+          return `<a class="titem" href="#/planner/view/${encodeURIComponent(tr.id)}">
+            <div class="seal" style="background:var(--accent)">🗓️</div>
+            <div class="meta">
+              <b>${esc(tr.title)}</b>
+              <div class="sub">${esc(tr.date || '날짜 미정')} · ${esc(tr.days || '당일치기')} · ${esc(tr.transport || '자가용')} · ${esc(tr.companion || '혼자 조용히')}</div>
+              <div><span class="tag ok">${sum.stops.length}곳</span><span class="tag">약 ${fmtMin(sum.totalMin)}</span>${sum.stops.slice(0, 3).map(t => `<span class="tag">${esc(t.name)}</span>`).join('')}</div>
+            </div>
+          </a>`;
+        }).join('')}</div>` : `<p class="sub" style="margin:8px 0">아직 저장된 여행 계획이 없어요. 아래 추천 일정을 담거나 직접 사찰을 골라 나만의 순례 코스를 만들어 보세요!</p>
+        <a class="btn small" style="text-decoration:none;display:inline-block" href="#/planner/new">첫 사찰 여행 계획 만들기 →</a>`}
+      </section>
+
+      <section class="card">
+        <div class="row between"><h2 style="margin:0">✨ 추천 사찰 여행 템플릿</h2><span class="sub">클릭해 내 일정으로 담기</span></div>
+        <p class="sub" style="margin:4px 0 10px">동선과 테마가 검증된 추천 코스예요. 내 일정으로 담은 뒤 자유롭게 수정할 수 있어요.</p>
+        ${TRIP_TEMPLATES.map(tpl => {
+          const sum = calcRouteSummary(tpl.stops, tpl.transport);
+          return `<div class="course">
+            <div class="row between"><b>${esc(tpl.title)}</b><span class="tag">${esc(tpl.days)} · ${esc(tpl.transport)}</span></div>
+            <div class="sub" style="margin:4px 0">📍 코스: ${sum.stops.map(t => esc(t.name)).join(' → ')} (총 직선 ${sum.totalStraightKm}km · 예상 ${fmtMin(sum.totalMin)})</div>
+            <ol style="padding-left:18px;margin:6px 0;font-size:.92em">${tpl.schedule.map(s => `<li>${esc(s)}</li>`).join('')}</ol>
+            <div class="sub">💡 ${esc(tpl.tip)}</div>
+            ${sum.relatedMissions.length ? `<div class="sub" style="margin-top:4px">🏅 연계 미션: ${sum.relatedMissions.map(m => m.icon + ' ' + m.name).join(', ')}</div>` : ''}
+            <div class="row wrap" style="margin-top:8px">
+              <button class="btn small" data-act="tpl-adopt" data-id="${esc(tpl.id)}">📥 내 여행 계획으로 담기</button>
+              ${sum.stops.map(t => `<a class="chip" style="text-decoration:none" href="#/temple/${t.id}">${esc(t.name)}</a>`).join('')}
+            </div>
+          </div>`;
+        }).join('')}
+      </section>
+
+      <section class="card">
+        <div class="row between"><h2 style="margin:0">🎒 사찰 여행 준비물 · 예절 체크리스트</h2><span class="tag ${doneCnt === TRIP_CHECKLIST.length ? 'ok' : ''}">${doneCnt}/${TRIP_CHECKLIST.length} 완료</span></div>
+        <p class="sub" style="margin:4px 0 8px">출발 전 하나씩 점검해 보세요. 체크 상태는 자동 저장됩니다.</p>
+        <ul class="chklist">
+          ${TRIP_CHECKLIST.map(c => {
+            const on = !!checks[c.id];
+            return `<li class="${on ? 'done' : ''}">
+              <input type="checkbox" id="chk_${c.id}" data-act="trip-chk" data-id="${c.id}" ${on ? 'checked' : ''}>
+              <label for="chk_${c.id}"><span class="tag">${esc(c.cat)}</span> ${esc(c.text)}</label>
+            </li>`;
+          }).join('')}
+        </ul>
+      </section>`;
+  }
+
+  function viewPlannerNew(preselectTid) {
+    if (preselectTid && byId[preselectTid] && !draftStops.includes(preselectTid)) {
+      draftStops.push(preselectTid);
+    }
+    if (!draftStops.length) {
+      draftStops = ['bulguksa', 'tongdosa'];
+    }
+    const sum = calcRouteSummary(draftStops, '자가용');
+    const sidos = SIDO_ORDER.filter(s => TEMPLES.some(t => t.sido === s));
+
+    return `<a href="#/planner" class="sub" style="text-decoration:none">← 여행 계획 목록</a>
+      <h1>새 사찰 여행 계획 짜기</h1>
+      <form id="planForm" class="card">
+        <label>여행 제목</label>
+        <input name="title" placeholder="예: 가을 산사 힐링 1박 2일 순례" value="${draftStops.map(id => byId[id] && byId[id].name).filter(Boolean).slice(0, 2).join('·')} 사찰 여행" required maxlength="60">
+        <div class="grid2">
+          <div><label>출발 예정일</label><input type="date" name="date" value="${today()}" required></div>
+          <div><label>여행 기간</label><select name="days"><option>반나절·당일</option><option selected>당일치기</option><option>1박 2일</option><option>2박 3일</option><option>3박 4일 이상</option></select></div>
+        </div>
+        <div class="grid2">
+          <div><label>이동 수단</label><select name="transport" id="planTransport"><option>자가용</option><option>대중교통</option><option>대중교통·도보</option><option>산행·트레킹</option></select></div>
+          <div><label>동행 스타일</label><select name="companion"><option>혼자 조용히</option><option>가족·부모님과</option><option>연인·친구와</option><option>아이와 함께</option><option>불자·순례 모임</option></select></div>
+        </div>
+
+        <label style="margin-top:12px">📍 경유 사찰 구성 (${draftStops.length}곳 선택됨)</label>
+        <div id="draftStopList">
+          ${draftStops.length ? `<ul class="route-line">${draftStops.map((id, idx) => {
+            const t = byId[id]; if (!t) return '';
+            const leg = idx < sum.legs.length ? sum.legs[idx] : null;
+            return `<li data-step="${idx + 1}">
+              <div class="row between">
+                <div><b>${esc(t.name)}</b> <span class="sub">${esc(t.sido)} ${esc(t.sgg)} · ${esc(t.mountain)}</span></div>
+                <div class="row">
+                  ${idx > 0 ? `<button type="button" class="btn ghost small" data-act="draft-up" data-idx="${idx}" title="위로">↑</button>` : ''}
+                  ${idx < draftStops.length - 1 ? `<button type="button" class="btn ghost small" data-act="draft-down" data-idx="${idx}" title="아래로">↓</button>` : ''}
+                  <button type="button" class="btn ghost small" data-act="draft-rm" data-idx="${idx}">제외</button>
+                </div>
+              </div>
+              <div class="sub">권장 관람: ${esc(t.duration || '약 1시간')} · 💡 ${esc(t.tip)}</div>
+              ${leg ? `<div class="route-leg">🚗 다음 사찰(${esc(leg.to.name)})까지 직선 약 ${leg.straightKm}km · 예상 도로 약 ${leg.roadKm}km (약 ${leg.driveMin}분)</div>` : ''}
+            </li>`;
+          }).join('')}</ul>` : '<p class="notice">아래에서 방문할 사찰을 1곳 이상 추가해 주세요.</p>'}
+        </div>
+
+        <div class="card" style="background:#f9f5ec;margin-top:8px">
+          <div class="row between"><b>사찰 추가하기</b><button type="button" class="btn ghost small" data-act="draft-optimize">✨ 동선 순서 자동 정렬</button></div>
+          <div class="row" style="margin-top:6px">
+            <select id="addTempleFilter" style="max-width:110px">
+              <option value="">전체 지역</option>
+              ${sidos.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('')}
+            </select>
+            <select id="addTempleSelect" style="flex:1">
+              ${TEMPLES.map(t => `<option value="${t.id}" data-sido="${esc(t.sido)}">[${esc(t.sido)}] ${esc(t.name)} (${esc(t.mountain)})</option>`).join('')}
+            </select>
+            <button type="button" class="btn small" data-act="draft-add">+ 추가</button>
+          </div>
+          <div class="sub" style="margin-top:6px">🏅 현재 코스로 채워지는 미션: ${sum.relatedMissions.length ? sum.relatedMissions.map(m => `${m.icon} ${m.name}`).join(', ') : '해당 없음'} · 총 예상 소요: <b>약 ${fmtMin(sum.totalMin)}</b> (관람 ${fmtMin(sum.stayMin)} + 이동 ${fmtMin(sum.moveMin)})</div>
+        </div>
+
+        <label>여행 메모 · 일정표 (시간대별 계획, 맛집·숙소·다짐 등)</label>
+        <textarea name="memo" placeholder="예:&#10;- 오전 9시 출발, 경주 톨게이트 통과&#10;- 점심은 사찰 입구 산채비빔밥&#10;- 대웅전에서 가족 건강 발원하기" maxlength="1500">${draftStops.map((id, i) => { const t = byId[id]; return t ? `${i + 1}. ${t.name} (${t.sido} ${t.sgg}) — 관람 및 산책 (${t.duration || '약 1시간'})` : ''; }).filter(Boolean).join('\n')}</textarea>
+
+        <button class="btn block" type="submit" style="margin-top:12px">🗓️ 여행 계획 저장하기</button>
+      </form>`;
+  }
+
+  function viewPlannerDetail(id) {
+    ensureDefaultTrips();
+    const tr = S.trips.find(x => x.id === id);
+    if (!tr) return `<a href="#/planner" class="sub" style="text-decoration:none">← 여행 계획 목록</a><p>여행 계획을 찾을 수 없어요.</p>`;
+    const sum = calcRouteSummary(tr.stops, tr.transport);
+    const v = visited();
+
+    return `<div class="row between noprint">
+        <a href="#/planner" class="sub" style="text-decoration:none">← 여행 계획 목록</a>
+        <div class="row">
+          <button class="btn ghost small" data-act="print">🖨 인쇄 / PDF</button>
+          <button class="btn ghost small" data-act="trip-del" data-id="${esc(tr.id)}">삭제</button>
+        </div>
+      </div>
+      <section class="card hero" style="margin-top:8px">
+        <div class="sub">🗓️ ${esc(tr.date || '날짜 미정')} · ${esc(tr.days)} · ${esc(tr.transport)} · ${esc(tr.companion)}</div>
+        <h1 style="margin:6px 0">${esc(tr.title)}</h1>
+        <div class="row wrap">
+          <span class="tag ok">경유 사찰 ${sum.stops.length}곳</span>
+          <span class="tag">총 예상 ${fmtMin(sum.totalMin)} (관람 ${fmtMin(sum.stayMin)} + 이동 ${fmtMin(sum.moveMin)})</span>
+          <span class="tag">구간 직선거리 합 ${sum.totalStraightKm}km</span>
+        </div>
+        ${sum.relatedMissions.length ? `<p class="sub" style="margin:8px 0 0">🏅 <b>연계 순례 미션</b>: ${sum.relatedMissions.map(m => `${m.icon} ${m.name}`).join(' · ')}</p>` : ''}
+      </section>
+
+      <section class="card">
+        <h2>📍 순례 동선 및 사찰별 안내</h2>
+        <ul class="route-line">
+          ${sum.stops.map((t, idx) => {
+            const leg = idx < sum.legs.length ? sum.legs[idx] : null;
+            const isVis = v.has(t.id);
+            return `<li data-step="${idx + 1}">
+              <div class="row between">
+                <div><a href="#/temple/${t.id}" style="font-weight:700;text-decoration:none">${esc(t.name)}</a> <span class="sub">${esc(t.sido)} ${esc(t.sgg)} · ${esc(t.mountain)}</span> ${isVis ? '<span class="tag ok">방문 완료</span>' : ''}</div>
+                <a class="btn ghost small noprint" style="text-decoration:none" href="#/temple/${t.id}">상세 →</a>
+              </div>
+              <div class="sub" style="margin-top:2px">소재지: ${esc(t.addr)}</div>
+              <div class="sub">권장 관람: ${esc(t.duration || '약 1시간')} · 주차: ${esc(t.practical.parking)}</div>
+              <div class="sub">💡 팁: ${esc(t.tip)}</div>
+              ${t.prayer ? `<div class="sub">🙏 기도처 안내: ${esc(t.prayer.target)}</div>` : ''}
+              ${leg ? `<div class="route-leg">🚗 <b>${esc(leg.from.name)} → ${esc(leg.to.name)}</b>: 직선 약 ${leg.straightKm}km · 도로 예상 약 ${leg.roadKm}km (약 ${leg.driveMin}분 소요)</div>` : ''}
+            </li>`;
+          }).join('')}
+        </ul>
+      </section>
+
+      ${tr.memo ? `<section class="card"><h2>📝 일정표 · 여행 메모</h2><p style="white-space:pre-wrap;margin:0">${esc(tr.memo)}</p></section>` : ''}
+
+      <section class="card noprint">
+        <h2>🗺️ 코스 지도</h2>
+        <div id="planMap" style="height:300px;border-radius:14px;border:1px solid var(--line)"></div>
+      </section>`;
+  }
+
+  function initPlanMap(stopIds) {
+    const el = document.getElementById('planMap');
+    if (!el || typeof L === 'undefined') return null;
+    const stops = (stopIds || []).map(id => byId[id]).filter(Boolean);
+    if (!stops.length) return null;
+    const m = L.map('planMap', { zoomControl: true }).setView([stops[0].lat, stops[0].lng], 8);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '&copy; OpenStreetMap' }).addTo(m);
+    const latlngs = stops.map(t => [t.lat, t.lng]);
+    if (latlngs.length > 1) {
+      L.polyline(latlngs, { color: '#7a8f5c', weight: 3, dashArray: '6, 6' }).addTo(m);
+    }
+    stops.forEach((t, idx) => {
+      L.circleMarker([t.lat, t.lng], { radius: 9, color: '#b5643c', fillColor: '#c9a24a', fillOpacity: 0.95, weight: 2 })
+        .bindPopup(`<b>${idx + 1}. ${esc(t.name)}</b><br>${esc(t.sido)} ${esc(t.sgg)}<br><a href="#/temple/${t.id}">상세 보기 →</a>`)
+        .addTo(m);
+    });
+    if (latlngs.length > 1) {
+      m.fitBounds(latlngs, { padding: [30, 30] });
+    }
+    setTimeout(() => m.invalidateSize(), 60);
+    return m;
+  }
+
+  function bindPlannerForm() {
+    const f = document.getElementById('planForm');
+    const filterSel = document.getElementById('addTempleFilter');
+    const templeSel = document.getElementById('addTempleSelect');
+    if (filterSel && templeSel) {
+      filterSel.addEventListener('change', () => {
+        const sd = filterSel.value;
+        const list = TEMPLES.filter(t => !sd || t.sido === sd);
+        templeSel.innerHTML = list.map(t => `<option value="${t.id}">[${esc(t.sido)}] ${esc(t.name)} (${esc(t.mountain)})</option>`).join('');
+      });
+    }
+    if (!f) return;
+    f.addEventListener('submit', e => {
+      e.preventDefault();
+      if (!draftStops.length) { toast('방문할 사찰을 최소 1곳 이상 추가해 주세요.'); return; }
+      const fd = new FormData(f);
+      ensureDefaultTrips();
+      const id = 'trip_' + Date.now().toString(36);
+      const item = {
+        id,
+        title: (fd.get('title') || '사찰 순례 여행').trim(),
+        date: fd.get('date') || today(),
+        days: fd.get('days') || '당일치기',
+        transport: fd.get('transport') || '자가용',
+        companion: fd.get('companion') || '혼자 조용히',
+        stops: draftStops.slice(),
+        memo: (fd.get('memo') || '').trim(),
+        createdAt: new Date().toISOString()
+      };
+      S.trips.push(item);
+      save();
+      toast('여행 계획을 저장했어요 🗓️');
+      location.hash = '#/planner/view/' + encodeURIComponent(id);
+    });
+  }
+
+  function optimizeDraftOrder() {
+    if (draftStops.length <= 2) { toast('사찰이 3곳 이상일 때 동선을 자동 정렬해요.'); return; }
+    const remaining = draftStops.slice(1);
+    const ordered = [draftStops[0]];
+    while (remaining.length) {
+      const cur = byId[ordered[ordered.length - 1]];
+      let bestIdx = 0, bestDist = Infinity;
+      remaining.forEach((id, idx) => {
+        const t = byId[id];
+        const d = (cur && t) ? haversine(cur.lat, cur.lng, t.lat, t.lng) : Infinity;
+        if (d < bestDist) { bestDist = d; bestIdx = idx; }
+      });
+      ordered.push(remaining.splice(bestIdx, 1)[0]);
+    }
+    draftStops = ordered;
+    toast('가장 가까운 동선 순서로 정렬했어요 ✨');
+    render();
+  }
+
+  function openPlanPickModal(tid) {
+    const t = byId[tid]; if (!t) return;
+    ensureDefaultTrips();
+    const trips = S.trips || [];
+    openModal(`<div class="sheet">
+      <h2>🗓️ 「${esc(t.name)}」 여행 계획에 담기</h2>
+      <p class="sub">새 사찰 여행 코스를 만들거나 기존 계획에 경유지로 추가할 수 있어요.</p>
+      ${trips.length ? `<div class="tlist" style="margin:10px 0">${trips.map(tr => `<div class="titem">
+        <div class="meta"><b>${esc(tr.title)}</b><div class="sub">${esc(tr.date)} · ${tr.stops.length}곳</div></div>
+        <button class="btn small" data-act="plan-append" data-trip="${esc(tr.id)}" data-tid="${esc(tid)}">여기에 추가</button>
+      </div>`).join('')}</div>` : ''}
+      <div class="grid2" style="margin-top:10px">
+        <button class="btn ghost" data-act="close">닫기</button>
+        <button class="btn" data-act="plan-new-with" data-tid="${esc(tid)}">+ 새 여행 계획 만들기</button>
+      </div>
+    </div>`);
+  }
+
   // ---------- 모달 ----------
   function openModal(html) { const m = document.getElementById('modal'); m.innerHTML = html; m.classList.remove('hidden'); }
   function closeModal() { const m = document.getElementById('modal'); m.classList.add('hidden'); m.innerHTML = ''; }
@@ -844,6 +1259,7 @@
       case 'guide': html = viewGuide(); tab = 'plus'; break;
       case 'season-report': html = viewSeasonReport(); tab = 'plus'; break;
       case 'mind': html = viewMind(); tab = 'home'; break;
+      case 'planner': html = viewPlanner(a, b); tab = 'journal'; break;
       default: html = viewHome(); tab = 'home';
     }
     $view.innerHTML = html;
@@ -856,8 +1272,10 @@
     if ('speechSynthesis' in window) speechSynthesis.cancel();
     if (r === 'map') { mapObj = initMap(a); }
     if (r === 'missions') { mapObj = initMap(null, 'pmap', true); }
+    if (r === 'planner' && a === 'view') { const tr = (S.trips || []).find(x => x.id === b); if (tr) mapObj = initPlanMap(tr.stops); }
     if (r === 'explore' && a === 'all') bindTrad();
     if (r === 'journal' && a === 'new') bindJournalForm();
+    if (r === 'planner' && a === 'new') bindPlannerForm();
     window.scrollTo(0, 0);
   }
 
@@ -927,6 +1345,90 @@
     else if (act === 'offline') { if (!isPlus()) openPaywall('offline'); else { if (!S.offline.includes(el.dataset.id)) S.offline.push(el.dataset.id); save(); render(); toast('이 기기에 저장해 두었어요 (데모: 앱 출시 때 실제 오프라인 캐시로 구현)'); } }
     else if (act === 'audio') playAudio(el.dataset.id);
     else if (act === 'reset') { if (confirm('방문·수첩 기록을 모두 지울까요? (이 기기에서만)')) { S.visits = []; S.journal = []; save(); render(); } }
+    else if (act === 'trip-chk') {
+      ensureDefaultTrips();
+      const cid = el.dataset.id;
+      S.tripChecks[cid] = !S.tripChecks[cid];
+      save(); render();
+    }
+    else if (act === 'tpl-adopt') {
+      const tpl = TRIP_TEMPLATES.find(x => x.id === el.dataset.id);
+      if (!tpl) return;
+      ensureDefaultTrips();
+      const id = 'trip_' + Date.now().toString(36);
+      S.trips.push({
+        id,
+        title: tpl.title,
+        date: today(),
+        days: tpl.days,
+        transport: tpl.transport,
+        companion: tpl.companion,
+        stops: tpl.stops.slice(),
+        memo: tpl.schedule.map((s, i) => `${i + 1}. ${s}`).join('\n') + `\n\n💡 팁: ${tpl.tip}`,
+        createdAt: new Date().toISOString()
+      });
+      save();
+      toast('추천 코스를 내 여행 계획에 담았어요 🗓️');
+      location.hash = '#/planner/view/' + encodeURIComponent(id);
+    }
+    else if (act === 'course-to-plan') {
+      const c = COURSES.find(x => x.id === el.dataset.course);
+      if (!c) return;
+      draftStops = c.stops.slice();
+      toast(`「${c.name}」 사찰들을 여행 계획에 불러왔어요`);
+      location.hash = '#/planner/new';
+    }
+    else if (act === 'draft-add') {
+      const sel = document.getElementById('addTempleSelect');
+      if (!sel || !sel.value) return;
+      if (draftStops.includes(sel.value)) { toast('이미 코스에 포함된 사찰이에요.'); return; }
+      draftStops.push(sel.value);
+      render();
+    }
+    else if (act === 'draft-rm') {
+      const idx = +el.dataset.idx;
+      draftStops.splice(idx, 1);
+      render();
+    }
+    else if (act === 'draft-up') {
+      const idx = +el.dataset.idx;
+      if (idx > 0) { const tmp = draftStops[idx - 1]; draftStops[idx - 1] = draftStops[idx]; draftStops[idx] = tmp; render(); }
+    }
+    else if (act === 'draft-down') {
+      const idx = +el.dataset.idx;
+      if (idx < draftStops.length - 1) { const tmp = draftStops[idx + 1]; draftStops[idx + 1] = draftStops[idx]; draftStops[idx] = tmp; render(); }
+    }
+    else if (act === 'draft-optimize') {
+      optimizeDraftOrder();
+    }
+    else if (act === 'trip-del') {
+      ensureDefaultTrips();
+      S.trips = S.trips.filter(x => x.id !== el.dataset.id);
+      save();
+      toast('여행 계획을 삭제했어요.');
+      location.hash = '#/planner';
+    }
+    else if (act === 'plan-pick') {
+      openPlanPickModal(el.dataset.id);
+    }
+    else if (act === 'plan-new-with') {
+      const tid = el.dataset.tid;
+      draftStops = [tid];
+      closeModal();
+      location.hash = '#/planner/new/' + encodeURIComponent(tid);
+    }
+    else if (act === 'plan-append') {
+      ensureDefaultTrips();
+      const tr = S.trips.find(x => x.id === el.dataset.trip);
+      const tid = el.dataset.tid;
+      if (tr && tid) {
+        if (!tr.stops.includes(tid)) tr.stops.push(tid);
+        save();
+        closeModal();
+        toast(`「${byId[tid].name}」을(를) 여행 계획에 추가했어요 🗓️`);
+        location.hash = '#/planner/view/' + encodeURIComponent(tr.id);
+      }
+    }
   });
   document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
 
