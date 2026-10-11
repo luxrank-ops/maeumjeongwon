@@ -6,13 +6,16 @@
 ```bash
 cd maeumjeongwon
 python3 -m http.server 8642      # 또는: npx serve -l 8642 .
-# 브라우저에서 http://localhost:8642  (모바일 화면 크기 권장)
+# 브라우저에서 http://localhost:8642  (모바일·태블릿·데스크톱 모두 최적화 — 창을 넓히면 사이드 내비로 재배치)
 ```
 GPS 인증은 브라우저 보안상 `localhost` 또는 HTTPS에서만 동작합니다. 지도 타일(OpenStreetMap)은 인터넷 연결이 필요합니다.
 
 ## 구성
-- `index.html` — 앱 셸, 하단 탭(홈/탐색/지도/순례/수첩), 큰글씨 토글
-- `css/style.css` — 따뜻한 한지 톤 모바일 우선 디자인, `body.big` 큰 글씨·간편 모드
+- `index.html` — 앱 셸, 하단 탭(홈/탐색/지도/순례/수첩)·본문 바로가기 링크, 큰글씨 토글
+- `css/style.css` — 따뜻한 한지 톤 **모바일 우선 반응형 시스템**(브레이크포인트 560·760·1120·1440·1760 + 가로모드·초소형 폰), `body.big` 큰 글씨·간편 모드
+  - 2026-10: **화면별 구성 배치 최적화** — `#app` 을 CSS 그리드(top/body/nav)로 재구성. 모바일·태블릿은 하단 스티키 탭바(고정 position 아님 → 주소창·키보드에 안 흔들림), **≥1120px 은 좌측 사이드 내비 + 900px 본문 열**, **≥1440px 은 카드를 2열 대시보드로 재배치**(`main[data-flow=cards]` 화면만). 열 개수는 `auto-fill·minmax` 가 남는 폭에서 계산(사찰 목록·배지·도감·기분 칩·요금제)
+  - 같은 작업: `svh`+`vh` 폴백과 `env(safe-area-inset-*)`(`@supports` 폴백)로 노치·홈인디케이터·주소창 대응, 터치 타깃 44px·입력 `font-size:max(16px,1em)`(iOS 포커스 확대 방지), 모달은 모바일 하단 시트→태블릿 이상 중앙 대화상자(배경 스크롤 잠금·`Esc`·`overscroll-behavior`), 지도는 `resize/orientationchange/visualViewport` 디바운스 `invalidateSize()`, 큰 글씨 모드는 `--fs-base` 를 교체해 모든 화면 폭에서 배율이 함께 동작
+  - 상세: `docs/responsive-layout.md` · 가드: `server/test/responsive-layout.test.js`
 - `js/app.js` — 해시 라우터, 마음 처방전, 탐색, 상세, GPS/데모 체크인, 미션·배지, 염주(108), 등급, 도감, 순례 지도, 사찰 수첩, 사찰 여행 계획(플래너), 전국 명당 사찰 풍수 대백과(`#/fengshui`)
   - 사찰 여행 계획 `#/planner` — 추천 코스 템플릿(사찰 테마별 필터 · 단풍·산행·바다·명상·설화·도심·기도·기운 좋은 곳)·준비물 체크리스트, `#/planner/new` 새 계획 짜기(경유 사찰 구성·동선 자동 정렬·거리/소요시간 추정)
   - 2026-10: **기도·기운 좋은 곳** 추천 테마에 영남·서울·남해 코스 추가. 기도 효험을 점수화하지 않고, 기도 전통·산행 안전·여행 실용정보를 구분
@@ -31,6 +34,7 @@ GPS 인증은 브라우저 보안상 `localhost` 또는 HTTPS에서만 동작합
 - `vendor/` — Leaflet 1.9.4
 - `docs/monetization.md` — 콘텐츠 전용 유료화 설계 v2(경쟁 분석·가격·페이월 지도·제작 로드맵·1년 매출 시나리오·법적 리스크)
 - `docs/scripture-content.md` — 불경(경전) 콘텐츠 검토(2026-10): 시장 근거, 유형별 품질 분석, 저작권·번역·음원 조건, 무료 미끼 + 유료 상품 설계, 로드맵
+- `docs/responsive-layout.md` — 화면(모바일·태블릿·웹)별 구성 배치 설계: 브레이크포인트 표, 셸 그리드 구조, 유동 타이포·여백 토큰, 지도·모달·SEO 페이지 대응, 알려진 한계
 - `tools/test-content.js` — 심화 스토리·보상 광고·콘텐츠 상점·순례 리포트 테스트, `tools/test-plus.js` — 플러스(유료화 데모)·기도처 테마 테스트, `tools/smoke-test.js` — Playwright 스모크 테스트/스크린샷, `tools/geocode.py` — 좌표 조회 스크립트
 
 ## 데이터 원칙
