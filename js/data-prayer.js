@@ -10,7 +10,7 @@
   // ---- 테마 이름·설명 정리 ----
   TH.energy = { icon: '🔋', name: '기운 좋은 사찰', desc: '명당·풍수 이야기나 진신사리·미륵 신앙처럼 "기운이 좋다"고 전해지는 곳 (전해지는 이야기, 효험 보장 아님)' };
   TH.wish = { icon: '🙏', name: '한 가지 소원 기도처', desc: '"한 가지 소원은 들어준다"는 이야기가 전해지는 이름난 기도처 (전해지는 이야기, 효험 보장 아님)' };
-  TH.prayer = { icon: '🕯️', name: '기도·기운 좋은 곳', desc: '기도 전통이 확인되는 사찰과 공개 영상의 현장 소개를 함께 살펴보는 테마 (기운·효험 보장 아님)' };
+  TH.prayer = { icon: '🕯️', name: '기도·기운 좋은 곳', desc: '기도 전통이 확인되는 사찰을 여행 계획과 함께 살펴보는 테마 (기운·효험 보장 아님)' };
 
   // ---- 출처 ----
   const S = {
@@ -226,6 +226,17 @@
   ENERGY.forEach(id => { const t = byId[id]; if (t && !t.themes.includes('energy')) t.themes.push('energy'); });
   PRAYER.forEach(id => { const t = byId[id]; if (t && !t.themes.includes('prayer')) t.themes.push('prayer'); });
   window.PRAYER_ORDER = { wish: WISH, energy: ENERGY, prayer: PRAYER };
+
+  // ---- 탐색 '기도·기운 좋은 곳' 화면에 표시하는 추천 기준·한계 ----
+  window.PRAYER_CRITERIA = [
+    '기도처·유물·의례의 기도 전통은 사찰 공식 자료, 문화유산·백과사전, 언론 보도 등으로 따로 확인한 뒤 소개합니다.',
+    '방송·공공기관·불교계 보도, 여행·현장 기록, 개인의 풍수·효험 주장을 구분하고, 개인 견해는 사실 근거로 취급하지 않습니다.',
+    '영험함을 점수로 매기지 않습니다. 코스는 지역 동선, 접근성, 산행 안전을 함께 고려해 추천합니다.'
+  ];
+  window.PRAYER_LIMITATIONS = [
+    '소원 성취·기운·풍수 효험을 실증하거나 보장하지 않습니다. 사찰별 소개는 공개 자료를 요약한 것이며 전문가 감수 전입니다.',
+    '개방 시간·입산 통제·행사 일정은 바뀔 수 있으니 방문 전에 사찰·지자체·국립공원 공지에서 확인하세요.'
+  ];
 
   // 일부 사실 보강
   if (byId.hyangiram) byId.hyangiram.practical = Object.assign({}, byId.hyangiram.practical, { transit: '여수엑스포역·이순신광장에서 시내버스 111·111-1·116번 → 임포(향일암) 정류장 하차 (여수시 관광문화 안내 기준)' });
