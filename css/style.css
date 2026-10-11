@@ -340,3 +340,19 @@ table.cmp td:nth-child(2),table.cmp td:nth-child(3),table.cmp th:nth-child(2),ta
   .card{box-shadow:none;border:1px solid #ccc;break-inside:avoid}
   .tlist,.badges,.moods{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+/* ---- 온보딩 ---- */
+.onboard-card{padding:4px 0}
+.onboard-card h2{margin:8px 0 12px;font-size:1.15em}
+.onboard-progress{display:flex;gap:6px;margin-bottom:12px}
+.onboard-progress span{flex:1;height:4px;border-radius:2px;background:var(--line)}
+.onboard-progress span.on{background:var(--accent)}
+.onboard-opts{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 16px}
+.onboard-opt{padding:10px 16px;border-radius:12px;border:2px solid var(--line);background:var(--card);font-size:.95em;transition:border-color .15s,background .15s}
+.onboard-opt.on{border-color:var(--accent);background:rgba(122,143,92,.08);font-weight:600}
+.onboard-nav{display:flex;gap:8px;margin-top:12px;justify-content:flex-end}
+.onboard-sheet{max-height:85vh;overflow-y:auto}
+.onboard-hint{border:2px dashed var(--accent);background:rgba(122,143,92,.04)!important}
+.tag.web{background:#e8f0fe;color:#1a56db}
+.tag.lifetime{background:#fef3c7;color:#92400e}
+#breathCircle{user-select:none;pointer-events:none}
