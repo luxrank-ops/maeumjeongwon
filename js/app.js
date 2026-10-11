@@ -924,6 +924,7 @@
   const TRIP_TEMPLATES = [
     {
       id: 'tpl-gyeongju-day',
+      theme: 'history',
       title: '경주·양산 천년고찰 당일 순례',
       days: '당일치기',
       transport: '자가용',
@@ -939,6 +940,7 @@
     },
     {
       id: 'tpl-jogyesan-1n2d',
+      theme: 'quiet',
       title: '순천 조계산 삼보·산사 1박 2일 힐링 여행',
       days: '1박 2일',
       transport: '대중교통·도보',
@@ -953,6 +955,7 @@
     },
     {
       id: 'tpl-eastsea-1n2d',
+      theme: 'sea',
       title: '강원 동해·오대산 관음·적멸보궁 1박 2일',
       days: '1박 2일',
       transport: '자가용',
@@ -967,6 +970,7 @@
     },
     {
       id: 'tpl-seoul-half',
+      theme: 'city',
       title: '도심 속 반나절 마음 비우기 사찰 산책',
       days: '반나절·당일',
       transport: '대중교통',
@@ -981,6 +985,7 @@
     },
     {
       id: 'tpl-unesco-2n3d',
+      theme: 'history',
       title: '경북·충청 유네스코 산사 2박 3일 기행',
       days: '2박 3일',
       transport: '자가용',
@@ -995,6 +1000,7 @@
     },
     {
       id: 'tpl-prayer-wish-1n2d',
+      theme: 'wish',
       title: '영남 영험 소원성지 1박 2일 기도 순례',
       days: '1박 2일',
       transport: '자가용',
@@ -1006,6 +1012,131 @@
         '2일차 오전 — 청도 호거산 운문사 사리암 1,008 돌계단 순례 · 나반존자 천태각 기도 (약 2시간)'
       ],
       tip: '풍생풍사TV 및 전통 순례길에서 손꼽는 대표 영험 기도 명당 코스예요. 계단과 암벽 구간이 있으니 편한 운동화와 보온 겉옷을 준비하세요.'
+    },
+    {
+      id: 'tpl-autumn-naejang-1d',
+      theme: 'autumn',
+      title: '단풍 절정 내장산·백양사 당일 순례',
+      days: '당일치기',
+      transport: '자가용',
+      companion: '연인·친구와',
+      stops: ['naejangsa', 'baegyangsa'],
+      schedule: [
+        '오전 07:30 — 정읍 내장사 도착 · 단풍터널 산책 및 우화정 감상 (약 1시간 30분~2시간, 단풍철 주말은 이른 아침이 한산해요)',
+        '오전 10:30 — 장성 백양사로 이동 (차량 이동)',
+        '오후 12:00 — 백양사 점심 식사 후 쌍계루·백학봉 경관 감상 · 천연기념물 고불매 관람 (약 1시간 30분)'
+      ],
+      tip: '두 사찰 모두 가을 단풍이 유명해요. 백양사 주차장은 무료이고, 주말에는 주변 도로 정체가 있으니 평일이나 이른 아침 출발을 권해요.'
+    },
+    {
+      id: 'tpl-jirisan-saseongam-1n2d',
+      theme: 'hike',
+      title: '지리산 자락 사성암 산행 · 쌍계사 1박 2일',
+      days: '1박 2일',
+      transport: '자가용',
+      companion: '혼자 조용히',
+      stops: ['saseongam', 'ssanggyesa'],
+      schedule: [
+        '1일차 오전 — 구례 사성암 하단 주차 후 순환 마을버스 이용 · 오산 산길을 올라 유리광전 마애여래입상과 도선굴 참배 (약 1시간 30분, 등산화 필수)',
+        '1일차 오후 — 하동 화개로 이동 · 쌍계사 진감선사탑비(최치원 글) 관람 및 경내 산책 (약 1시간 30분)',
+        '2일차 오전 — 쌍계사 주변 차 시배지 일대 산책 후 귀가 (봄에는 화개 십리벚꽃길과 함께 둘러보기 좋아요)'
+      ],
+      tip: '사성암 순환 마을버스 막차는 오후 5시 30분경이라 하산 시간을 미리 계산하세요. 산길이 있으니 편한 등산화와 생수를 준비하세요.'
+    },
+    {
+      id: 'tpl-south-sea-1n2d',
+      theme: 'sea',
+      title: '여수 향일암 일출 · 해남 대흥사·미황사 남도 바다 1박 2일',
+      days: '1박 2일',
+      transport: '자가용',
+      companion: '연인·친구와',
+      stops: ['hyangiram', 'daeheungsa', 'mihwangsa'],
+      schedule: [
+        '1일차 새벽 — 여수 향일암 일출 참배 (매일 04:00 개방, 일출 시각 확인) · 바위 석문 통과와 바다 조망 (약 1시간 30분)',
+        '1일차 오후 — 해남 두륜산 대흥사 이동 · 장춘숲길 산책 및 경내 참배 (약 2시간)',
+        '2일차 오전 — 해남 송지 미황사 참배 · 달마고도 일부 구간 산책 (약 1시간 30분~2시간)'
+      ],
+      tip: '향일암은 계단과 석문이 좁아 일출 시간에 붐벼요. 일찍 도착해 여유 있게 오르세요. 미황사는 달마산 바위 능선과 다도해 노을이 아름다워 일정을 여유 있게 잡으면 좋아요.'
+    },
+    {
+      id: 'tpl-chungnam-quiet-1n2d',
+      theme: 'quiet',
+      title: '예산 수덕사·공주 마곡사 침묵 명상 1박 2일',
+      days: '1박 2일',
+      transport: '자가용',
+      companion: '혼자 조용히',
+      stops: ['sudeoksa', 'magoksa'],
+      schedule: [
+        '1일차 오전 — 예산 수덕사 도착 · 고려 시대 목조건축인 대웅전 참배 및 경내 고요한 산책 (약 1시간 30분)',
+        '1일차 오후 — 숙소에서 휴식 · 차 한 잔과 함께 조용히 쉬기',
+        '2일차 오전 — 공주 마곡사로 이동 · 백범 명상길 걷기 (약 1시간 30분~2시간)',
+        '2일차 오후 — 대웅보전·대광보전 참배 후 귀가'
+      ],
+      tip: '수덕사 대웅전은 건립 연대가 확인되는 오래된 목조 건물이에요. 마곡사는 봄 풍경이 특히 유명해 계절을 바꿔 다시 찾아도 좋아요. 법당에서는 정숙을 지켜 주세요.'
+    },
+    {
+      id: 'tpl-haeinsa-donghwasa-1n2d',
+      theme: 'history',
+      title: '합천 해인사·대구 동화사 국보·역사 기행 1박 2일',
+      days: '1박 2일',
+      transport: '자가용',
+      companion: '불자·순례 모임',
+      stops: ['haeinsa', 'donghwasa'],
+      schedule: [
+        '1일차 오전 — 합천 해인사 도착 · 경내 참배 및 장경판전 관람 (장경판전은 보존을 위해 출입이 제한될 수 있어 사전 확인, 약 2시간)',
+        '1일차 오후 — 시간이 되면 가야산 소리길 산책 후 대구 팔공산으로 이동',
+        '2일차 오전 — 대구 팔공산 동화사 · 보물 동화사 마애여래좌상과 통일약사여래대불 참배 (약 1시간 30분~2시간)',
+        '2일차 오후 — 팔공산 가을 단풍 산책 후 귀가'
+      ],
+      tip: '해인사는 팔만대장경과 장경판전으로 기록유산의 가치를 느낄 수 있는 법보사찰이에요. 동화사는 「겨울에 핀 오동꽃」 이야기를 떠올리며 걷기 좋아요.'
+    },
+    {
+      id: 'tpl-ganghwa-legend-day',
+      theme: 'legend',
+      title: '강화도 설화 순례 — 전등사·보문사 당일',
+      days: '당일치기',
+      transport: '자가용',
+      companion: '가족·부모님과',
+      stops: ['jeondeungsa', 'bomunsa'],
+      schedule: [
+        '오전 09:30 — 강화 전등사 도착 · 대웅전 처마 밑 나부상 이야기 살펴보기, 정족산성 삼랑성 둘레길 산책 (약 1시간 30분)',
+        '오후 12:30 — 점심 식사 후 석모도 보문사로 이동 (석모대교 경유)',
+        '오후 15:00 — 보문사 눈썹바위 마애석불좌상 참배 (계단이 가파르니 천천히) · 석실 나한전 관람',
+        '해질녘 — 서해 낙조 감상 후 귀가 (계절별 일몰 시각 확인)'
+      ],
+      tip: '전등사 처마 설화와 보문사 그물에 걸린 돌 이야기는 모두 「전해지는 이야기」예요. 보문사 눈썹바위까지는 계단이 가팔라 편한 신발이 필요해요.'
+    },
+    {
+      id: 'tpl-busan-transit-day',
+      theme: 'city',
+      title: '부산 도심 범어사·바닷가 해동용궁사 뚜벅이 당일',
+      days: '당일치기',
+      transport: '대중교통',
+      companion: '연인·친구와',
+      stops: ['beomeosa', 'yonggungsa'],
+      schedule: [
+        '오전 10:00 — 부산 도시철도 1호선 범어사역에서 순환버스 이용 후 범어사 참배 · 대웅전·삼층석탑·조계문 관람 (약 1시간 30분)',
+        '오후 12:30 — 점심 식사 후 기장 해동용궁사로 이동 (버스·지하철 환승, 이동에 1시간 이상 여유)',
+        '오후 15:00 — 해동용궁사 바닷가 바위 위 전각 관람 · 해수관음대불 참배 및 파도 소리 산책 (약 1시간 30분)',
+        '해질녘 — 동해선 오시리아역 또는 해운대 방면으로 귀가'
+      ],
+      tip: '해동용궁사는 주말 혼잡이 심하니 평일이나 이른 아침을 추천해요. 두 사찰 모두 대중교통으로 갈 수 있어 차 없이도 편하게 다닐 수 있어요.'
+    },
+    {
+      id: 'tpl-hwaseong-family-day',
+      theme: 'family',
+      title: '화성 용주사·서울 봉은사 아이와 함께하는 반나절 나들이',
+      days: '반나절·당일',
+      transport: '자가용',
+      companion: '아이와 함께',
+      stops: ['yongjusa', 'bongeunsa'],
+      schedule: [
+        '오전 10:00 — 화성 용주사 도착 · 넓은 무료 주차장에서 가볍게 시작, 경내 산책 · 국보 용주사 동종 및 부모은중경판 관람 (약 1시간 30분)',
+        '오후 12:30 — 점심 식사 후 서울 강남 봉은사로 이동',
+        '오후 14:30 — 봉은사 판전 현판·미륵대불 관람 · 명상길 산책 (약 1시간 30분)',
+        '오후 16:30 — 코엑스 쪽 간식·나들이로 마무리'
+      ],
+      tip: '용주사는 융릉·건릉과 함께 둘러보기 좋아요. 봉은사는 코엑스 바로 옆이라 나들이 마무리에 좋고, 경내에서는 아이와 함께 조용히 걷도록 이야기해 주세요.'
     }
   ];
 
@@ -1143,6 +1274,15 @@
     toast('작성 중이던 여행 계획을 초기화했어요 🧹');
   }
 
+  // 추천 템플릿을 사찰 특징(테마)별로 골라 보는 필터 (화면 상태, 저장하지 않음)
+  let tplTheme = 'all';
+  const tplMatch = tpl => tplTheme === 'all' || tpl.theme === tplTheme;
+  function tplFilterHtml() {
+    const keys = [...new Set(TRIP_TEMPLATES.map(t => t.theme).filter(k => k && THEMES[k]))];
+    const chip = (k, label) => `<button type="button" class="chip ${tplTheme === k ? 'on' : ''}" data-act="tpl-theme" data-theme="${k}" aria-pressed="${tplTheme === k}">${label}</button>`;
+    return `<div class="row wrap" style="margin:4px 0 10px">${chip('all', '전체')}${keys.map(k => chip(k, THEMES[k].icon + ' ' + THEMES[k].name)).join('')}</div>`;
+  }
+
   function viewPlanner(sub, arg) {
     ensureDefaultTrips();
     if (sub === 'new') return viewPlannerNew(arg);
@@ -1173,11 +1313,14 @@
 
       <section class="card">
         <div class="row between"><h2 style="margin:0">✨ 추천 사찰 여행 템플릿</h2><span class="sub">클릭해 내 일정으로 담기</span></div>
-        <p class="sub" style="margin:4px 0 10px">동선과 테마가 검증된 추천 코스예요. 내 일정으로 담은 뒤 자유롭게 수정할 수 있어요.</p>
-        ${TRIP_TEMPLATES.map(tpl => {
+        <p class="sub" style="margin:4px 0 10px">사찰마다 가진 테마(단풍·산행·바다·명상·설화 등)에 맞춰 짠 추천 코스예요. 내 일정으로 담은 뒤 자유롭게 수정할 수 있어요.</p>
+        ${tplFilterHtml()}
+        ${TRIP_TEMPLATES.filter(tplMatch).map(tpl => {
           const sum = calcRouteSummary(tpl.stops, tpl.transport);
+          const th = THEMES[tpl.theme];
           return `<div class="course">
             <div class="row between"><b>${esc(tpl.title)}</b><span class="tag">${esc(tpl.days)} · ${esc(tpl.transport)}</span></div>
+            ${th ? `<div style="margin:2px 0 4px"><span class="tag ok">${th.icon} ${esc(th.name)}</span> <span class="sub">${esc(th.desc)}</span></div>` : ''}
             <div class="sub" style="margin:4px 0">📍 코스: ${sum.stops.map(t => esc(t.name)).join(' → ')} (총 직선 ${sum.totalStraightKm}km · 예상 ${fmtMin(sum.totalMin)})</div>
             <ol style="padding-left:18px;margin:6px 0;font-size:.92em">${tpl.schedule.map(s => `<li>${esc(s)}</li>`).join('')}</ol>
             <div class="sub">💡 ${esc(tpl.tip)}</div>
@@ -1634,6 +1777,10 @@
     }
     else if (act === 'draft-optimize') {
       optimizeDraftOrder();
+    }
+    else if (act === 'tpl-theme') {
+      tplTheme = el.dataset.theme || 'all';
+      render();
     }
     else if (act === 'draft-reset') {
       resetPlannerDraft();
