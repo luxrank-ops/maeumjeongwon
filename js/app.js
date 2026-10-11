@@ -1004,7 +1004,16 @@
     { id: 'etiquette', cat: '사찰 예절', text: '법당 어간문(가운데 문) 피하기 · 묵언 및 촬영 매너 숙지' }
   ];
 
+  // 새 여행 계획 작성 중인 임시 초안 (저장 전까지만 유지, 초기화 버튼으로 비울 수 있음)
+  const DRAFT_SAMPLE_STOPS = ['bulguksa', 'tongdosa'];
+  const DRAFT_FIELDS = ['title', 'date', 'days', 'transport', 'companion', 'memo'];
+  const DRAFT_DEFAULTS = { days: '당일치기', transport: '자가용', companion: '혼자 조용히' };
+  const DAYS_OPTS = ['반나절·당일', '당일치기', '1박 2일', '2박 3일', '3박 4일 이상'];
+  const TRANSPORT_OPTS = ['자가용', '대중교통', '대중교통·도보', '산행·트레킹'];
+  const COMPANION_OPTS = ['혼자 조용히', '가족·부모님과', '연인·친구와', '아이와 함께', '불자·순례 모임'];
   let draftStops = [];
+  let draftForm = {};       // 사용자가 직접 고친 입력값만 보관 (없으면 사찰 구성에 따른 자동값 사용)
+  let draftCleared = false; // 초기화한 뒤에는 예시 사찰을 다시 채우지 않음
 
   function parseDurationMin(str) {
     if (!str) return 60;
@@ -1044,6 +1053,80 @@
   function ensureDefaultTrips() {
     if (!Array.isArray(S.trips)) S.trips = [];
     if (!S.tripChecks || typeof S.tripChecks !== 'object') S.tripChecks = {};
+  }
+
+  // ---- 새 계획 초안(draft) 상태 ----
+  const draftNames = () => draftStops.map(id => { const t = resolveTemple(id); return t ? t.name : null; }).filter(Boolean);
+
+  function autoDraftTitle() {
+    const names = draftNames();
+    if (!names.length) return '';
+    return names.slice(0, 2).join('·') + (names.length > 2 ? ` 외 ${names.length - 2}곳` : '') + ' 사찰 여행';
+  }
+
+  function autoDraftMemo() {
+    return draftStops.map((id, i) => {
+      const t = resolveTemple(id);
+      return t ? `${i + 1}. ${t.name} (${t.addr}) — 관람 및 산책 (${t.duration || '약 1시간'})` : '';
+    }).filter(Boolean).join('\n');
+  }
+
+  // 사용자가 입력한 값이 있으면 그 값을, 없으면 자동값(사찰 구성 기반 기본값)을 쓴다
+  function draftValue(field) {
+    if (draftForm[field] != null) return draftForm[field];
+    if (field === 'title') return autoDraftTitle();
+    if (field === 'memo') return autoDraftMemo();
+    if (field === 'date') return today();
+    return DRAFT_DEFAULTS[field] || '';
+  }
+
+  function selOpts(list, cur) {
+    return list.map(o => `<option${o === cur ? ' selected' : ''}>${esc(o)}</option>`).join('');
+  }
+
+  // 사찰을 추가/삭제하면 화면을 다시 그리므로, 입력 중인 값은 그때그때 초안에 담아 둔다
+  function captureDraftField(e) {
+    const el = e.target;
+    if (!el || !el.name || DRAFT_FIELDS.indexOf(el.name) < 0) return;
+    draftForm[el.name] = el.value;
+  }
+
+  // 초기화할 내용이 있는지 (경유 사찰 또는 기본값과 다른 입력값)
+  function plannerDraftFilled() {
+    if (draftStops.length) return true;
+    return DRAFT_FIELDS.some(k => {
+      const v = draftForm[k];
+      if (v == null) return false;
+      if (k === 'date') return v !== today();
+      if (DRAFT_DEFAULTS[k]) return v !== DRAFT_DEFAULTS[k];
+      return String(v).trim() !== '';
+    });
+  }
+
+  function clearPlannerDraft() {
+    draftStops = [];
+    draftForm = {};
+    draftCleared = true;
+  }
+
+  // 지울 내용이 없으면 초기화 버튼을 비활성 상태로 둔다
+  function syncDraftResetButtons() {
+    const on = plannerDraftFilled();
+    document.querySelectorAll('[data-act="draft-reset"]').forEach(b => {
+      b.disabled = !on;
+      b.setAttribute('aria-disabled', String(!on));
+    });
+  }
+
+  // 🧹 초기화 버튼 — 작성 중인 새 여행 계획만 비움 (저장된 계획·수첩 기록은 그대로)
+  function resetPlannerDraft() {
+    if (!plannerDraftFilled()) { toast('이미 비어 있는 새 계획이에요.'); return; }
+    if (!confirm('작성 중인 내용을 모두 지우고 처음부터 다시 짤까요?\n(이미 저장한 여행 계획은 그대로 남아요)')) return;
+    clearPlannerDraft();
+    // #/planner/new/<사찰id> 로 들어온 경우 다시 그리면 그 사찰이 되살아나므로 주소를 비운다
+    if (location.hash !== '#/planner/new') location.hash = '#/planner/new';
+    else render();
+    toast('작성 중이던 여행 계획을 초기화했어요 🧹');
   }
 
   function viewPlanner(sub, arg) {
@@ -1108,49 +1191,71 @@
       </section>`;
   }
 
+  function draftStopsHtml(sum) {
+    if (!draftStops.length) return '<p class="notice">아래에서 방문할 사찰을 1곳 이상 추가해 주세요.</p>';
+    return `<ul class="route-line">${draftStops.map((id, idx) => {
+      const t = resolveTemple(id); if (!t) return '';
+      const leg = idx < sum.legs.length ? sum.legs[idx] : null;
+      return `<li data-step="${idx + 1}">
+        <div class="row between">
+          <div><b>${esc(t.name)}</b> <span class="sub">${esc(t.sido)} ${esc(t.sgg)} · ${esc(t.mountain)}</span></div>
+          <div class="row">
+            ${idx > 0 ? `<button type="button" class="btn ghost small" data-act="draft-up" data-idx="${idx}" title="위로">↑</button>` : ''}
+            ${idx < draftStops.length - 1 ? `<button type="button" class="btn ghost small" data-act="draft-down" data-idx="${idx}" title="아래로">↓</button>` : ''}
+            <button type="button" class="btn ghost small" data-act="draft-rm" data-idx="${idx}">제외</button>
+          </div>
+        </div>
+        <div class="sub">주소: ${esc(t.addr)} · 권장 관람: ${esc(t.duration || '약 1시간')}</div>
+        ${leg ? `<div class="route-leg">🚗 다음 사찰(${esc(leg.to.name)})까지 직선 약 ${leg.straightKm}km · 예상 도로 약 ${leg.roadKm}km (약 ${leg.driveMin}분)</div>` : ''}
+      </li>`;
+    }).join('')}</ul>`;
+  }
+
+  function draftSummaryHtml(sum) {
+    return `🏅 현재 코스로 채워지는 미션: ${sum.relatedMissions.length ? sum.relatedMissions.map(m => `${m.icon} ${m.name}`).join(', ') : '해당 없음'} · 총 예상 소요: <b>약 ${fmtMin(sum.totalMin)}</b> (관람 ${fmtMin(sum.stayMin)} + 이동 ${fmtMin(sum.moveMin)})`;
+  }
+
+  // 이동 수단을 바꾸면 화면 전체를 다시 그리지 않고 거리·소요시간만 갱신 (입력값·스크롤 유지)
+  function refreshDraftEstimates() {
+    const list = document.getElementById('draftStopList');
+    const box = document.getElementById('draftSummary');
+    if (!list && !box) return;
+    const sum = calcRouteSummary(draftStops, draftValue('transport'));
+    if (list) list.innerHTML = draftStopsHtml(sum);
+    if (box) box.innerHTML = draftSummaryHtml(sum);
+  }
+
   function viewPlannerNew(preselectTid) {
     if (preselectTid && resolveTemple(preselectTid) && !draftStops.includes(preselectTid)) {
       draftStops.push(preselectTid);
+      draftCleared = false;
     }
-    if (!draftStops.length) {
-      draftStops = ['bulguksa', 'tongdosa'];
+    if (!draftStops.length && !draftCleared) {
+      draftStops = DRAFT_SAMPLE_STOPS.slice();
     }
-    const sum = calcRouteSummary(draftStops, '자가용');
+    const sum = calcRouteSummary(draftStops, draftValue('transport'));
     const sidos = SIDO_ORDER;
+    const filled = plannerDraftFilled();
 
-    return `<a href="#/planner" class="sub" style="text-decoration:none">← 여행 계획 목록</a>
+    return `<div class="row between">
+        <a href="#/planner" class="sub" style="text-decoration:none">← 여행 계획 목록</a>
+        <button type="button" class="btn ghost small" data-act="draft-reset" ${filled ? '' : 'disabled aria-disabled="true"'} title="작성 중인 내용 모두 지우기">🧹 초기화</button>
+      </div>
       <h1>새 사찰 여행 계획 짜기</h1>
       <form id="planForm" class="card">
         <label>여행 제목</label>
-        <input name="title" placeholder="예: 가을 산사 힐링 1박 2일 순례" value="${draftStops.map(id => resolveTemple(id) && resolveTemple(id).name).filter(Boolean).slice(0, 2).join('·')} 사찰 여행" required maxlength="60">
+        <input name="title" placeholder="예: 가을 산사 힐링 1박 2일 순례" value="${esc(draftValue('title'))}" required maxlength="60">
         <div class="grid2">
-          <div><label>출발 예정일</label><input type="date" name="date" value="${today()}" required></div>
-          <div><label>여행 기간</label><select name="days"><option>반나절·당일</option><option selected>당일치기</option><option>1박 2일</option><option>2박 3일</option><option>3박 4일 이상</option></select></div>
+          <div><label>출발 예정일</label><input type="date" name="date" value="${esc(draftValue('date'))}" required></div>
+          <div><label>여행 기간</label><select name="days">${selOpts(DAYS_OPTS, draftValue('days'))}</select></div>
         </div>
         <div class="grid2">
-          <div><label>이동 수단</label><select name="transport" id="planTransport"><option>자가용</option><option>대중교통</option><option>대중교통·도보</option><option>산행·트레킹</option></select></div>
-          <div><label>동행 스타일</label><select name="companion"><option>혼자 조용히</option><option>가족·부모님과</option><option>연인·친구와</option><option>아이와 함께</option><option>불자·순례 모임</option></select></div>
+          <div><label>이동 수단</label><select name="transport" id="planTransport">${selOpts(TRANSPORT_OPTS, draftValue('transport'))}</select></div>
+          <div><label>동행 스타일</label><select name="companion">${selOpts(COMPANION_OPTS, draftValue('companion'))}</select></div>
         </div>
 
         <label style="margin-top:12px">📍 경유 사찰 구성 (${draftStops.length}곳 선택됨)</label>
-        <div id="draftStopList">
-          ${draftStops.length ? `<ul class="route-line">${draftStops.map((id, idx) => {
-            const t = resolveTemple(id); if (!t) return '';
-            const leg = idx < sum.legs.length ? sum.legs[idx] : null;
-            return `<li data-step="${idx + 1}">
-              <div class="row between">
-                <div><b>${esc(t.name)}</b> <span class="sub">${esc(t.sido)} ${esc(t.sgg)} · ${esc(t.mountain)}</span></div>
-                <div class="row">
-                  ${idx > 0 ? `<button type="button" class="btn ghost small" data-act="draft-up" data-idx="${idx}" title="위로">↑</button>` : ''}
-                  ${idx < draftStops.length - 1 ? `<button type="button" class="btn ghost small" data-act="draft-down" data-idx="${idx}" title="아래로">↓</button>` : ''}
-                  <button type="button" class="btn ghost small" data-act="draft-rm" data-idx="${idx}">제외</button>
-                </div>
-              </div>
-              <div class="sub">주소: ${esc(t.addr)} · 권장 관람: ${esc(t.duration || '약 1시간')}</div>
-              ${leg ? `<div class="route-leg">🚗 다음 사찰(${esc(leg.to.name)})까지 직선 약 ${leg.straightKm}km · 예상 도로 약 ${leg.roadKm}km (약 ${leg.driveMin}분)</div>` : ''}
-            </li>`;
-          }).join('')}</ul>` : '<p class="notice">아래에서 방문할 사찰을 1곳 이상 추가해 주세요.</p>'}
-        </div>
+        <div id="draftStopList">${draftStopsHtml(sum)}</div>
 
         <div class="card" style="background:#f9f5ec;margin-top:8px">
           <div class="row between"><b>사찰 추가하기 (전통사찰 991곳 전체 지원)</b><button type="button" class="btn ghost small" data-act="draft-optimize">✨ 동선 순서 자동 정렬</button></div>
@@ -1168,13 +1273,17 @@
             </select>
             <button type="button" class="btn small" data-act="draft-add">+ 추가</button>
           </div>
-          <div class="sub" style="margin-top:6px">🏅 현재 코스로 채워지는 미션: ${sum.relatedMissions.length ? sum.relatedMissions.map(m => `${m.icon} ${m.name}`).join(', ') : '해당 없음'} · 총 예상 소요: <b>약 ${fmtMin(sum.totalMin)}</b> (관람 ${fmtMin(sum.stayMin)} + 이동 ${fmtMin(sum.moveMin)})</div>
+          <div class="sub" id="draftSummary" style="margin-top:6px">${draftSummaryHtml(sum)}</div>
         </div>
 
         <label>여행 메모 · 일정표 (시간대별 계획, 맛집·숙소·다짐 등)</label>
-        <textarea name="memo" placeholder="예:&#10;- 오전 9시 출발, 경주 톨게이트 통과&#10;- 점심은 사찰 입구 산채비빔밥&#10;- 대웅전에서 가족 건강 발원하기" maxlength="1500">${draftStops.map((id, i) => { const t = resolveTemple(id); return t ? `${i + 1}. ${t.name} (${t.addr}) — 관람 및 산책 (${t.duration || '약 1시간'})` : ''; }).filter(Boolean).join('\n')}</textarea>
+        <textarea name="memo" placeholder="예:&#10;- 오전 9시 출발, 경주 톨게이트 통과&#10;- 점심은 사찰 입구 산채비빔밥&#10;- 대웅전에서 가족 건강 발원하기" maxlength="1500">${esc(draftValue('memo'))}</textarea>
 
-        <button class="btn block" type="submit" style="margin-top:12px">🗓️ 여행 계획 저장하기</button>
+        <div class="grid2" style="margin-top:12px">
+          <button class="btn ghost" type="button" data-act="draft-reset" ${filled ? '' : 'disabled aria-disabled="true"'}>🧹 초기화</button>
+          <button class="btn" type="submit">🗓️ 계획 저장하기</button>
+        </div>
+        <p class="notice" style="margin-top:8px">🧹 초기화를 누르면 선택한 사찰과 입력한 내용이 모두 지워지고 빈 계획표로 돌아가요. 이미 저장한 여행 계획은 지워지지 않아요.</p>
       </form>`;
   }
 
@@ -1274,6 +1383,13 @@
       if (searchInp) searchInp.addEventListener('input', updateOptions);
     }
     if (!f) return;
+    // 사찰 추가·삭제로 화면을 다시 그려도 입력하던 값이 날아가지 않도록 초안에 보관
+    f.addEventListener('input', e => { captureDraftField(e); syncDraftResetButtons(); });
+    f.addEventListener('change', e => {
+      captureDraftField(e);
+      if (e.target && e.target.name === 'transport') refreshDraftEstimates();
+      syncDraftResetButtons();
+    });
     f.addEventListener('submit', e => {
       e.preventDefault();
       if (!draftStops.length) { toast('방문할 사찰을 최소 1곳 이상 추가해 주세요.'); return; }
@@ -1293,6 +1409,7 @@
       };
       S.trips.push(item);
       save();
+      clearPlannerDraft(); // 저장했으니 다음 '새 계획 짜기'는 빈 계획표로 시작
       toast('여행 계획을 저장했어요 🗓️');
       location.hash = '#/planner/view/' + encodeURIComponent(id);
     });
@@ -1475,6 +1592,8 @@
       const c = COURSES.find(x => x.id === el.dataset.course);
       if (!c) return;
       draftStops = c.stops.slice();
+      draftForm = {};
+      draftCleared = false;
       toast(`「${c.name}」 사찰들을 여행 계획에 불러왔어요`);
       location.hash = '#/planner/new';
     }
@@ -1488,6 +1607,7 @@
     else if (act === 'draft-rm') {
       const idx = +el.dataset.idx;
       draftStops.splice(idx, 1);
+      if (!draftStops.length) draftCleared = true; // 직접 모두 비운 경우 예시 사찰을 다시 채우지 않음
       render();
     }
     else if (act === 'draft-up') {
@@ -1500,6 +1620,9 @@
     }
     else if (act === 'draft-optimize') {
       optimizeDraftOrder();
+    }
+    else if (act === 'draft-reset') {
+      resetPlannerDraft();
     }
     else if (act === 'trip-del') {
       ensureDefaultTrips();
@@ -1514,6 +1637,8 @@
     else if (act === 'plan-new-with') {
       const tid = el.dataset.tid;
       draftStops = [tid];
+      draftForm = {};
+      draftCleared = false;
       closeModal();
       location.hash = '#/planner/new/' + encodeURIComponent(tid);
     }
