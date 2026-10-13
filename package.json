@@ -8,6 +8,9 @@
     "build:seo": "node tools/build-seo.js",
     "build:mobile": "node tools/build-mobile.js",
     "test": "node --test server/test/*.test.js",
+    "test:content": "node tools/content-smoke.js",
+    "test:temples": "node tools/temple-smoke.js",
+    "verify": "npm test && npm run test:content && npm run test:temples && npm run build",
     "push": "node tools/git-push.js",
     "start": "node server.js"
   },
