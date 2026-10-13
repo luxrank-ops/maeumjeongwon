@@ -5,7 +5,8 @@ const http = require('node:http');
 const crypto = require('node:crypto');
 const { createApp } = require('../server/app');
 const identity = require('../server/identity');
-const { findTemple } = require('../server/content/temples');
+const { findTemple, listTemples } = require('../server/content/temples');
+const { loadTraditionalTemples } = require('../server/content/traditional');
 
 const SECRET = 'smoke-test-secret-32-chars-minimum-0000';
 const { publicKey, privateKey } = crypto.generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
@@ -17,6 +18,24 @@ const pubPem = publicKey.export({ type: 'spki', format: 'pem' });
     if (cond) { passed++; console.log('PASS ' + msg); }
     else { failed++; console.error('FAIL ' + msg); process.exitCode = 1; }
   }
+
+  // Static dataset checks catch accidental truncation or malformed coordinates/practical info.
+  const curated = listTemples();
+  const traditional = loadTraditionalTemples();
+  const curatedIds = new Set(curated.map(temple => temple.id));
+  const text = value => typeof value === 'string' && value.trim().length > 0;
+  ok(curated.length >= 61, `curated temple collection has ${curated.length} entries (minimum 61)`);
+  ok(curatedIds.size === curated.length && curated.every(temple =>
+    text(temple.id) && text(temple.name) && text(temple.sido) && text(temple.sgg) && text(temple.addr) &&
+    Number.isFinite(temple.lat) && temple.lat >= -90 && temple.lat <= 90 &&
+    Number.isFinite(temple.lng) && temple.lng >= -180 && temple.lng <= 180 &&
+    text(temple.duration) && temple.practical &&
+    ['parking', 'fee', 'hours', 'transit'].every(key => text(temple.practical[key]))
+  ), 'curated temples have unique IDs, valid coordinates, and practical visit information');
+  ok(traditional.length === 991, `traditional temple collection has ${traditional.length}/991 records`);
+  ok(traditional.every((temple, index) =>
+    temple.no === index + 1 && ['sido', 'sgg', 'addr', 'name', 'order'].every(key => text(temple[key]))
+  ), 'traditional records are sequentially numbered and all required fields are present');
 
   const app = createApp({
     secret: SECRET,

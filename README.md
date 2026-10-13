@@ -10,6 +10,14 @@ python3 -m http.server 8642      # 또는: npx serve -l 8642 .
 ```
 GPS 인증은 브라우저 보안상 `localhost` 또는 HTTPS에서만 동작합니다. 지도 타일(OpenStreetMap)은 인터넷 연결이 필요합니다.
 
+## 검증·GitHub 동기화
+
+- GitHub Actions의 `.github/workflows/ci.yml`은 `main` 푸시와 `main` 대상 Pull Request에서 Node.js 22로 `npm ci`, `npm test`, 콘텐츠·사찰 데이터 검사, API 스모크 테스트, SEO 정적 페이지 빌드를 실행합니다. 이 워크플로우는 읽기 전용 권한만 사용하며 배포 자격 증명은 필요하지 않습니다.
+- 로컬에서 전체 검증: `npm run verify` (단위/통합 테스트 → 스토리·전설·풍수 콘텐츠 검사 → 큐레이션/전통사찰 991건·API 스모크 검사 → `npm run build`). 개별 명령은 `npm test`, `npm run test:content`, `npm run test:temples`, `npm run build`입니다.
+- 선택적 GitHub 푸시 도구: 실제 PAT는 저장소 루트의 무시된 `.env.local`에 `GITHUB_REPO`, `GITHUB_BRANCH`(기본 `main`), `GITHUB_TOKEN`으로 설정하고 `npm run push`를 실행합니다. 커밋 메시지는 `node tools/git-push.js "원하는 커밋 메시지"`처럼 지정할 수 있습니다. 토큰을 채팅·커밋 메시지에 붙여 넣지 마세요.
+- 푸시 도구는 토큰을 Git 원격 URL이나 `.git/config`에 저장하지 않고, Git 네트워크 명령의 일회성 Authorization 설정으로만 전달합니다. `.git`이 없으면 초기화하고 원격 브랜치를 가져와 작업 파일을 보존한 채 기준 인덱스를 복구합니다. 원격 변경은 리베이스하며 충돌 시 푸시하지 않고 중단합니다. `.env`·`.env.local`이 추적되거나 무시되지 않은 경우에도 안전을 위해 중단합니다.
+- PAT는 대상 저장소만 허용하는 Fine-grained token으로 만들고, `Contents: Read and write` 권한만 부여하는 방식을 권장합니다. `.env.local`은 Git 추적 대상이 아닙니다 (`.env.example`만 빈 템플릿으로 추적).
+
 ## 구성
 - `index.html` — 앱 셸, 하단 탭(홈/탐색/지도/순례/수첩)·본문 바로가기 링크, 큰글씨 토글
 - `css/style.css` — 따뜻한 한지 톤 **모바일 우선 반응형 시스템**(브레이크포인트 560·760·1120·1440·1760 + 가로모드·초소형 폰), `body.big` 큰 글씨·간편 모드
@@ -38,7 +46,7 @@ GPS 인증은 브라우저 보안상 `localhost` 또는 HTTPS에서만 동작합
 - `docs/paid-success-playbook.md` — 유료·상업 성공 플레이북(2026-10): 성공 유료앱 10개 해부, 2026 실측 벤치마크, 전환·리텐션·유입·수익 구조 추가 제안 15개(우선순위·공수·근거), 90일 실행 로드맵, KPI 대시보드
 - `docs/scripture-content.md` — 불경(경전) 콘텐츠 검토(2026-10): 시장 근거, 유형별 품질 분석, 저작권·번역·음원 조건, 무료 미끼 + 유료 상품 설계, 로드맵
 - `docs/responsive-layout.md` — 화면(모바일·태블릿·웹)별 구성 배치 설계: 브레이크포인트 표, 셸 그리드 구조, 유동 타이포·여백 토큰, 지도·모달·SEO 페이지 대응, 알려진 한계
-- `tools/test-content.js` — 심화 스토리·보상 광고·콘텐츠 상점·순례 리포트 테스트, `tools/test-plus.js` — 플러스(유료화 데모)·기도처 테마 테스트, `tools/smoke-test.js` — Playwright 스모크 테스트/스크린샷, `tools/geocode.py` — 좌표 조회 스크립트
+- `tools/content-smoke.js` — 스토리·전설·풍수·기도 콘텐츠 정합성 검사, `tools/temple-smoke.js` — 큐레이션·전통사찰 991건 및 API 스모크 검사. `tools/test-content.js`·`tools/test-plus.js`·`tools/smoke-test.js`는 Playwright 브라우저 테스트/스크린샷용, `tools/geocode.py`는 좌표 조회 스크립트
 
 ## 데이터 원칙
 - 유튜브 등 외부 영상은 앱에 연결하지 않음 — 사찰 상세·추천 코스의 영상 링크·색인과 수집 도구는 2026-10 제거
