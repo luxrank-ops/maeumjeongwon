@@ -104,6 +104,16 @@
   const KEY = 'maeumjeongwon.v1';
   const $view = document.getElementById('view');
 
+  // SVG <text> 는 CSS 변수를 못 읽는다 — 세리프(문서 체)가 없는 기기용 폴백까지 문자열로 들고 간다.
+  const DISPLAY_FONT = 'NanumMyeongjo,Nanum Myeongjo,"Noto Serif KR","Noto Serif CJK KR",AppleMyungjo,Batang,serif';
+  /* ---------- 아이콘 ----------
+   * 화면의 '구조'(탭·버튼·상태)를 나타내는 그림은 이모지를 쓰지 않는다 — OS마다 크기가 다르고
+   * 스크린리더는 글자로 읽는다. index.html 의 <symbol id="i-…"> 스프라이트를 참조한다.
+   * 콘텐츠(기분·날씨·계절)의 이모지는 그대로 둔다 — 그곳에서는 이모지가 '내용'이다. */
+  function ic(name, cls) {
+    return `<svg class="ic${cls ? ' ' + cls : ''}" aria-hidden="true" focusable="false"><use href="#i-${name}"/></svg>`;
+  }
+
   // ---------- 상태 ----------
   const SESS_KEY = 'maeumjeongwon.sess.v1';
   const ENT_KEY = 'maeumjeongwon.ent.v1';
@@ -531,7 +541,7 @@
   function lockBlock(feat, previewHtml) {
     const f = FEAT[feat] || FEAT.general;
     return `<div class="locked"><div class="preview">${previewHtml || ''}</div>
-      <div class="lockbar"><span>🔒 <b>${f.t}</b>는 플러스에서 이어서 볼 수 있어요</span><button class="btn small" data-act="paywall" data-feat="${feat}">자세히 보기</button></div></div>`;
+      <div class="lockbar"><span>${ic('lock')} <b>${f.t}</b>는 플러스에서 이어서 볼 수 있어요</span><button class="btn small ghost" data-act="paywall" data-feat="${feat}">자세히 보기</button></div></div>`;
   }
   const LEGAL = `<ul class="legal" style="padding-left:22px">
       <li>🧪 <b>데모 화면</b>이에요. 지금은 실제 결제가 일어나지 않아요.</li>
@@ -543,8 +553,8 @@
   function planCards() {
     const main = ['monthly', 'yearly'].map(k => [k, PLANS[k]]);
     const extra = ['webYearly', 'lifetime'].map(k => [k, PLANS[k]]);
-    return `<div class="plans">${main.map(([k, p]) => `<button class="plan ${S.plan === k ? 'on' : ''}" data-act="plan" data-plan="${k}">${p.best ? `<span class="best">${p.best}</span>` : ''}<div class="sub">${p.name}</div><div class="price">${p.price}</div><div class="sub" style="font-size:.78em">${p.sub}</div></button>`).join('')}</div>
-      <div class="plans" style="margin-top:8px">${extra.map(([k, p]) => `<button class="plan ${S.plan === k ? 'on' : ''}" data-act="plan" data-plan="${k}">${p.best ? `<span class="best">${p.best}</span>` : ''}${p.badge === 'web' ? '<span class="tag">💳 웹 결제</span> ' : p.badge === 'lifetime' ? '<span class="tag">🎁 영구</span> ' : ''}<div class="sub">${p.name}</div><div class="price">${p.price}</div><div class="sub" style="font-size:.78em">${p.sub}</div></button>`).join('')}</div>`;
+    return `<div class="plans">${main.map(([k, p]) => `<button class="plan ${S.plan === k ? 'on' : ''}" data-act="plan" data-plan="${k}">${p.best ? `<span class="best">${p.best}</span>` : ''}<div class="sub">${p.name}</div><div class="price">${p.price}</div><div class="sub plan-sub">${p.sub}</div></button>`).join('')}</div>
+      <div class="plans plans-extra">${extra.map(([k, p]) => `<button class="plan ${S.plan === k ? 'on' : ''}" data-act="plan" data-plan="${k}">${p.best ? `<span class="best">${p.best}</span>` : ''}${p.badge === 'web' ? '<span class="tag">웹 결제</span> ' : p.badge === 'lifetime' ? '<span class="tag">평생</span> ' : ''}<div class="sub">${p.name}</div><div class="price">${p.price}</div><div class="sub plan-sub">${p.sub}</div></button>`).join('')}</div>`;
   }
   function openPaywall(feat) {
     MJAnalytics.track('paywall_view', { feature: feat || 'general' });
@@ -566,8 +576,8 @@
     const ps = plusState();
     const status = ps.on ? (ps.trial ? `<div class="statusbar trial">🧪 데모 무료 체험 중 · <b>${ps.left}일</b> 남음 (${PLANS[ps.plan || 'yearly'].price} 선택). 체험이 끝나도 자동 결제되지 않아요.</div>` : `<div class="statusbar">🧪 데모 플러스 이용 중 (${PLANS[ps.plan || 'yearly'].price})</div>`)
       : (ps.expired ? '<div class="statusbar trial">체험이 끝났어요. 동의 없이 결제되지 않았어요.</div>' : '');
-    const cell = v => v === true ? '✅' : v === false ? '—' : `<span class="sub">${esc(v)}</span>`;
-    return `<h1>마음정원사 : 절로가 플러스 <span class="demo-ribbon">데모 · 실제 결제 없음</span></h1>
+    const cell = v => v === true ? `<span class="yes">${ic('check')}<span class="sr">포함</span></span>` : v === false ? `<span class="no">—</span>` : `<span class="sub">${esc(v)}</span>`;
+    return `<div class="screen-head"><h1>마음정원사 : 절로가 플러스 <span class="demo-ribbon">데모 · 실제 결제 없음</span></h1><p class="sub">순례·지도·스탬프·기도 안내는 언제나 무료예요. 플러스는 이 앱이 직접 만드는 이야기와 여행 도구에 씁니다.</p></div>
     ${status}
     <section class="card hero" style="border-left:4px solid var(--gold)">
       <div class="row between">
@@ -599,8 +609,8 @@
   // ---------- 콘텐츠 상점 (데모 · 실제 결제 없음) ----------
   function viewStore() {
     const kinds = [...new Set(STORE.map(x => x.kind))];
-    return `<h1>콘텐츠 상점 <span class="demo-ribbon">데모 · 실제 결제 없음</span></h1>
-      <p class="sub">이 앱이 직접 만든 디지털 콘텐츠만 팔아요. 1회 결제이고 자동 갱신이 없어요.</p>
+    return `<div class="screen-head"><h1>콘텐츠 상점 <span class="demo-ribbon">데모 · 실제 결제 없음</span></h1>
+      <p class="sub">이 앱이 직접 만든 디지털 콘텐츠만 팔아요. 1회 결제이고 자동 갱신이 없어요.</p></div>
       ${kinds.map(k => `<section class="card"><h2>${esc(k)}</h2><div class="tlist">${STORE.filter(x => x.kind === k).map(storeRow).join('')}</div></section>`).join('')}
       <section class="card"><h2>구매 전 꼭 읽어 주세요</h2><ul class="legal" style="padding-left:20px">
         <li>🧪 데모라서 누르면 바로 '보유'로 표시돼요. 실제 결제는 일어나지 않아요.</li>
@@ -626,7 +636,7 @@
   };
   const storyOpen = st => isPlus() || !!adUnlocked(st.id) || !!(STORY_CACHE[st.id] && STORY_CACHE[st.id].unlocked);
   function chapterHtml(c) {
-    return `<section class="card ${c.legend ? 'legend' : ''}">${c.legend ? '<span class="lbl">전해지는 이야기</span>' : ''}<h2 style="margin-top:${c.legend ? '8px' : '0'}">${esc(c.h)}</h2>${c.body.map(x => `<p>${esc(x)}</p>`).join('')}</section>`;
+    return `<section class="card chapter ${c.legend ? 'legend' : ''}">${c.legend ? `<span class="lbl">${ic('quote')} 전해지는 이야기</span>` : ''}<h2>${esc(c.h)}</h2>${c.body.map(x => `<p>${esc(x)}</p>`).join('')}</section>`;
   }
   // 잠긴 장이 포함된 전체 본문은 서버가 허용할 때만 내려온다. 여기서는 요청만 한다.
   function ensureStory(id) {
@@ -649,14 +659,18 @@
     const chapters = (open && full && full.chapters) ? full.chapters : (open && rawFull ? rawFull.chapters : st.chapters);
     const t = byId[st.tid], adUntil = adUnlocked(st.id), adOn = !isPlus() && !!adUntil;
     const left = adOn ? Math.max(1, Math.round((adUntil - Date.now()) / 3600000)) : 0;
-    return `<a href="javascript:history.back()" class="sub" style="text-decoration:none">← 뒤로</a>
-      <section class="card hero" style="margin-top:8px"><div class="sub">📖 마음정원사 : 절로가 심화 스토리 · ${esc(st.series)} ${st.ep}편 · 약 ${st.minutes}분</div>
-        <h1 style="margin:6px 0">${esc(st.title)}</h1><p style="margin:0">${esc(st.hook)}</p>
-        <div class="row wrap" style="margin-top:8px;gap:6px">
-          <button class="btn ghost small" data-act="docent-story" data-id="${st.id}">🎧 이야기 오디오 듣기</button>
-          ${t ? `<a class="btn ghost small" style="text-decoration:none" href="#/temple/${t.id}">${esc(t.name)} 상세 보기 →</a>` : ''}
+    return `<a href="javascript:history.back()" class="backlink">${ic('back')} 뒤로</a>
+      <section class="card hero story-head">
+        <span class="section-kicker">${ic('book')} 심화 스토리 · ${esc(st.series)} ${st.ep}편</span>
+        <h1>${esc(st.title)}</h1>
+        <p class="lead">${esc(st.hook)}</p>
+        <div class="tagrow"><span class="tag">${ic('clock')} 약 ${st.minutes}분</span>${t ? `<span class="tag">${esc(t.name)}</span>` : ''}${isPlus() ? `<span class="tag ok">${ic('check')} 전체 열람 중</span>` : `<span class="tag lock">${ic('lock')} 첫 장 무료</span>`}</div>
+        <div class="btn-group">
+          <button class="btn ghost small" data-act="docent-story" data-id="${st.id}">${ic('headphones')} 이야기 듣기</button>
+          ${t ? `<a class="btn ghost small" style="text-decoration:none" href="#/temple/${t.id}">${esc(t.name)} 상세${ic('chevron')}</a>` : ''}
         </div>
-        ${adOn ? `<p class="statusbar trial" style="margin:8px 0 0">📺 광고 보상으로 열림 · 약 ${left}시간 남음</p>` : ''}</section>
+        ${adOn ? `<p class="statusbar trial">${ic('info')} 광고 보상으로 열림 · 약 ${left}시간 남음</p>` : ''}
+      </section>
       ${open ? chapters.map(chapterHtml).join('') : chapterHtml(st.chapters[0]) + storyLock(st)}
       <section class="card"><h2>이 글은 이렇게 만들었어요</h2><p class="sub">공개된 역사 기록·백과사전의 <b>사실</b>을 바탕으로 이 앱이 직접 쓴 글이에요. 다른 글·영상의 문장을 옮기지 않았고, '전해지는 이야기' 표시가 있는 부분은 역사적 사실과 다를 수 있어요. 출시 전 전문가 감수를 받을 예정이에요.</p>
         <div class="src">참고: ${st.sources.map(x => `<a href="${x.u}" target="_blank" rel="noopener">${esc(x.t)}</a>`).join(' · ')}</div></section>
@@ -667,14 +681,16 @@
     const total = st.totalChapters || (RAW_STORIES.find(x => x.id === st.id) || { chapters: [] }).chapters.length || 2;
     const rest = Math.max(1, total - 1), n = adLeft();
     return `<div class="locked"><div class="preview"><b>${esc(nxt.h)}</b><br>${esc((nxt.body && nxt.body[0]) || '')}</div>
-      <div style="margin-top:8px"><p style="margin:0 0 8px">🔒 나머지 <b>${rest}개 장</b>은 플러스에서 이어서 읽을 수 있어요.</p>
-      <div class="grid2"><button class="btn ghost" data-act="ad" data-id="${st.id}" ${n > 0 ? '' : 'disabled'}>📺 광고 보고 24시간 열기<br><span class="sub" style="font-size:.8em">${n > 0 ? `오늘 ${n}회 남음 · 데모` : '오늘은 모두 사용했어요'}</span></button>
-      <button class="btn" data-act="paywall" data-feat="story">플러스 알아보기<br><span style="font-size:.8em;opacity:.85">7일 무료 체험</span></button></div></div></div>`;
+      <div style="margin-top:8px"><p class="lock-note">${ic('lock')} 나머지 <b>${rest}개 장</b>은 플러스에서 이어서 읽을 수 있어요.</p>
+      <div class="btn-group lock-opts">
+        <button class="btn ghost" data-act="ad" data-id="${st.id}" ${n > 0 ? '' : 'disabled'}>${ic('play')} 광고 보고 24시간<span class="sub">${n > 0 ? `오늘 ${n}회 남음 · 데모` : '오늘은 모두 사용했어요'}</span></button>
+        <button class="btn" data-act="paywall" data-feat="story">플러스 알아보기<span class="sub">7일 무료 체험</span></button>
+      </div></div></div>`;
   }
   function openAd(id) {
     if (adLeft() <= 0) { toast('오늘 볼 수 있는 보상 광고를 모두 봤어요. 내일 다시 열려요.'); return; }
     openModal(`<div class="sheet" style="text-align:center"><div class="row between"><b>보상형 광고</b><span class="demo-ribbon">데모 · 실제 광고 없음</span></div>
-      <div class="adbox" id="adbox">광고 자리<br><span class="sub">출시 때 이 자리에 짧은 영상 광고(약 15~30초)가 나와요.<br>사찰·기도 화면 안에는 광고를 넣지 않아요.</span><div class="adcount" id="adcount">5</div></div>
+      <div class="adbox" id="adbox">광고 자리<span class="sub">출시 때 이 자리에 짧은 영상 광고(약 15~30초)가 나와요.<br>사찰·기도 화면 안에는 광고를 넣지 않아요.</span><div class="adcount" id="adcount">5</div></div>
       <div class="grid2" style="margin-top:10px"><button class="btn ghost" data-act="close">닫기 (보상 없음)</button><button class="btn" id="adreward" data-act="ad-reward" data-id="${esc(id)}" disabled>보상 받기</button></div>
       <p class="sub" style="font-size:.8em;margin:8px 0 0">하루 최대 ${AD_DAILY}회 · 광고는 원할 때만 봐요 · 자동 재생·전면 광고 없음</p></div>`);
     let n = 5; clearInterval(openAd._t);
@@ -760,8 +776,8 @@
         <p class="sub" style="margin:4px 0 0">${log.length ? `${log.length}번 기분을 골랐어요: ${Object.entries(cntm).map(([k, n]) => MOODS[k].icon + n).join(' ')}` : '아직 기록이 적어서 오늘 고른 기분으로 만들었어요.'}</p></section>
       <section class="card"><h2>이번 주 걷기 루틴</h2><ol style="padding-left:20px;margin:0"><li>${esc(m.line)}</li><li>${esc(MIND_LINES[seed % MIND_LINES.length])}</li><li>${esc(MIND_LINES[(seed + 2) % MIND_LINES.length])}</li></ol></section>
       <section class="card"><h2>지금 마음에 어울리는 사찰 3곳</h2><div class="tlist">${picks.map(t => templeItem(t)).join('')}</div></section>
-      <section class="card legend"><span class="lbl">오늘의 한 문장</span><p style="margin:8px 0 0">${esc(MIND_LINES[(seed + 4) % MIND_LINES.length])}</p></section>`;
-    return `<a href="#/home" class="sub" style="text-decoration:none">← 홈</a><h1>🔮 마음 처방전 심화 리포트</h1>
+      <section class="card legend"><span class="lbl">${ic('quote')} 오늘의 한 문장</span><p style="margin:8px 0 0">${esc(MIND_LINES[(seed + 4) % MIND_LINES.length])}</p></section>`;
+    return `<a href="#/home" class="backlink">${ic('back')} 홈</a><div class="screen-head"><h1>마음 처방전 심화 리포트</h1></div>
       <p class="notice">재미로 보는 읽을거리예요. 미래를 예측하거나 효험을 약속하지 않으며, 의학적·심리 상담을 대신하지 않아요. 마음이 많이 힘들면 전문가와 이야기해 보세요.</p>
       ${own ? body : lockBlock('general', body.replace(/<section/g, '<div').replace(/<\/section>/g, '</div>')) + `<div class="row" style="margin-top:8px"><button class="btn small" data-act="buy" data-id="reading-mind">단품 2,900원 (데모)</button></div>`}`;
   }
@@ -817,149 +833,195 @@
   // ---------- 공통 렌더 조각 ----------
   function templeItem(t, extra) {
     const v = visited().has(t.id);
-    return `<a class="titem" href="#/temple/${t.id}"><div class="seal ${v ? '' : 'off'}">${sealChar(t)}</div>
-      <div class="meta"><b>${esc(t.name)} ${v ? '<span class="tag ok">방문</span>' : ''}</b>
+    const tags = t.lists.map(l => `<span class="tag">${LL[l]}</span>`).join('') + t.themes.slice(0, 2).map(th => `<span class="tag v">${esc(THEMES[th].name)}</span>`).join('');
+    return `<a class="titem ${v ? 'is-visited' : ''}" href="#/temple/${t.id}"><div class="seal ${v ? '' : 'off'}" aria-hidden="true">${sealChar(t)}</div>
+      <div class="meta"><b>${esc(t.name)}${v ? ` <span class="tag ok">${ic('check')} 방문</span>` : ''}</b>
       <div class="sub">${esc(t.sido)} ${esc(t.sgg)} · ${esc(t.order)}${extra ? ' · ' + extra : ''}</div>
-      <div class="simple-hide">${t.lists.map(l => `<span class="tag">${LL[l]}</span>`).join('')}${t.themes.slice(0, 2).map(th => `<span class="tag">${THEMES[th].icon} ${THEMES[th].name}</span>`).join('')}</div></div></a>`;
+      ${tags ? `<div class="tags simple-hide">${tags}</div>` : ''}</div></a>`;
   }
   function beadSVG(n, size) {
     size = size || 220; const c = size / 2, R = size / 2 - 10, out = [];
     for (let i = 0; i < 108; i++) { const a = (i / 108) * Math.PI * 2 - Math.PI / 2; const x = c + R * Math.cos(a), y = c + R * Math.sin(a); out.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(size / 70).toFixed(1)}" fill="${i < n ? (S.skin === 'maple' ? ['#c2410c', '#d97706', '#b91c1c'][i % 3] : '#8a5a2b') : '#e3d8c4'}" stroke="${i < n ? (S.skin === 'maple' ? '#7c2d12' : '#5e3b19') : '#d4c7ae'}" stroke-width="0.8"/>`); }
     return `<svg class="beads" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="디지털 염주 ${n}/108">${out.join('')}
-      <text x="${c}" y="${c - 4}" text-anchor="middle" font-size="${size / 7}" font-family="Noto Serif CJK KR,serif" fill="#2f2a24">${n}</text>
-      <text x="${c}" y="${c + size / 9}" text-anchor="middle" font-size="${size / 16}" fill="#7a6f62">/ 108 알</text></svg>`;
+      <text x="${c}" y="${c - 4}" text-anchor="middle" font-size="${size / 7}" font-family="${DISPLAY_FONT}" fill="#1c2621">${n}</text>
+      <text x="${c}" y="${c + size / 9}" text-anchor="middle" font-size="${size / 16}" fill="#5c6a63">/ 108 알</text></svg>`;
   }
 
   // ---------- 화면: 홈 ----------
   function consentCard() {
     if (!MJAnalytics.shouldPrompt()) return '';
-    return `<section class="card simple-hide" id="consentCard">
-      <div class="row between"><b>📊 서비스 개선을 위한 익명 통계</b><span class="tag">선택</span></div>
-      <p class="sub" style="margin:6px 0">어떤 사찰과 이야기를 많이 보는지 익명으로 집계해요. 기도 내용·수첩 글·정밀 위치 좌표는 절대 수집하지 않아요.</p>
-      <div class="grid2"><button class="btn ghost small" data-act="consent-deny">거부</button><button class="btn small" data-act="consent-allow">허용</button></div>
+    return `<section class="card consent" id="consentCard">
+      <div class="consent-row">
+        <span class="tool-ic">${ic('info')}</span>
+        <p><b>어떤 사찰을 많이 보는지, 익명으로만</b> 알려면 허용해 주세요. 기도 내용·수첩 글·정밀 위치는 모으지 않고, 거부해도 모든 기능을 그대로 씁니다.</p>
+      </div>
+      <div class="consent-actions">
+        <button class="btn text small" data-act="consent-deny">거부</button>
+        <button class="btn small" data-act="consent-allow">허용</button>
+      </div>
     </section>`;
   }
   function viewHome() {
     const v = visited(), g = gradeInfo(v.size);
     const mi = S.moodIdx || 0; const t = prescribe(mi, S.shift || 0);
     const near = MISSIONS.filter(m => m.ids).map(m => ({ m, p: missionProgress(m) })).filter(x => x.p.done < x.p.total).sort((a, b) => (a.p.total - a.p.done) - (b.p.total - b.p.done))[0];
-    const top = ['bulguksa', 'naksansa', 'tongdosa'].map(id => byId[id]);
-    const season = (window.MJ_FEATURES && window.MJ_FEATURES.Weather) ? window.MJ_FEATURES.Weather.getCurrentSeason() : { name: '가을 (단풍)', icon: '🍁', advice: '단풍이 물든 고즈넉한 산사를 걸어보세요.', templeIds: ['bulguksa', 'baegyangsa', 'naesosa'] };
+    const popular = ['bulguksa', 'naksansa', 'tongdosa', 'haeinsa', 'songgwangsa'].map(id => byId[id]).filter(Boolean);
+    const season = (window.MJ_FEATURES && window.MJ_FEATURES.Weather) ? window.MJ_FEATURES.Weather.getCurrentSeason() : { name: '가을', advice: '단풍이 물든 고즈넉한 산사를 걸어보세요.', templeIds: ['bulguksa', 'baegyangsa', 'naesosa'] };
     const seasonTemples = (season.templeIds || []).map(id => byId[id]).filter(Boolean);
+    const picks = seasonTemples.concat(popular.filter(x => !seasonTemples.some(s => s.id === x.id))).slice(0, 6);
+    const tripN = (S.trips || []).length;
 
-    /* 배치 원칙: ① 오늘 할 일(리추얼·처방전) ② 지금 가기 좋은 곳 ③ 계획 도구 ④ 읽을거리·상점.
-     * 상업 요소(플러스·상점·스토리)는 아래쪽에 모아 두어 순례 흐름을 끊지 않는다. */
+    /* 배치 원칙 (2026-10 디자인 리뷰)
+     * 이 앱이 첫 화면에서 시켜야 할 일은 하나다 — '마음을 고르고, 그 사찰로 향한다'.
+     * 그래서 ① 오늘 ② 마음 처방전(주 행동) ③ 매일의 리추얼 ④ 내 순례(결과) ⑤ 지금 가기 좋은 곳
+     * ⑥ 여행 계획 ⑦ 쉬는 도구 ⑧ 읽을거리·상점 순. 등급·염주·상점·플러스는 1등석이 아니라
+     * 결과와 부수 요소 자리에 둔다. 상업 요소는 맨 아래 한 장으로 모아 순례 흐름을 끊지 않는다. */
     updateStreak();
     const done = ritualDoneToday(), verse = getDailyVerse(), streak = S.streak || 0;
 
-    const homeIntro = `<header class="home-intro">
-      <div class="home-intro-meta"><span class="eyebrow">MAEUM JOURNEY</span><span class="home-date">${today().replace(/-/g, '.')} · 오늘의 여정</span></div>
-      <h1>오늘도, 마음을 고르는 시간</h1>
-      <p>걸음을 기록하고 고요한 이야기를 만나는<br class="mobile-only"> 나만의 사찰 순례 공간</p>
+    const todayHead = `<header class="today">
+      <div class="today-date"><span>${today().replace(/-/g, '.')} · ${greetPart()}</span><span class="state ${done ? 'ok' : ''}"><i class="dot"></i>${done ? '오늘 리추얼 완료' : '오늘 남긴 한 가지'}</span></div>
+      <h1>오늘, 마음은<br class="mobile-only"> 어디에 놓을까요</h1>
+      <p>기분을 고르면 어울리는 사찰 이야기와 걷는 순례길을 골라 드려요.</p>
     </header>`;
 
-    const heroCard = `<section class="card hero home-hero">
-      <div class="hero-orb" aria-hidden="true"></div>
-      <div class="hero-topline"><span class="eyebrow">MY JOURNEY · 순례 기록</span><span class="hero-status"><i></i> 오늘도 이어가는 중</span></div>
-      <div class="home-hero-main">
-        <div><div class="hero-label">${g.cur ? '현재 등급' : '순례를 시작해 보세요'}</div><div class="grade">${g.cur ? g.cur.name : '첫걸음 전'}</div>
-          <p class="hero-copy">작은 걸음이 모여<br><b>나만의 순례 지도</b>가 돼요.</p></div>
-        <div class="hero-beads"><span class="hero-beads-label">DIGITAL MALA</span><strong>${beads()}<small>/108</small></strong><span>염주</span></div>
+    const moodCard = `<section class="card mood-card">
+      <div class="section-heading">
+        <div><span class="section-kicker">${ic('lotus')} 마음 체크인</span><h2>오늘의 마음 처방전</h2></div>
+        <a class="text-link" href="#/mind">마음 리포트${ic('chevron')}</a>
       </div>
-      <div class="hero-progress-head"><b>도감 ${v.size}/100</b><span>${g.next ? `다음 ${g.left}곳이면 '${g.next.name}' 등급!` : '회향 완성 🙏'}</span></div>
-      <div class="progress hero-progress"><i style="width:${Math.min(100, v.size)}%"></i></div>
-      ${near ? `<p class="hero-mission"><span>${near.m.icon}</span> ${near.m.name.replace(/ 완주| 순례/, '')} 완주까지 <b>${near.p.total - near.p.done}곳</b> 남았어요</p>` : ''}
-      <div class="hero-actions">
-        <button class="btn small" data-act="cert-open">📜 디지털 완주증 발급</button>
-        <a class="btn ghost small" style="text-decoration:none" href="#/missions">🏅 순례 현황 보기</a>
+      <div class="moods" role="group" aria-label="오늘의 마음 고르기">
+        ${MOODS.map((m, i) => `<button class="mood ${i === mi ? 'on' : ''}" data-mood="${i}" aria-pressed="${i === mi ? 'true' : 'false'}"><span aria-hidden="true">${m.icon}</span><b>${esc(m.label)}</b></button>`).join('')}
       </div>
-    </section>`;
-
-    const onboard = !S.onboarded ? `<section class="card onboard-hint"><div class="row between"><h2 style="margin:0">🪷 마음정원에 오신 것을 환영해요</h2></div><p class="sub" style="margin:6px 0">관심 분야를 알려주시면 오늘 가기 좋은 사찰을 추천해 드려요.</p><button class="btn" data-act="start-onboarding">추천 받기 (3문항)</button></section>` : '';
-
-    const ritualCard = `<section class="card home-ritual">
-      <div class="section-heading"><div><span class="section-label">DAILY RITUAL · 매일의 루틴</span><h2>${streakMilestoneHTML(streak)} 오늘의 리추얼</h2></div>${streak > 0 ? `<span class="tag ok">🔥 ${streak}일 연속</span>` : '<span class="tag">시작해 보세요</span>'}</div>
-      <div class="card ritual-quote legend">
-        <span class="lbl">📖 오늘의 한 구절 · ${esc(verse.src)}</span>
-        <p>"${esc(verse.text)}"</p>
-      </div>
-      <div class="grid2 ritual-actions">
-        <button class="btn ${done ? 'ghost' : ''}" data-act="daily-ritual" ${done ? 'disabled' : ''}>${done ? '✅ 오늘 완료' : '📿 108 염주·기도'}</button>
-        <button class="btn ghost" data-act="daily-breathing">🧘 3분 호흡</button>
-      </div>
-      ${S.streakFreezes > 0 ? `<p class="sub ritual-foot">프리즈 ${S.streakFreezes}개 보유 · 하루 쉬어도 스트릭을 지켜드려요</p>` : ''}
-    </section>`;
-
-    const moodCard = `<section class="card home-mood">
-      <div class="section-heading"><div><span class="section-label">MOOD CHECK-IN · 마음 체크인</span><h2>오늘의 마음 처방전</h2></div><a class="text-link" href="#/mind">심화 리포트 <span>↗</span></a></div>
-      <p class="sub mood-intro">지금의 마음과 가장 가까운 상태를 골라 주세요.<br class="mobile-only"> 어울리는 사찰과 이야기를 골라 드려요.</p>
-      <div class="moods">${MOODS.map((m, i) => `<button class="mood ${i === mi ? 'on' : ''}" data-mood="${i}"><span>${m.icon}</span><b>${m.label}</b><i></i></button>`).join('')}</div>
-      <div class="card legend prescription-card">
-        <div class="row between"><span class="lbl">오늘의 처방</span><button class="btn ghost small" data-act="reshuffle">다른 곳 추천</button></div>
-        <p class="prescription-copy">${esc(MOODS[mi].line)}</p>
-        <div class="prescription-place"><div class="place-marker">${t.name.charAt(0)}</div><div><h3>${esc(t.name)} <span class="sub">${esc(t.sido)} ${esc(t.sgg)}</span></h3>${t.legend ? `<p class="sub">📖 전해지는 이야기 — 「${esc(t.legend.title)}」</p>` : ''}</div></div>
-        <a class="btn small" href="#/temple/${t.id}" style="display:inline-block;text-decoration:none;margin-top:10px">이야기 열기 →</a>
+      <div class="prescription">
+        <div class="rx-head"><span class="section-kicker">${ic('quote')} 오늘의 처방</span><button class="btn text small" data-act="reshuffle">${ic('refresh')} 다른 사찰</button></div>
+        <p class="rx-copy">${esc(MOODS[mi].line)}</p>
+        <a class="rx-place" href="#/temple/${t.id}">
+          <span class="seal" aria-hidden="true">${sealChar(t)}</span>
+          <span class="meta"><b>${esc(t.name)}</b><span class="sub">${esc(t.sido)} ${esc(t.sgg)} · ${esc(t.mountain || t.order)}</span></span>
+          ${ic('chevron')}
+        </a>
+        ${t.legend ? `<p class="sub rx-note">${ic('book')} <b>전해지는 이야기</b> 「${esc(t.legend.title)}」</p>` : ''}
+        <div class="rx-actions">
+          <a class="btn" href="#/temple/${t.id}">${ic('book')} 이야기 읽기</a>
+          <button class="btn ghost" data-act="plan-pick" data-id="${t.id}">${ic('calendar')} 순례 계획에 담기</button>
+        </div>
       </div>
     </section>`;
 
-    const seasonCard = `<section class="card home-season">
-      <div class="section-heading"><div><span class="section-label">SEASONAL PICKS · 계절의 추천</span><h2>${season.icon} 지금 가기 좋은 사찰</h2></div><a class="text-link" href="#/explore/theme/autumn">더보기 <span>↗</span></a></div>
-      <p class="sub season-copy">${season.advice}</p>
-      <div class="row wrap season-picks">
-        ${seasonTemples.map(st => `<a class="chip" style="text-decoration:none" href="#/temple/${st.id}"><span class="season-icon">${season.icon}</span><b>${esc(st.name)}</b><span class="sub">${esc(st.sido)} ${esc(st.sgg)}</span><span class="pick-arrow">↗</span></a>`).join('')}
+    const onboard = !S.onboarded ? `<section class="card onboard-hint">
+      <div class="section-heading"><div><span class="section-kicker">${ic('sparkle')} 첫 방문이에요</span><h2>세 가지만 알려 주세요</h2></div></div>
+      <p class="sub">걷는 속도·관심 분야를 고르면 오늘 가기 좋은 사찰을 골라 드려요. 언제든 바꿀 수 있어요.</p>
+      <div class="btn-group"><button class="btn" data-act="start-onboarding">추천 받기 (3문항)</button><a class="btn ghost" style="text-decoration:none" href="#/explore">그냥 둘러보기</a></div>
+    </section>` : '';
+
+    const ritualCard = `<section class="card ritual-card">
+      <div class="section-heading">
+        <div><span class="section-kicker">${ic('wind')} 매일의 리추얼</span><h2>오늘의 한 구절</h2></div>
+        ${streak > 0 ? `<span class="tag ok">${ic('check')} ${streak}일째</span>` : '<span class="tag">이어도 되고, 멈춰도 돼요</span>'}
+      </div>
+      <blockquote class="verse">"${esc(verse.text)}"<span class="verse-src">— ${esc(verse.src)}</span></blockquote>
+      <div class="btn-group">
+        <button class="btn ${done ? 'ghost' : ''}" data-act="daily-ritual" ${done ? 'disabled' : ''}>${done ? ic('check') + ' 오늘 했어요' : ic('lotus') + ' 108 염주·기도'}</button>
+        <button class="btn ghost" data-act="daily-breathing">${ic('circle')} 3분 호흡</button>
+      </div>
+      ${S.streakFreezes > 0 ? `<p class="sub ritual-foot">하루쯤 쉬어도 스트릭은 프리즈 ${S.streakFreezes}개가 지켜 드려요.</p>` : ''}
+    </section>`;
+
+    const pilgrimCard = `<section class="card pilgrim-card">
+      <div class="section-heading">
+        <div><span class="section-kicker">${ic('stamp')} 내 순례</span><h2>${g.cur ? esc(g.cur.name) : '첫 도장을 기다리는 중'}</h2></div>
+        <a class="text-link" href="#/missions">순례 현황${ic('chevron')}</a>
+      </div>
+      <div class="progress ${v.size >= 100 ? 'done' : ''}" role="img" aria-label="도감 ${v.size}곳 / 100곳"><i style="width:${Math.min(100, v.size)}%"></i></div>
+      <dl class="meters">
+        <div class="meter"><dt>도감</dt><dd class="num">${v.size}<small>/100곳</small></dd></div>
+        <div class="meter"><dt>염주</dt><dd class="num">${beads()}<small>/108알</small></dd></div>
+        <div class="meter"><dt>${g.next ? `다음 · ${esc(g.next.name)}` : '회향'}</dt><dd class="num">${g.next ? g.left + '<small>곳</small>' : ic('check')}</dd></div>
+      </dl>
+      ${near ? `<p class="next-mission">${ic('target')} <span><b>${esc(near.m.name.replace(/ 완주| 순례/, ''))}</b>까지 ${near.p.total - near.p.done}곳 남았어요</span></p>` : ''}
+      <div class="btn-group"><button class="btn ghost" data-act="cert-open">${ic('file')} 디지털 완주증</button><a class="btn ghost" href="#/journal" style="text-decoration:none">${ic('pencil')} 발자국 남기기</a></div>
+    </section>`;
+
+    const railCard = `<section class="card rail-card">
+      <div class="section-heading">
+        <div><span class="section-kicker">${ic('leaf')} 지금 가기 좋은 곳</span><h2>${esc(String(season.name).replace(/\s*\(.*\)$/, ''))}</h2></div>
+        <a class="text-link" href="#/explore">사찰 탐색${ic('chevron')}</a>
+      </div>
+      <p class="sub">${esc(season.advice)}</p>
+      <div class="rail">
+        ${picks.map(x => {
+          const got = v.has(x.id);
+          return `<a class="rail-item" href="#/temple/${x.id}">
+            <span class="seal ${got ? '' : 'off'}" aria-hidden="true">${sealChar(x)}</span>
+            <b>${esc(x.name)}</b>
+            <p class="sub">${esc(x.sido)} ${esc(x.sgg)}${x.mountain ? ' · ' + esc(x.mountain) : ''}</p>
+            <span class="rail-foot">${got ? `<span class="tag ok">${ic('check')} 방문</span>` : (x.themes[0] ? `<span class="tag">${esc(THEMES[x.themes[0]].name)}</span>` : '<span class="tag">이야기 있음</span>')}<span class="rail-go">${ic('chevron')}</span></span>
+          </a>`;
+        }).join('')}
+      </div>
+      <div class="theme-row">
+        <span class="theme-row-label">마음으로 고르기</span>
+        <div class="row wrap">${Object.entries(THEMES).slice(0, 5).map(([k, th]) => `<a class="chip" href="#/explore/theme/${k}">${esc(th.name)}</a>`).join('')}</div>
       </div>
     </section>`;
 
-    const plannerCard = `<section class="card home-planner">
-      <div class="section-heading"><div><span class="section-label">TRAVEL PLANNER · 여행 도구</span><h2>사찰 여행 계획 짜기</h2></div><a class="text-link" href="#/planner">전체 보기 <span>↗</span></a></div>
-      <p class="sub">당일치기부터 2박 3일까지 — 사찰 동선·거리·소요시간·준비물을 한눈에 계획해요.</p>
-      <div class="planner-quick"><a class="btn small" style="text-decoration:none" href="#/planner/new"><span>＋</span> 새 여행 계획</a><a class="btn ghost small" style="text-decoration:none" href="#/planner">추천 코스·내 일정 <em>${(S.trips || []).length}</em></a></div>
+    const plannerCard = `<section class="card planner-card">
+      <div class="section-heading">
+        <div><span class="section-kicker">${ic('calendar')} 여행 계획</span><h2>${tripN ? `내 계획 ${tripN}건` : '사찰 순례 코스 짜기'}</h2></div>
+        <a class="text-link" href="#/planner">전체 보기${ic('chevron')}</a>
+      </div>
+      <p class="sub">당일치기부터 1박 2일까지 — 경유 사찰·동선·직선거리·준비물을 한 장으로 정리해요.</p>
+      <div class="btn-group">
+        <a class="btn" href="#/planner/new" style="text-decoration:none">${ic('plus')} 새 계획 짜기</a>
+        <a class="btn ghost" href="#/planner" style="text-decoration:none">${ic('sparkle')} 추천 코스 받기</a>
+      </div>
     </section>`;
 
-    // 명상·AI 상담은 '도구' 한 줄로 묶는다 (예전에는 히어로 버튼 + 큰 카드가 따로 있어 중복이었다)
-    const toolsCard = `<div class="grid2 home-tools">
-      <section class="card tool-card">
-        <div class="tool-icon tool-icon-breathe">◌</div><div><span class="section-label">MINDFUL BREAK</span><h3>마음 쉼터</h3></div>
-        <p class="sub">범종·풍경·목탁·계곡물소리</p><button class="btn small block" data-act="meditation-open">명상 시작 <span>→</span></button>
-      </section>
-      <section class="card tool-card">
-        <div class="tool-icon tool-icon-ai">✦</div><div><span class="section-label">AI GUIDE</span><h3>AI 마음 상담</h3></div>
-        <p class="sub">구절·사찰·참배법 안내</p><button class="btn small block" data-act="ai-counsel">상담 받기 <span>→</span></button>
-      </section>
-    </div>`;
-
-    const themeCard = `<section class="card simple-hide home-themes">
-      <div class="section-heading"><div><span class="section-label">EXPLORE BY FEELING</span><h2>테마로 떠나기</h2></div><a class="text-link" href="#/explore">전체 탐색 <span>↗</span></a></div>
-      <div class="row wrap">${Object.entries(THEMES).map(([k, th]) => `<a class="chip" style="text-decoration:none" href="#/explore/theme/${k}">${th.icon} ${th.name}</a>`).join('')}</div>
+    const toolsCard = `<section class="card tools-card">
+      <div class="tools">
+        <div class="tool">
+          <div class="tool-head"><span class="tool-ic">${ic('wind')}</span><h3>마음 쉼터</h3></div>
+          <p>범종·풍경·목탁·계곡물 소리와 함께 잠깐 멈추기.</p>
+          <button class="btn ghost small" data-act="meditation-open">${ic('play')} 들어보기</button>
+        </div>
+        <div class="tool">
+          <div class="tool-head"><span class="tool-ic">${ic('sparkle')}</span><h3>AI 참배 안내</h3></div>
+          <p>예절·동선·사찰 이야기를 물으면 이 앱의 자료로 답해요.</p>
+          <button class="btn ghost small" data-act="ai-counsel">물어보기${ic('chevron')}</button>
+        </div>
+      </div>
     </section>`;
 
-    const topCard = `<section class="card simple-hide home-popular">
-      <div class="section-heading"><div><span class="section-label">POPULAR TRAILS</span><h2>많이 찾는 사찰</h2></div><span class="sub">예시 데이터 · 실시간 아님</span></div>
-      <div class="tlist">${top.map(x => templeItem(x)).join('')}</div>
+    const story = STORIES[0];
+    const readCard = `<section class="card read-card">
+      <div class="section-heading"><div><span class="section-kicker">${ic('file')} 읽을거리 · 내려받기</span><h2>${story ? '이번 주 심화 스토리' : '이번 주 발자취'}</h2></div><a class="text-link" href="#/store">상점${ic('chevron')}</a></div>
+      <ul class="tool-list">
+        ${story ? `<li><a href="#/story/${story.id}">${ic('book')}<span><b>${esc(story.title)}</b><span class="sub">${esc(byId[story.tid] ? byId[story.tid].name : '')} · 약 ${story.minutes}분</span></span><span class="tail">${isPlus() ? '읽기' : '첫 장 무료'}${ic('chevron')}</span></a></li>` : ''}
+        <li><a href="#/store">${ic('bag')}<span><b>콘텐츠 상점</b><span class="sub">구독 없이 필요한 것만 · 1회 결제 (데모)</span></span><span class="tail">${ic('chevron')}</span></a></li>
+        ${isPlus() ? `<li><a href="#/report">${ic('stamp')}<span><b>나의 순례 리포트</b><span class="sub">이 기기 기록으로만 계산해요</span></span><span class="tail">${ic('chevron')}</span></a></li>`
+          : `<li><a href="#/plus">${ic('sparkle')}<span><b>플러스 · 심화 스토리·오디오·코스</b><span class="sub">7일 무료 체험 (데모 · 자동 결제 없음)</span></span><span class="tail">${ic('chevron')}</span></a></li>`}
+      </ul>
     </section>`;
-
-    const storyCard = STORIES[0] ? `<section class="card legend simple-hide home-story"><div class="row between"><span class="lbl">이번 주 심화 스토리</span>${isPlus() ? '' : '<span class="tag">첫 장 무료</span>'}</div><h3 style="margin:8px 0 4px">${esc(STORIES[0].title)}</h3><p class="sub" style="margin:0">${esc(byId[STORIES[0].tid].name)} · ${esc(STORIES[0].series)} ${STORIES[0].ep}편 · 약 ${STORIES[0].minutes}분</p><a class="btn small" href="#/story/${STORIES[0].id}" style="display:inline-block;text-decoration:none;margin-top:8px">읽기 →</a></section>` : '';
-
-    const storeCard = `<section class="card simple-hide home-store"><div class="section-heading"><div><span class="section-label">DIGITAL STORE</span><h2>콘텐츠 상점</h2></div><a class="text-link" href="#/store">전체 보기 <span>↗</span></a></div><p class="sub" style="margin:4px 0 8px">구독 없이 필요한 것만 · 1회 결제 · 데모</p><div class="row wrap">${STORE.slice(0, 4).map(o => `<a class="chip" style="text-decoration:none" href="${owns(o.id) ? o.go : '#/store'}">${o.icon} ${esc(o.name.split(' (')[0])}</a>`).join('')}</div></section>`;
-
-    const plusBanner = isPlus() ? '' : `<a class="card plusbanner simple-hide" href="#/plus"><span style="font-size:1.6em">✨</span><span><b>마음정원사 : 절로가 플러스</b> <span class="demo-ribbon">데모</span><br><span class="sub">원작 심화 스토리·오디오·코스 플래너·순례 리포트 · 7일 무료 체험</span></span></a>`;
 
     return `
+    ${todayHead}
     ${consentCard()}
-    ${homeIntro}
-    ${heroCard}
     ${onboard}
-    ${ritualCard}
     ${moodCard}
-    ${seasonCard}
+    ${ritualCard}
+    ${pilgrimCard}
+    ${railCard}
     ${plannerCard}
     ${toolsCard}
-    ${themeCard}
-    ${topCard}
-    ${storyCard}
-    ${storeCard}
-    ${plusBanner}
-    <p class="notice">🙏 전설·기도 이야기는 \'전해지는 이야기\'로 소개하며, 효험을 보장하지 않습니다. 무리한 산행·야간 방문은 삼가고 사찰 예절을 지켜 주세요.</p>`;
+    ${readCard}
+    <p class="notice">🙏 전설·기도 이야기는 '전해지는 이야기'로 소개하며, 효험을 보장하지 않습니다. 무리한 산행·야간 방문은 삼가고 사찰 예절을 지켜 주세요.</p>`;
+  }
+
+  // 인사말은 시계(時計)만 본다 — 개인 정보를 읽지 않고도 '지금'을 말해 주는 가장 값싼 단서
+  function greetPart() {
+    const h = new Date().getHours();
+    return h < 5 ? '새벽예불의 시간' : h < 11 ? '아침' : h < 14 ? '낮' : h < 18 ? '오후' : h < 22 ? '저녁' : '밤';
   }
 
   // ---------- 화면: 탐색 ----------
@@ -986,20 +1048,19 @@
       <div class="tlist">${TEMPLES.filter(t => t.sido === cur).map(t => templeItem(t, esc(t.mountain))).join('')}</div>`;
     } else {
       const orders = [...new Set(TRAD.map(r => r.order))].sort();
-      body = `<section class="card hero" style="margin-bottom:10px">
-        <div class="row between"><b>📋 전통사찰 현황 공식 데이터</b><span class="tag ok">총 ${TRAD.length}곳</span></div>
-        <p class="sub" style="margin:4px 0 0">첨부 파일 「전통사찰 현황」(2026.6.1. 현재) 전체 991곳 데이터예요. 사찰을 눌러 상세 주소·종단을 보거나 <b>여행 계획·수첩·방문 인증</b>에 바로 사용할 수 있어요.</p>
+      body = `<section class="card hero data-note">
+        <div class="row between"><span class="section-kicker">${ic('file')} 공식 데이터</span><span class="tag ok">${TRAD.length}곳 수록</span></div>
+        <p class="sub" style="margin:6px 0 0">「전통사찰 현황」(2026.6.1. 현재) 991곳 전체 목록이에요. 사찰을 누르면 상세 주소·종단을 보고, <b>여행 계획·수첩·방문 인증</b>에 바로 쓸 수 있어요.</p>
       </section>
-      <div class="row wrap" style="margin-bottom:6px">
-        <input id="tq" placeholder="사찰명·시군구·주소·종단 검색 (예: 보광사, 강남구, 천태종)" value="${esc(arg || '')}" style="flex:1;min-width:180px" />
+      <div class="searchbar">
+        <span class="search-wrap">${ic('search')}<input id="tq" placeholder="사찰명 · 지역 · 종단 (예: 보광사, 강남구, 천태종)" value="${esc(arg || '')}" aria-label="전통사찰 검색" /></span>
+        <select id="ts" class="filter-sel" aria-label="시·도 필터"><option value="">전체 시·도</option>${SIDO_ORDER.map(s => `<option value="${esc(s)}">${esc(s)} (${TRAD.filter(r => r.sido === s).length})</option>`).join('')}</select>
+        <select id="to" class="filter-sel" aria-label="종단 필터"><option value="">전체 종단</option>${orders.map(o => `<option value="${esc(o)}">${esc(o)} (${TRAD.filter(r => r.order === o).length})</option>`).join('')}</select>
       </div>
-      <div class="grid2" style="margin-bottom:8px">
-        <select id="ts"><option value="">전체 시·도 (${SIDO_ORDER.length})</option>${SIDO_ORDER.map(s => `<option value="${esc(s)}">${esc(s)} (${TRAD.filter(r => r.sido === s).length})</option>`).join('')}</select>
-        <select id="to"><option value="">전체 종단 (${orders.length})</option>${orders.map(o => `<option value="${esc(o)}">${esc(o)} (${TRAD.filter(r => r.order === o).length})</option>`).join('')}</select>
-      </div>
-      <div id="tres" style="margin-top:10px"></div>`;
+      <div id="tres"></div>`;
     }
-    return `<h1>사찰 탐색</h1><div class="tabs">${tabs.map(([k, n]) => `<a class="chip ${k === tab ? 'on' : ''}" style="text-decoration:none" href="#/explore/${k}">${n}</a>`).join('')}</div>${body}`;
+    return `<div class="screen-head"><h1>사찰 탐색</h1><p class="sub"> 수록 ${TEMPLES.length}곳 · 전통사찰 ${TRAD.length}곳 · 이야기 ${STORIES.length}편</p></div>
+      <nav class="seg" aria-label="탐색 방식">${tabs.map(([k, n]) => `<a class="${k === tab ? 'on' : ''}" style="text-decoration:none" href="#/explore/${k}"${k === tab ? ' aria-current="page"' : ''}>${n}</a>`).join('')}</nav>${body}`;
   }
 
   function themeBody(cur) {
@@ -1011,12 +1072,12 @@
       const E = window.PRAYER_ETIQUETTE;
       const criteria = PRAYER_CRITERIA;
       const limitations = PRAYER_LIMITATIONS;
-      return `<section class="card"><h2 style="margin-top:0">🧭 추천 기준</h2>
+      return `<section class="card"><h2 style="margin-top:0">추천 기준</h2>
           <p class="sub">'기도 기운 좋은 곳'을 효험 점수로 매기지 않고, 확인 가능한 기도 전통과 여행 안전·실용정보를 나눠서 안내합니다.</p>
           <ol style="padding-left:20px;margin:6px 0">${criteria.map(x => `<li>${esc(x)}</li>`).join('')}</ol>
           <p class="notice" style="margin:6px 0 0">${limitations.map(esc).join('<br>')}</p>
         </section>
-        <section class="card prayer"><h2 style="margin-top:0">🙏 사찰 참배 예절</h2>
+        <section class="card prayer"><h2 style="margin-top:0">사찰 참배 예절</h2>
           <ul>${E.items.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
           <p class="notice" style="margin:6px 0 0">${esc(E.note)}</p>
           <div class="src">출처: <a href="${E.src.u}" target="_blank" rel="noopener">${esc(E.src.t)}</a></div>
@@ -1045,7 +1106,7 @@
     const sourced = order.map(id => byId[id]).filter(t => t && t.themes.includes(cur));
     const rest = list.filter(t => !order.includes(t.id));
     const E = window.PRAYER_ETIQUETTE;
-    return `<section class="card prayer"><h2 style="margin-top:0">🙏 기도 안내</h2>
+    return `<section class="card prayer"><div class="section-heading"><div><span class="section-kicker">${ic('lotus')} 기도</span><h2>이 사찰에서 기도해 온 것</h2></div></div>
         <p class="sub" style="margin:0 0 6px">어느 기도처든 이것만 지키면 돼요.</p>
         <ul>${E.items.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
         <p class="notice" style="margin:6px 0 0">${esc(E.note)}</p>
@@ -1137,7 +1198,7 @@
     </section>` : '';
 
     return `<a href="#/explore/theme/fengshui" class="sub" style="text-decoration:none">← 풍수 답사 사찰</a>
-      <h1>🧭 ${esc(A.title)}</h1>
+      <div class="screen-head"><h1>${esc(A.title)}</h1></div>
       <p class="sub" style="margin:4px 0 8px">${esc(A.subtitle)} — ${esc(A.intro)}</p>
       <p class="notice">${(A.disclaimer || []).map(esc).join('<br>')}</p>
       ${matrixHtml}
@@ -1175,7 +1236,7 @@
     const atlas = t.fengshuiAtlas;
     const atlasHead = atlas ? `<p style="margin:8px 0 2px"><b>형국</b> · ${esc(atlas.hyeong)}</p>
       <div class="row wrap" style="margin:4px 0 2px">${atlas.power.map(p => `<span class="tag">💡 ${esc(p)}</span>`).join('')}</div>` : '';
-    return `<section class="card legend"><span class="lbl">풍수 이야기 · 전해지는 이야기</span>${atlasHead}<ul style="padding-left:18px;margin:8px 0 0">${shown.map(v => `<li style="margin-bottom:4px">${esc(v)}</li>`).join('')}</ul>${!open && extraCnt > 0 ? lockBlock('fengshui', `<p style="margin:0">추가 풍수 해설 ${extraCnt}편이 더 있어요.</p>`) : ''}
+    return `<section class="card legend"><span class="lbl">${ic('leaf')} 풍수 이야기 · 전해지는 이야기</span>${atlasHead}<ul style="padding-left:18px;margin:8px 0 0">${shown.map(v => `<li style="margin-bottom:4px">${esc(v)}</li>`).join('')}</ul>${!open && extraCnt > 0 ? lockBlock('fengshui', `<p style="margin:0">추가 풍수 해설 ${extraCnt}편이 더 있어요.</p>`) : ''}
       ${atlas ? `<p style="margin:8px 0 0"><a class="sub" href="#/fengshui">🧭 전국 명당 사찰 풍수 대백과에서 권역별 전체 보기 →</a></p>` : ''}
       <p class="sub" style="font-size:.8em">풍수 해석은 개인의 견해이자 전해지는 이야기예요. 효험이나 결과를 보장하지 않아요.</p></section>`;
   }
@@ -1183,28 +1244,29 @@
     const t = resolveTemple(id); if (!t) return `<p>사찰을 찾을 수 없어요.</p>`;
     if (!t.isTradOnly && isPlus() && (!TEMPLE_EXTRAS_CACHE[id] || !TEMPLE_EXTRAS_CACHE[id].unlocked)) ensureTempleExtras(id);
     const vs = S.visits.filter(v => v.tid === t.id);
-    const mapQuery = encodeURIComponent(`${t.addr} ${t.name}`);
     return `
-    <a href="javascript:history.back()" class="sub" style="text-decoration:none">← 뒤로</a>
-    <section class="card hero" style="margin-top:8px">
-      <div class="row between"><div><h1 style="margin:0">${esc(t.name)}</h1><div class="sub">${esc(t.hanja)} · ${esc(t.mountain)}</div></div>
-      <div class="seal ${vs.length ? '' : 'off'}" style="flex-basis:56px;height:56px">${sealChar(t)}</div></div>
-      <div style="margin-top:6px"><span class="tag">${esc(t.order)}</span>${t.tradNo ? `<span class="tag">전통사찰 No.${t.tradNo}</span>` : ''}${t.lists.map(l => `<span class="tag">${LL[l]}</span>`).join('')}${t.themes.map(th => `<span class="tag">${THEMES[th].icon} ${THEMES[th].name}</span>`).join('')}</div>
-      <div id="templeWeatherBox" class="row wrap" style="margin-top:8px"><span class="weather-chip" id="twChip"><span class="wicon">⛅</span> 날씨 조회 중...</span></div>
-      ${vs.length ? `<p class="sub" style="margin:8px 0 0">✅ ${vs.length}회 방문 · 최근 ${fmtDate(vs[vs.length - 1].date)}${vs.some(x => x.method === 'demo') ? ' (데모 포함)' : ''}</p>` : ''}
-      <div class="grid2" style="margin-top:12px">
-        <button class="btn" data-act="gps" data-id="${t.id}">📍 GPS 방문 인증</button>
-        <button class="btn ghost" data-act="demo" data-id="${t.id}">🧪 데모 체크인(테스트)</button>
-        <button class="btn ghost" data-act="nav-hub" data-id="${t.id}">🚗 길찾기·내비게이션</button>
-        <button class="btn ghost" data-act="docent-temple" data-id="${t.id}">🎧 오디오 도슨트 듣기</button>
-        <button class="btn ghost" data-act="ai-counsel" data-id="${t.id}">✨ AI 맞춤 참배 안내</button>
-        <a class="btn ghost" style="text-align:center;text-decoration:none" href="#/journal/new/${t.id}">📔 수첩 쓰기</a>
-        <button class="btn ghost" data-act="plan-pick" data-id="${t.id}">🗓️ 여행 계획에 담기</button>
+    <a href="javascript:history.back()" class="backlink">${ic('back')} 뒤로</a>
+    <section class="card hero temple-head">
+      <div class="temple-head-row">
+        <div class="temple-id">
+          <h1>${esc(t.name)}</h1>
+          <p class="sub">${esc(t.hanja)} · ${esc(t.mountain)}</p>
+        </div>
+        <div class="seal lg ${vs.length ? '' : 'off'}" aria-hidden="true">${sealChar(t)}</div>
       </div>
-      <div class="grid2" style="margin-top:8px"><button class="btn ghost" data-act="offline" data-id="${t.id}">${S.offline.includes(t.id) && isPlus() ? '✅ 오프라인 저장됨' : '⬇ 오프라인 저장' + (isPlus() ? '' : ' 🔒')}</button>
-        <a class="btn ghost" style="text-align:center;text-decoration:none" href="#/map/${t.id}">🗺️ 앱 지도 보기</a></div>
-      <div class="row" style="margin-top:8px">${STORIES.some(x => x.tid === t.id) ? `<a class="btn ghost block" style="text-align:center;text-decoration:none" href="#/story/${STORIES.find(x => x.tid === t.id).id}">📖 심화 스토리 읽기</a>` : `<a class="btn ghost block" style="text-align:center;text-decoration:none" href="#/explore/all">📋 전통사찰 991 전체 목록</a>`}</div>
-      <p class="sub" style="margin:8px 0 0;font-size:.8em">GPS 인증 반경 ${t.radius}m · 하루 1회</p>
+      <div class="tagrow"><span class="tag">${ic('stamp')}${esc(t.order)}</span>${t.tradNo ? `<span class="tag">전통사찰 No.${t.tradNo}</span>` : ''}${t.lists.slice(0, 2).map(l => `<span class="tag">${LL[l]}</span>`).join('')}${t.themes.slice(0, 2).map(th => `<span class="tag v">${esc(THEMES[th].name)}</span>`).join('')}</div>
+      <div id="templeWeatherBox" class="row wrap temple-weather"><span class="weather-chip" id="twChip"><span class="wicon">⛅</span> 날씨 보는 중…</span></div>
+      ${vs.length ? `<p class="visited-line">${ic('check')} <b>${vs.length}회 방문</b> · 최근 ${fmtDate(vs[vs.length - 1].date)}${vs.some(x => x.method === 'demo') ? ' (데모 포함)' : ''} · GPS 반경 ${t.radius}m · 하루 1회</p>` : `<p class="sub visited-line">방문하면 도장·염주 한 알·수첩 자리가 함께 생깁니다. (하루 1회)</p>`}
+      <ul class="tool-list temple-tools">
+        <li><button data-act="docent-temple" data-id="${t.id}">${ic('headphones')}<span><b>오디오 도슨트</b><span class="sub">걸으면서 이야기를 귀로</span></span><span class="tail">듣기${ic('chevron')}</span></button></li>
+        <li><button data-act="ai-counsel" data-id="${t.id}">${ic('sparkle')}<span><b>AI 맞춤 참배 안내</b><span class="sub">예절·동선·궁금한 것을 물으면 자료로 답해요</span></span><span class="tail">${ic('chevron')}</span></button></li>
+        <li><a href="#/journal/new/${t.id}">${ic('pencil')}<span><b>수첩에 남기기</b><span class="sub">날씨·다짐·사진 (이 기기에만)</span></span><span class="tail">${ic('chevron')}</span></a></li>
+        <li><button data-act="plan-pick" data-id="${t.id}">${ic('calendar')}<span><b>여행 계획에 담기</b><span class="sub">경유 사찰·동선·거리</span></span><span class="tail">${ic('chevron')}</span></button></li>
+        <li><a href="#/map/${t.id}">${ic('map')}<span><b>지도에서 보기</b><span class="sub">경내 범위·인근 사찰</span></span><span class="tail">${ic('chevron')}</span></a></li>
+        ${STORIES.some(x => x.tid === t.id) ? `<li><a href="#/story/${STORIES.find(x => x.tid === t.id).id}">${ic('book')}<span><b>심화 스토리</b><span class="sub">이 사찰을 길게 읽는 편</span></span><span class="tail">${isPlus() ? '읽기' : '첫 장 무료'}${ic('chevron')}</span></a></li>` : `<li><a href="#/explore/all">${ic('list')}<span><b>전통사찰 991 전체 목록</b><span class="sub">이 사찰의 등재 정보 확인</span></span><span class="tail">${ic('chevron')}</span></a></li>`}
+        <li><button data-act="demo" data-id="${t.id}">${ic('stamp')}<span><b>데모로 인증</b><span class="sub">현장에 없어도 기능을 시험하는 기록 · '데모'로 표시돼요</span></span><span class="tail">${ic('chevron')}</span></button></li>
+        <li><button data-act="offline" data-id="${t.id}">${ic('download')}<span><b>오프라인 저장</b><span class="sub">산중 통신 음영 대비${isPlus() ? '' : ' · 플러스'}</span></span><span class="tail">${S.offline.includes(t.id) && isPlus() ? '저장됨' : ic('chevron')}</span></button></li>
+      </ul>
     </section>
     <section class="card templestay-hero">
       <div class="row between">
@@ -1222,7 +1284,7 @@
       <dt>종단</dt><dd>${esc(t.order)}</dd><dt>소재지</dt><dd>${esc(t.addr)}</dd><dt>창건</dt><dd>${esc(t.founded)}</dd>
       <dt>대표 문화재</dt><dd>${t.treasures.map(esc).join('<br>')}</dd><dt>관람 소요</dt><dd>${val(t.duration)}</dd></dl></section>
     <section class="card"><h2>기원·역사</h2><ul class="timeline">${t.timeline.map(([y, d]) => `<li><b>${esc(y)}</b>${esc(d)}</li>`).join('')}</ul></section>
-    ${(t.legend || (t.legends && t.legends.length)) ? `<section class="card legend"><div class="row between"><span class="lbl">전해지는 이야기</span><button class="btn ghost small" data-act="docent-temple" data-id="${id}">🎧 듣기</button></div>
+    ${(t.legend || (t.legends && t.legends.length)) ? `<section class="card legend"><div class="row between"><span class="lbl">${ic('quote')} 전해지는 이야기</span><button class="btn ghost small" data-act="docent-temple" data-id="${id}">${ic('headphones')} 듣기</button></div>
       ${legendsHtml(t)}
       <p class="sub" style="font-size:.8em">설화·전승은 역사적 사실과 다를 수 있으며 효험을 보장하지 않습니다. (전문가 감수 예정)</p></section>` : ''}
     ${storyCards(id)}
@@ -1235,14 +1297,18 @@
       <dt>대중교통</dt><dd>${val(t.practical.transit)}</dd><dt>템플스테이</dt><dd>${val(t.practical.templestay)}</dd><dt>좌표</dt><dd>${t.lat.toFixed(5)}, ${t.lng.toFixed(5)}</dd></dl>
       <div class="row" style="margin-top:10px"><button class="btn ghost small block" data-act="nav-hub" data-id="${t.id}">🚗 내비게이션 길찾기 앱 열기</button></div>
       <p class="notice" style="margin-top:8px">방문 전 사찰·국립공원 공지에서 개방시간·통제 여부를 꼭 확인하세요.</p></section>
-    ${t.verify.length ? `<section class="card"><h2>확인 필요 항목</h2><ul style="padding-left:18px;margin:0">${t.verify.map(v => `<li class="needs">${esc(v)}</li>`).join('')}</ul></section>` : ''}
+    ${t.verify.length ? `<section class="card verify-card"><div class="section-heading"><div><span class="section-kicker warn">${ic('alert')} 데이터 확인 중</span><h2>방문 전 확인할 항목</h2></div></div><ul class="verify-list">${t.verify.map(v => `<li class="needs">${esc(v)}</li>`).join('')}</ul></section>` : ''}
+    <div class="actionbar noprint">
+      <button class="btn primary" data-act="gps" data-id="${t.id}">${ic('target')} 방문 인증</button>
+      <button class="btn ghost" data-act="nav-hub" data-id="${t.id}">${ic('nav')} 길찾기</button>
+    </div>
     <p class="notice">자료: 주소·종단 = 「전통사찰 현황」(2026.6.1.) · 좌표 = OpenStreetMap · 연혁 = 공개 자료 요약(감수 전)${t.prayer ? ' · 기도 안내 = 언론·백과사전·지자체·사찰 공식 자료(위 출처)' : ''}</p>`;
   }
 
 
   function storyCards(id) {
     const st = STORIES.filter(x => x.tid === id), soon = STORY_SOON.filter(x => x.tid === id); if (!st.length && !soon.length) return '';
-    return `<section class="card legend"><span class="lbl">📖 마음정원사 : 절로가 심화 스토리</span>${st.map(x => `<h3 style="margin:8px 0 4px">${esc(x.series)} ${x.ep}편 · ${esc(x.title)}</h3><p class="sub" style="margin:0">${esc(x.hook)}</p><a class="btn small" href="#/story/${x.id}" style="display:inline-block;text-decoration:none;margin-top:6px">${storyOpen(x) ? '읽기' : '첫 장 무료로 읽기'} →</a>`).join('')}${soon.map(x => `<p class="sub" style="margin:8px 0 0">${x.ep}편 「${esc(x.title)}」 제작 예정</p>`).join('')}</section>`;
+    return `<section class="card legend"><span class="lbl">${ic('book')} 마음정원사 : 절로가 심화 스토리</span>${st.map(x => `<h3 style="margin:8px 0 4px">${esc(x.series)} ${x.ep}편 · ${esc(x.title)}</h3><p class="sub" style="margin:0">${esc(x.hook)}</p><a class="btn small" href="#/story/${x.id}" style="display:inline-block;text-decoration:none;margin-top:6px">${storyOpen(x) ? '읽기' : '첫 장 무료로 읽기'} →</a>`).join('')}${soon.map(x => `<p class="sub" style="margin:8px 0 0">${x.ep}편 「${esc(x.title)}」 제작 예정</p>`).join('')}</section>`;
   }
   function legendsHtml(t) {
     const all = [t.legend].concat(t.legends || []).filter(Boolean);
@@ -1252,7 +1318,7 @@
   }
   function prayerHtml(t) {
     const p = t.prayer; if (!p) return '';
-    return `<section class="card prayer"><h2 style="margin-top:0">🙏 기도 안내</h2>
+    return `<section class="card prayer"><div class="section-heading"><div><span class="section-kicker">${ic('lotus')} 기도</span><h2 style="margin-top:0">기도 안내</h2></div></div>
       <p style="margin:0"><b>기도 대상</b> · ${esc(p.target)}</p>
       <h3>왜 기도처로 알려졌을까 <span class="sub">(전해지는 이야기)</span></h3><ul>${p.why.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
       ${p.how && p.how.length ? `<h3>찾아가는 법·기도 방법</h3><ul>${p.how.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
@@ -1269,14 +1335,20 @@
     MJAnalytics.track('checkin', { method: method === 'demo' ? 'demo' : 'gps' });
     const after = visited().size, g1 = gradeInfo(after).cur;
     const t = resolveTemple(tid); if (!t) return; const completed = MISSIONS.filter(m => m.ids && m.ids.includes(tid)).filter(m => { const p = missionProgress(m); return p.done === p.total; });
-    openModal(`<div class="sheet" style="text-align:center">
-      <div class="sub">${method === 'demo' ? '🧪 데모 체크인 (테스트용 · 실제 방문 인증 아님)' : '📍 GPS 방문 인증 완료 · 거리 ' + fmtDist(dist)}</div>
+    openModal(`<div class="sheet stamp-sheet">
+      <div class="stamp-kicker">${method === 'demo' ? '데모 체크인 · 테스트용 (실제 방문 인증 아님)' : 'GPS 방문 인증 · 거리 ' + fmtDist(dist)}</div>
       <div class="stampbig">${esc(t.name.replace(/\(.*\)/, ''))}</div>
-      <h2>${esc(t.name)} 스탬프를 받았어요</h2>
-      <p>📿 염주 한 알이 더해졌어요 · <b>${beads()}/108</b></p>
-      <p>도감 <b>${after}/100</b>${g1 && (!g0 || g1.name !== g0.name) ? ` · 🎉 <b>'${g1.name}'</b> 등급이 되었어요!` : ''}</p>
-      ${completed.map(m => `<p>🏅 <b>${m.reward}</b> 획득 — ${m.name}</p>`).join('')}
-      <div class="grid2" style="margin-top:12px"><a class="btn ghost" style="text-decoration:none" href="#/journal/new/${tid}" data-act="close">수첩에 기록</a><button class="btn" data-act="close">확인</button></div></div>`);
+      <h2>${esc(t.name)} 도장을 받았어요</h2>
+      <ul class="stamp-list">
+        <li>${ic('lotus')} <span>염주 <b>${beads()}/108</b> 알</span></li>
+        <li>${ic('book')} <span>도감 <b>${after}/100</b>곳</span></li>
+        ${g1 && (!g0 || g1.name !== g0.name) ? `<li class="up">${ic('stamp')} <span><b>${esc(g1.name)}</b> 등급이 되었어요</span></li>` : ''}
+        ${completed.map(m => `<li class="up">${ic('check')} <span>${esc(m.reward)} 획득 — ${esc(m.name)}</span></li>`).join('')}
+      </ul>
+      <div class="btn-group">
+        <a class="btn ghost" style="text-decoration:none" href="#/journal/new/${tid}" data-act="close">${ic('pencil')} 수첩에 한 줄</a>
+        <button class="btn" data-act="close">닫기</button>
+      </div></div>`);
   }
   function gpsCheckin(tid) {
     const t = resolveTemple(tid); if (!t) return;
@@ -1308,9 +1380,10 @@
   window.addEventListener('orientationchange', fitMap);
   if (window.visualViewport) window.visualViewport.addEventListener('resize', fitMap);
   function viewMap() {
-    return `<h1>사찰 지도</h1><div class="tabs" id="mapf"><button class="chip on" data-f="">전체</button>${Object.entries(LL).map(([k, n]) => `<button class="chip" data-f="${k}">${n}</button>`).join('')}<button class="chip" data-f="visited">방문한 곳</button></div>
-      <div id="map"></div><div class="row" style="margin-top:10px"><button class="btn small" data-act="locate">📍 내 위치</button><span class="sub"><b style="color:#7a8f5c">●</b> 방문 <b style="color:#e0a77e">●</b> 미방문</span></div>
-      <p class="notice" style="margin-top:8px">지도 © OpenStreetMap 기여자. 좌표는 OSM 조회값으로 현장 확인이 필요해요.</p>`;
+    return `<div class="screen-head map-head"><h1>사찰 지도</h1><button class="btn soft small" data-act="locate">${ic('target')} 내 주변</button></div>
+      <div class="tabs" id="mapf"><button class="chip on" data-f="">전체</button>${Object.entries(LL).map(([k, n]) => `<button class="chip" data-f="${k}">${n}</button>`).join('')}<button class="chip" data-f="visited">방문한 곳</button></div>
+      <div id="map"></div>
+      <p class="map-legend"><span class="state ok"><i class="dot"></i>방문한 곳</span><span class="state"><i class="dot"></i>아직인 곳</span><span class="sub">© OpenStreetMap 기여자 · 좌표는 조회값이라 현장 확인이 필요해요.</span></p>`;
   }
   function initMap(focusId, elId, onlyVisited) {
     elId = elId || 'map';
@@ -1339,19 +1412,26 @@
     const v = visited(), g = gradeInfo(v.size);
     const demoN = S.visits.filter(x => x.method === 'demo').length;
     const sidoCount = s => TEMPLES.filter(t => t.sido === s && v.has(t.id)).length;
-    return `<h1>나의 순례</h1>
-    <section class="card hero" style="text-align:center">
-      <div class="sub">현재 등급</div><div class="grade">${g.cur ? g.cur.name : '첫걸음 전'}</div>
-      ${beadSVG(beads(), 210)}
-      <p class="sub" style="margin:4px 0">방문할 때마다 염주 한 알 · 108알을 모으면 '108 염주' 완성${demoN ? ` · 데모 ${demoN}회 포함` : ''}</p>
-      <div class="row wrap" style="justify-content:center;gap:4px">${GRADES.map(x => `<span class="tag ${g.cur && v.size >= x.n ? 'ok' : ''}">${x.name} ${x.n}</span>`).join('→')}</div>
-      ${g.next ? `<p style="margin:8px 0 0">다음 <b>${g.left}곳</b>이면 '<b>${g.next.name}</b>' 등급!</p>` : ''}
-      <div class="grid2" style="margin-top:12px">
-        <button class="btn" data-act="cert-open">📜 디지털 완주증 발급</button>
-        <a class="btn ghost" style="text-decoration:none" href="#/report">📊 나의 리포트${isPlus() ? '' : ' ✨'}</a>
+    return `<div class="screen-head"><h1>나의 순례</h1><p class="sub">방문 한 번에 도장 하나 · 염주 한 알${demoN ? ` · 데모 ${demoN}회 포함` : ''}. 이 기기에만 저장돼요.</p></div>
+    <section class="card hero pilgrim-hero">
+      <div class="section-heading">
+        <div><span class="section-kicker">${ic('stamp')} 현재 등급</span><h2>${g.cur ? esc(g.cur.name) : '첫 도장을 기다리는 중'}</h2></div>
+        <span class="tag ${v.size ? 'ok' : ''}">도감 ${v.size}/100</span>
+      </div>
+      <div class="progress ${v.size >= 100 ? 'done' : ''}" role="img" aria-label="도감 ${v.size}곳 / 100곳"><i style="width:${Math.min(100, v.size)}%"></i></div>
+      ${g.next ? `<p class="next-mission">${ic('target')} <span>다음은 <b>${esc(g.next.name)}</b> — ${g.left}곳만 더 걸으면 돼요</span></p>` : `<p class="next-mission">${ic('check')} <span>100곳을 모두 걸었어요 · 회향</span></p>`}
+      <ol class="grade-rail">${GRADES.map(x => `<li class="${v.size >= x.n ? 'on' : ''}${g.next && g.next.n === x.n ? ' next' : ''}"><span class="grade-dot" aria-hidden="true"></span><b>${esc(x.name)}</b><span class="sub">${x.n}곳</span></li>`).join('')}</ol>
+      <div class="btn-group">
+        <button class="btn" data-act="cert-open">${ic('file')} 디지털 완주증</button>
+        <a class="btn ghost" style="text-decoration:none" href="#/report">${ic('list')} 나의 리포트${isPlus() ? '' : ` ${ic('lock')}`}</a>
       </div>
     </section>
-    <section class="card"><h2>순례 미션 · 배지</h2><div class="badges">${MISSIONS.map(m => { const p = missionProgress(m); const done = p.done >= p.total; return `<div class="badge ${done ? 'done' : ''}" title="${esc(m.note || '')}"><span class="ic">${m.icon}</span><b>${m.name}</b><div class="sub">${p.done}/${p.total}</div><div class="progress"><i style="width:${p.done / p.total * 100}%"></i></div><div class="sub simple-hide" style="font-size:.85em">${m.reward}</div></div>`; }).join('')}</div>
+    <section class="card bead-card">
+      <div class="section-heading"><div><span class="section-kicker">${ic('lotus')} 108 염주</span><h2>${beads()}알 모았어요</h2></div><span class="tag">${108 - beads()}알 남음</span></div>
+      ${beadSVG(beads(), 210)}
+      <p class="sub bead-note">사찰을 방문하거나 오늘의 리추얼을 마치면 한 알씩 쌓여요. 쉬고 싶은 날은 쉬어도 됩니다.</p>
+    </section>
+    <section class="card"><div class="section-heading"><div><span class="section-kicker">${ic('target')} 미션</span><h2>순례 미션 · 배지</h2></div></div><div class="badges">${MISSIONS.map(m => { const p = missionProgress(m); const done = p.done >= p.total; return `<div class="badge ${done ? 'done' : ''}" title="${esc(m.note || '')}"><span class="badge-ic">${m.icon}</span><b>${m.name}</b><div class="sub">${p.done}/${p.total}</div><div class="progress"><i style="width:${p.done / p.total * 100}%"></i></div><div class="sub simple-hide" style="font-size:.85em">${m.reward}</div></div>`; }).join('')}</div>
       <p class="notice" style="margin-top:10px">7대 총림 지정 현황과 100대 사찰 선정 기준은 확정 후 반영 예정이에요.</p></section>
     ${seasonCard()}
     <section class="card"><div class="row between"><h2>도감 ${v.size}/100</h2><a class="sub" href="#/dex">전체 보기 →</a></div>
@@ -1370,27 +1450,29 @@
     const sorted = TEMPLES.slice().sort((a, b) => (v.has(b.id) - v.has(a.id)));
     for (let i = 0; i < (limit || 100); i++) {
       const t = sorted[i];
-      if (t) { const got = v.has(t.id); cells.push(`<a class="cell ${got ? 'got' : 'sil'}" href="#/temple/${t.id}"><div><div class="s">${got ? '🏯' : '🏯'}</div>${got ? esc(t.name.replace(/\(.*\)/, '')) : '???'}</div></a>`); }
-      else cells.push(`<div class="cell sil"><div><div class="s">🏯</div>선정 예정</div></div>`);
+      if (t) { const got = v.has(t.id); cells.push(`<a class="cell ${got ? 'got' : 'sil'}" href="#/temple/${t.id}"><div><div class="s">${sealChar(t)}</div>${got ? esc(t.name.replace(/\(.*\)/, '')) : '아직'}</div></a>`); }
+      else cells.push(`<div class="cell sil"><div><div class="s">·</div>선정 예정</div></div>`);
     }
     return cells.join('');
   }
   function viewDex() {
-    return `<a href="#/missions" class="sub" style="text-decoration:none">← 순례</a><h1>사찰 도감 ${visited().size}/100</h1><p class="sub">방문하지 않은 칸은 실루엣으로 보여요. ${TEMPLES.length}곳 수록 · 나머지는 100대 사찰 선정 후 공개.</p><div class="dex">${dexCells(100)}</div>`;
+    return `<a href="#/missions" class="backlink">${ic('back')} 순례</a><div class="screen-head"><h1>사찰 도감 ${visited().size}/100</h1><p class="sub">방문한 사찰만 도장이 찍히고, 나머지는 윤곽으로 보여요. ${TEMPLES.length}곳 수록 · 나머지는 100대 사찰 선정 후 공개.</p></div><div class="dex">${dexCells(100)}</div>`;
   }
 
   // ---------- 사찰 수첩 ----------
   function viewJournal() {
     const list = S.journal.slice().sort((a, b) => b.date.localeCompare(a.date));
     const trips = (S.trips || []).slice();
-    return `<div class="row between"><h1>사찰 수첩</h1><a class="btn small" style="text-decoration:none" href="#/journal/new/">+ 기록</a></div>
-      <div class="screen-actions">
-        <a class="chip" style="text-decoration:none" href="#/planner">🗓️ 여행 계획 (${trips.length})</a>
-        <button class="chip" data-act="cert-open">📜 완주증</button>
-        <button class="chip" data-act="sample-populate">✨ 샘플 값 채우기</button>
+    return `<div class="screen-head">
+        <div class="row between"><h1>사찰 수첩</h1><a class="btn small" style="text-decoration:none" href="#/journal/new/">${ic('plus')} 첫 기록</a></div>
+        <p class="sub">사진·날씨·다짐을 남겨 두면 나중에 '1년 전 오늘'로 다시 만나요. (이 기기에만 저장)</p>
       </div>
-      <p class="sub">사진·날씨·다짐을 남겨 두면 나중에 \'1년 전 오늘\'로 다시 만나요. (이 기기에만 저장)</p>
-      ${list.length ? list.map(j => { const t = resolveTemple(j.tid); return `<article class="card jentry"><div class="row between"><b>${t ? esc(t.name) : '기타'}</b><span class="sub">${fmtDate(j.date)} ${esc(j.weather || '')}</span></div><p style="white-space:pre-wrap;margin:6px 0">${esc(j.note)}</p>${j.photo ? `<img src="${j.photo}" alt="${t ? esc(t.name) : ''} 사진">` : ''}<div class="row" style="margin-top:8px"><button class="btn ghost small" data-act="jdel" data-id="${j.id}">삭제</button></div></article>`; }).join('') : '<div class="card"><p>아직 기록이 없어요. 첫 사찰 수첩을 남겨 보세요 📔</p></div>'}`;
+      <div class="screen-actions">
+        <a class="chip" style="text-decoration:none" href="#/planner">${ic('calendar')} 여행 계획 ${trips.length}</a>
+        <button class="chip" data-act="cert-open">${ic('file')} 완주증</button>
+        <button class="chip" data-act="sample-populate">${ic('sparkle')} 샘플 값 채우기</button>
+      </div>
+      ${list.length ? list.map(j => { const t = resolveTemple(j.tid); return `<article class="card jentry"><div class="jentry-head"><b>${t ? esc(t.name) : '기타'}</b><span class="sub">${fmtDate(j.date)}${j.weather ? ' · ' + esc(j.weather) : ''}</span></div><p class="jentry-body">${esc(j.note)}</p>${j.photo ? `<img src="${j.photo}" alt="${t ? esc(t.name) : ''} 사진">` : ''}<div class="jentry-foot"><button class="btn text small" data-act="jdel" data-id="${j.id}">삭제</button></div></article>`; }).join('') : `<div class="empty">${ic('pencil')}<b>아직 남긴 걸음이 없어요</b><p>사찰에서 떠올린 한 줄을 적어 두면, 그날의 공기가 함께 남습니다.</p><a class="btn" style="text-decoration:none" href="#/journal/new/">수첩 쓰기</a></div>`}`;
   }
   function viewJournalNew(tid) {
     const preT = resolveTemple(tid);
@@ -1459,7 +1541,15 @@
     m.innerHTML = html; m.classList.remove('hidden');
     document.body.classList.add('modal-open');   // 배경 스크롤 잠금 — 시트가 화면 높이만큼만 스크롤되게
     const sheet = m.querySelector('.sheet');
-    if (sheet) { sheet.setAttribute('tabindex', '-1'); sheet.focus({ preventScroll: true }); }
+    if (sheet) {
+      sheet.setAttribute('tabindex', '-1');
+      // 시트에는 항상 '닫기' 손잡이를 하나 더 둔다 — Esc 를 모르는 모바일 사용자를 위해
+      if (typeof sheet.insertAdjacentHTML === 'function' && !sheet.querySelector('.sheet-close')) {
+        sheet.classList.add('has-close');
+        sheet.insertAdjacentHTML('afterbegin', `<button class="sheet-close" data-act="close" aria-label="닫기">${ic('x')}</button>`);
+      }
+      sheet.focus({ preventScroll: true });
+    }
   }
   function closeModal() {
     const m = document.getElementById('modal');
@@ -1468,6 +1558,7 @@
   }
 
   // ---------- 라우터 ----------
+  let prevRoute = null, enterT = null;
   function render() {
     const parts = (location.hash || '#/home').slice(2).split('/').map(decodeURIComponent);
     const [r, a, b] = parts;
@@ -1497,7 +1588,21 @@
       default: html = viewHome(); tab = 'home';
     }
     $view.innerHTML = html;
-    document.querySelectorAll('.tabbar a').forEach(x => x.classList.toggle('on', x.dataset.tab === tab));
+    // 진입 애니메이션은 '화면이 바뀌었을 때'만 켠다 — 같은 화면을 다시 그려도 카드가 다시 튀면 읽다가 피로해진다
+    if ($view.dataset.route !== prevRoute) {
+      prevRoute = $view.dataset.route;
+      if ($view.classList && typeof window.setTimeout === 'function') {
+        $view.classList.add('entering');
+        if (enterT && typeof window.clearTimeout === 'function') window.clearTimeout(enterT);
+        enterT = window.setTimeout(() => $view.classList.remove('entering'), 520);
+      }
+    }
+    document.querySelectorAll('.tabbar a').forEach(x => {
+      const on = x.dataset.tab === tab;
+      x.classList.toggle('on', on);
+      // aria-current 는 'false' 도 유효 — removeAttribute 보다 안전하고(가상 DOM 호환) SR 도 상태를 안다
+      x.setAttribute('aria-current', on ? 'page' : 'false');
+    });
     updatePlusChip();
     if (window.MJ_FEATURES && window.MJ_FEATURES.I18N) window.MJ_FEATURES.I18N.apply();
     MJAnalytics.track('page_view', { page: r || 'home' });
@@ -1859,12 +1964,32 @@
     clearInterval(openAd._t); closeModal();
   });
 
-  function updatePlusChip() { const c = document.getElementById('plusChip'); if (!c) return; const ps = plusState(); c.textContent = ps.on ? (ps.trial ? `✨ 체험 ${ps.left}일` : '✨ 플러스 이용 중') : '✨ 플러스'; }
+  function updatePlusChip() {
+    const c = document.getElementById('plusChip'); if (!c) return;
+    const ps = plusState();
+    c.innerHTML = ic('sparkle') + `<span>${ps.on ? (ps.trial ? `체험 ${ps.left}일` : '플러스 이용 중') : '플러스'}</span>`;
+    c.classList.toggle('on', !!ps.on);
+    c.setAttribute('aria-label', ps.on ? (ps.trial ? `플러스 체험 ${ps.left}일 남음` : '플러스 이용 중') : '플러스 알아보기');
+  }
   const bt = document.getElementById('bigToggle');
-  function applyBig() { document.body.classList.toggle('big', !!S.big); bt.setAttribute('aria-pressed', !!S.big); bt.textContent = S.big ? '가 큰글씨 켜짐' : '가 큰글씨'; }
+  function applyBig() {
+    document.body.classList.toggle('big', !!S.big);
+    bt.setAttribute('aria-pressed', !!S.big ? 'true' : 'false');
+    bt.innerHTML = ic('textsize') + `<span>큰 글씨</span>`;   // 상태는 aria-pressed 로만 알린다 (문구가 길면 상단이 흔들린다)
+  }
   bt.addEventListener('click', () => { S.big = !S.big; save(); applyBig(); render(); toast(S.big ? '큰 글씨·간편 모드를 켰어요' : '기본 모드로 돌아왔어요'); });
   applyBig();
   window.addEventListener('hashchange', () => { clearInterval(openAd._t); closeModal(); navigate(); });
+  // 스크롤 위치로만 상단 바의 경계를 그린다 — 늘 그림자를 달면 화면이 '무게'를 잃는다
+  let scrolledT = null;
+  window.addEventListener('scroll', () => {
+    if (scrolledT) return;
+    scrolledT = setTimeout(() => {
+      scrolledT = null;
+      const on = (window.scrollY || 0) > 6;
+      if (on !== (document.body._scrolled || false)) { document.body._scrolled = on; document.body.classList.toggle('scrolled', on); }
+    }, 80);
+  }, { passive: true });
   navigate();
   // 테스트·부트스트랩이 "화면 준비 완료"를 기다릴 수 있게 노출 (지연 로딩이 없으면 즉시 이행)
   window.MJ_NAV_READY = () => pendingNav || Promise.resolve();

@@ -21,14 +21,17 @@ GPS 인증은 브라우저 보안상 `localhost` 또는 HTTPS에서만 동작합
 
 ## 구성
 - `index.html` — 앱 셸, 하단 탭(홈/탐색/지도/순례/수첩)·본문 바로가기 링크, 큰글씨 토글
+  - 2026-10: 탭·버튼·제목의 이모지를 **24px SVG 아이콘 스프라이트 38종**(`<symbol id="i-…">`)으로 교체 — JS의 `ic(name)`이 `<use>`로 참조한다. 기분·날씨·계절처럼 '내용인 이모지'는 그대로 남긴다. `theme-color`를 manifest·SEO와 같은 `#f6f1e7`로 통일(앱이 열리는 순간 상태바 색 점프 제거)
   - 2026-10: 첫 화면 스크립트를 **7개(loader·data-temples·planner-reco·config·analytics·features·app.js)로 축소**하고 `preload` 힌트 2개 + 준비 중 화면(`.boot-splash`)을 넣었다. 지도(leaflet 144KB)·전통사찰 991곳(107KB)·기도·풍수·스토리 데이터는 그 화면에 들어갈 때 받는다
   - 넓은 화면(≥1120px) 좌측 레일에만 보이는 보조 메뉴(계획·상점, `.tabbar a.rail-only`) — 모바일 하단 탭은 5칸 유지
 - `css/style.css` — 따뜻한 한지 톤 **모바일 우선 반응형 시스템**(브레이크포인트 560·760·1120·1440·1760 + 가로모드·초소형 폰), `body.big` 큰 글씨·간편 모드
   - 2026-10: **화면별 구성 배치 최적화** — `#app` 을 CSS 그리드(top/body/nav)로 재구성. 모바일·태블릿은 하단 스티키 탭바(고정 position 아님 → 주소창·키보드에 안 흔들림), **≥1120px 은 좌측 사이드 내비 + 900px 본문 열**, **≥1440px 은 카드를 2열 대시보드로 재배치**(`main[data-flow=cards]` 화면만). 열 개수는 `auto-fill·minmax` 가 남는 폭에서 계산(사찰 목록·배지·도감·기분 칩·요금제)
   - 같은 작업: `svh`+`vh` 폴백과 `env(safe-area-inset-*)`(`@supports` 폴백)로 노치·홈인디케이터·주소창 대응, 터치 타깃 44px·입력 `font-size:max(16px,1em)`(iOS 포커스 확대 방지), 모달은 모바일 하단 시트→태블릿 이상 중앙 대화상자(배경 스크롤 잠금·`Esc`·`overscroll-behavior`), 지도는 `resize/orientationchange/visualViewport` 디바운스 `invalidateSize()`, 큰 글씨 모드는 `--fs-base` 를 교체해 모든 화면 폭에서 배율이 함께 동작
-  - 상세: `docs/responsive-layout.md` · 가드: `server/test/responsive-layout.test.js`
+  - 2026-10: **⑮ 디자인 시스템 v3** — 색 3+1+1(종이·먹·소나무 / 점토는 도장·기도 / 골드는 완성만), `--font-ui`·`--font-display` 토큰(없는 웹폰트 이름 폐지, 한글 자간 -.011em, 본문 줄높이 1.6, 최소 13px급), 여백·모서리·그림자 2종·`--ring`·`--ease/--dur-*` 단일 세트. 버튼 3단계(`.btn`/`.ghost`·`.soft`/`.text`), 세그먼트 컨트롤 `.seg`, 목록 행의 각진 도장(印), 시트 그랩 핸들·닫기, 빈 상태 `.empty`·스켈레톤 `.skel`, `entering` 클래스가 붙은 라우트 전환에서만 진입 애니메이션. 진입·hover lift·카드 안 카드·영문 마이크레이블 폐지
+  - 상세: `docs/responsive-layout.md` · `docs/design-refresh.md` · 가드: `server/test/responsive-layout.test.js`
 - `js/lib/loader.js` — **지연 자산 표**와 로더: 라우트 → 필요한 데이터·지도(`ASSETS`·`NEEDS`), 첫 화면을 막지 않는 자산(`SOFT`). 라우터와 서비스워커가 같은 표를 본다. 가드: `server/test/app-runtime.test.js`
 - `js/app.js` — **앱 셸**: 해시 라우터, 마음 처방전, 탐색, 상세, GPS/데모 체크인, 미션·배지, 염주(108), 등급, 도감, 순례 지도, 사찰 수첩, 풍수 대백과(`#/fengshui`), 지연 데이터 채우기(`hydrateLazyData`)
+  - 2026-10 화면 배치도 디자인 리뷰에 맞춰 다시 정했다 — 홈은 `오늘 인사 → 마음 처방전(주 행동) → 리추얼 → 내 순례(결과) → 지금 가기 좋은 곳(가로 스냅 레일) → 여행 계획 → 쉬는 도구 → 읽을거리·상점` 순으로, 등급·염주 히어로를 1등석에서 내리고 상점·플러스 배너는 한 장으로 합쳤다. 사찰 상세는 `방문 인증`·`길찾기`만 **하단 고정 행동판**에 두고 나머지 7개 도구는 리스트로 위계화, 데모 체크인은 리스트 아래로 이동. 탭 선택은 `aria-current="page"`로 알린다
   - 2026-10: 단일 파일 2,768줄 → 셸 1,869줄. 계획 화면은 `js/app/planner.js`로 분리했고, 무거운 데이터는 `js/lib/loader.js`가 화면에 맞춰 내려준다. 첫 화면 전송량 699KB→364KB(원본)·208KB→118KB(gzip)
   - 구조·배치 설계와 측정값: `docs/architecture.md`
   - 2026-10: **전국 명당 사찰 풍수 대백과** 화면 신규 — 권역별(수도권·강원/충청/영남/호남) 명당 사찰 18편의 형국·핵심 기운·풍수 해설, 목적별 맞춤 사찰 매트릭스(6종), 사찰 방문법 3가지. 사찰 상세 '풍수 이야기'에서 형국·핵심 기운 요약과 함께 연결
@@ -53,6 +56,7 @@ GPS 인증은 브라우저 보안상 `localhost` 또는 HTTPS에서만 동작합
 - `docs/paid-success-playbook.md` — 유료·상업 성공 플레이북(2026-10): 성공 유료앱 10개 해부, 2026 실측 벤치마크, 전환·리텐션·유입·수익 구조 추가 제안 15개(우선순위·공수·근거), 90일 실행 로드맵, KPI 대시보드
 - `docs/scripture-content.md` — 불경(경전) 콘텐츠 검토(2026-10): 시장 근거, 유형별 품질 분석, 저작권·번역·음원 조건, 무료 미끼 + 유료 상품 설계, 로드맵
 - `docs/architecture.md` — **앱 구조와 배치**: 계층 지도, 라우트→자산 표, 첫 화면 로딩 예산(측정), 셸/모듈 경계를 정한 근거, 홈 카드 위계·내비게이션 배치, 서버 캐시 정책, 가드 테스트 지도
+- `docs/design-refresh.md` — **디자인 리뷰 & 리프레시(2026-10)**: 13가지 관찰 → 7원칙 → 셸·타이포·홈 정보구조·사찰 상세 행동판·컴포넌트 변경과 근거, 검증(테스트·전송 예산), 의도적으로 미룬 다음 라운드
 - `docs/responsive-layout.md` — 화면(모바일·태블릿·웹)별 구성 배치 설계: 브레이크포인트 표, 셸 그리드 구조, 유동 타이포·여백 토큰, 지도·모달·SEO 페이지 대응, 알려진 한계
 - `tools/payload-budget.js` — 전송 예산 측정: 첫 화면 파일 목록은 `index.html` 에서, 지연 자산은 `js/lib/loader.js` 의 `ASSETS` 에서 읽어 gzip 크기와 라우트별 추가 전송량을 계산. `npm run budget [-- --check]`
 - `tools/_dep-audit.js` — 구조 감사 도구: `node tools/_dep-audit.js js/app.js` 로 섹션별 줄 범위와 밖에서 참조하는 심볼(결합도)을 센다. 모듈 경계를 정할 때 사용(`docs/architecture.md` 4절)

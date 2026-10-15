@@ -1,5 +1,5 @@
 /* 마음정원 PWA Service Worker — 오프라인 캐시 및 산사 통신 음영 지역 대응 */
-const CACHE_NAME = 'maeumjeongwon-v2';
+const CACHE_NAME = 'maeumjeongwon-v3';
 // 첫 설치에서 받는 것 = 첫 화면을 그리는 데 실제로 필요한 것만.
 const PRECACHE_URLS = [
   '/',
@@ -11,7 +11,7 @@ const PRECACHE_URLS = [
   '/js/planner-reco.js?v=20261012reco',
   '/js/config.js?v=20261009analytics',
   '/js/analytics.js?v=20261009analytics',
-  '/js/features.js',
+  '/js/features.js?v=20261016split',
   '/js/app.js?v=20261016split',
   '/pwa-192x192.png',
   '/pwa-512x512.png',

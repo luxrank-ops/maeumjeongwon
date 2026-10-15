@@ -47,7 +47,9 @@ test('기도 테마에는 출처를 갖춘 기도처와 추천 기준·한계가
 
   assert.ok(appSource.includes('window.PRAYER_CRITERIA'), '앱이 추천 기준을 읽음');
   assert.ok(appSource.includes('window.PRAYER_LIMITATIONS'), '앱이 한계 문구를 읽음');
-  assert.ok(appSource.includes('🧭 추천 기준'), '기도 테마 화면에 추천 기준 카드 표시');
+  // 이 가드는 '기도 테마 화면에 추천 기준 카드가 그려지는지'를 본다 — 제목의 이모지 장식이 아니다.
+  // 2026-10 디자인 리뷰로 제목 이모지는 SVG 아이콘으로 바꿨으므로 라벨 텍스트만 확인한다.
+  assert.ok(appSource.includes('추천 기준'), '기도 테마 화면에 추천 기준 카드 표시');
 });
 
 test('유튜브 참고영상 기능은 앱·데이터·도구에서 제거되어 있다', () => {
