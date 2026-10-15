@@ -391,6 +391,14 @@
   function toast(msg) { const el = document.getElementById('toast'); if (!el) return; el.textContent = msg; el.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('show'), 2600); }
   window.MJ_TOAST = toast;
   const fmtDist = m => m >= 1000 ? (m / 1000).toFixed(1) + 'km' : Math.round(m) + 'm';
+  // GPS 반경·구간 거리용 지구 표면 거리 (미터). 호출부에서 /1000 하면 km.
+  function haversine(lat1, lng1, lat2, lng2) {
+    const R = 6371000;
+    const rad = x => x * Math.PI / 180;
+    const dLat = rad(lat2 - lat1), dLng = rad(lng2 - lng1);
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+  }
   const val = v => (!v || /확인 필요/.test(v)) ? `<span class="needs">${esc(v || '확인 필요')}</span>` : esc(v);
 
   // ---------- 진행도 ----------
@@ -505,7 +513,7 @@
       <li>청약철회·환불은 전자상거래법과 앱 마켓 정책을 따르며, 출시 전 법률 검토를 거쳐 확정해요.</li>
     </ul>`;
   function planCards() {
-    const main = ['monthly', 'yearly'].map(([k]) => [k, PLANS[k]]);
+    const main = ['monthly', 'yearly'].map(k => [k, PLANS[k]]);
     const extra = ['webYearly', 'lifetime'].map(k => [k, PLANS[k]]);
     return `<div class="plans">${main.map(([k, p]) => `<button class="plan ${S.plan === k ? 'on' : ''}" data-act="plan" data-plan="${k}">${p.best ? `<span class="best">${p.best}</span>` : ''}<div class="sub">${p.name}</div><div class="price">${p.price}</div><div class="sub" style="font-size:.78em">${p.sub}</div></button>`).join('')}</div>
       <div class="plans" style="margin-top:8px">${extra.map(([k, p]) => `<button class="plan ${S.plan === k ? 'on' : ''}" data-act="plan" data-plan="${k}">${p.best ? `<span class="best">${p.best}</span>` : ''}${p.badge === 'web' ? '<span class="tag">💳 웹 결제</span> ' : p.badge === 'lifetime' ? '<span class="tag">🎁 영구</span> ' : ''}<div class="sub">${p.name}</div><div class="price">${p.price}</div><div class="sub" style="font-size:.78em">${p.sub}</div></button>`).join('')}</div>`;
