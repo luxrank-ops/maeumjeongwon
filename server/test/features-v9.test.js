@@ -5,6 +5,8 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
+const { readAppSources } = require('./_sources');
+
 const ROOT = path.join(__dirname, '..', '..');
 
 test('1. PWA 표준 준수 — manifest.webmanifest 필수 항목 및 아이콘 규격 검증', () => {
@@ -79,7 +81,8 @@ test('4. 9대 제안 기능 모듈 (js/features.js) 구조 및 i18n / Web Audio 
 });
 
 test('5. 템플스테이 1박2일 힐링 코스가 여행 계획 템플릿에 등록되어 있음', () => {
-  const appCode = fs.readFileSync(path.join(ROOT, 'js', 'app.js'), 'utf-8');
+  // 계획·추천 화면은 js/app/planner.js 로 분리되어 있다 → 셸+모듈을 함께 본다
+  const appCode = readAppSources();
   assert.ok(appCode.includes('tpl-templestay-1n2d'), '템플스테이 1박2일 코스 ID');
   assert.ok(appCode.includes('산사 1박 2일 템플스테이 & 참선 힐링 코스'), '템플스테이 코스 제목');
   assert.ok(appCode.includes('templestay.com'), '템플스테이 공식 링크');

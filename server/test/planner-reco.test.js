@@ -10,7 +10,8 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const ROOT = path.join(__dirname, '..', '..');
-const appSource = fs.readFileSync(path.join(ROOT, 'js', 'app.js'), 'utf8');
+const { readAppSources } = require('./_sources');
+const appSource = readAppSources();   // 추천 화면은 js/app/planner.js 로 분리 — 셸+모듈을 함께 본다
 const indexHtml = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 
 function loadReco() {
@@ -130,8 +131,9 @@ test('9. 사찰 데이터가 없으면 추천하지 않고 이유를 돌려준�
 });
 
 test('10. 앱 셸은 추천 엔진을 먼저 불러오고, 실행·적용 버튼과 연결돼 있다', () => {
-  const recoIdx = indexHtml.indexOf('js/planner-reco.js');
-  const appIdx = indexHtml.indexOf('js/app.js');
+  // <script> 태그 기준으로 순서를 본다 (head의 preload 힌트는 실행 순서와 무관)
+  const recoIdx = indexHtml.indexOf('<script src="js/planner-reco.js');
+  const appIdx = indexHtml.indexOf('<script src="js/app.js');
   assert.ok(recoIdx > -1, 'index.html에 추천 엔진 로드');
   assert.ok(appIdx > recoIdx, '추천 엔진을 app.js보다 먼저 로드');
 

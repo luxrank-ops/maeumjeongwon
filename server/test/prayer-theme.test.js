@@ -7,7 +7,8 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const ROOT = path.join(__dirname, '..', '..');
-const appSource = fs.readFileSync(path.join(ROOT, 'js', 'app.js'), 'utf8');
+const { readAppSources } = require('./_sources');
+const appSource = readAppSources();   // 셸(js/app.js) + 모듈(js/app/*.js)
 const indexHtml = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 

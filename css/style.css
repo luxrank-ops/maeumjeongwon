@@ -62,6 +62,12 @@ a{color:inherit}
 .chip.on,.chip[aria-pressed=true]{background:var(--accent);color:#fff;border-color:var(--accent)}
 main{grid-area:body;padding:var(--pad-y) var(--pad-x) calc(var(--pad-y) + 20px);outline:none;min-width:0;width:100%}
 main>*{min-width:0;max-width:100%}
+/* 첫 화면 준비 자리 — 홈에 필요한 스토리 데이터를 기다리는 짧은 순간에 빈 화면 대신 보여 준다 */
+.boot-splash{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:46svh;color:var(--sub);text-align:center}
+.boot-splash span{font-size:2.4em;animation:bootPulse 1.6s ease-in-out infinite}
+.boot-splash p{margin:0;font-size:.92em}
+@keyframes bootPulse{0%,100%{opacity:.45;transform:scale(.96)}50%{opacity:1;transform:scale(1.04)}}
+@media (prefers-reduced-motion:reduce){.boot-splash span{animation:none;opacity:.85}}
 
 /* ---------- ④ 타이포 ---------- */
 h1,h2,h3{font-family:"Noto Serif CJK KR",serif;margin:.2em 0 .5em;line-height:1.35;overflow-wrap:anywhere}
@@ -87,6 +93,10 @@ p{overflow-wrap:anywhere}
 .progress{height:10px;background:#ece3d1;border-radius:99px;overflow:hidden}.progress>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--gold));border-radius:99px}
 .tag{display:inline-block;font-size:.75em;padding:3px 8px;border-radius:99px;background:#efe7d6;color:#6b5d48;margin:2px 3px 2px 0}
 .tag.v{background:#fbe9df;color:#a24c22}.tag.ok{background:#e6eedb;color:#4f6a33}
+/* 화면 상단 보조 행동 — 제목 옆에 버튼을 몰아넣지 않고 한 줄로 정리한다 (좁은 화면에서도 줄바꿈만 된다) */
+.screen-actions{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.tool-card{display:flex;flex-direction:column}
+.tool-card .btn{margin-top:auto}
 .notice{font-size:.82em;color:var(--sub);background:#f1eadb;border-radius:10px;padding:9px 10px}
 .tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;-webkit-mask-image:linear-gradient(90deg,#000 0 94%,transparent);mask-image:linear-gradient(90deg,#000 0 94%,transparent)}
 .tabs::-webkit-scrollbar{display:none}
@@ -95,6 +105,8 @@ p{overflow-wrap:anywhere}
 /* ---------- ⑥ 하단 탭 (모바일) — 데스크톱에서는 ⑪에서 사이드 내비로 재배치 ---------- */
 .tabbar{grid-area:nav;position:sticky;bottom:0;display:flex;gap:2px;background:#fffdf8;border-top:1px solid var(--line);z-index:600;padding:4px 6px calc(4px + var(--safe-b))}
 .tabbar a{flex:1;min-width:0;text-align:center;text-decoration:none;font-size:.75em;padding:7px 2px calc(7px);color:var(--sub);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:var(--tabbar-h);border-radius:12px}
+/* 레일 전용 항목(계획·상점)은 모바일 하단 탭에 넣지 않는다 — 엄지로 닿는 5칸을 지키고, 넓은 화면에서만 메뉴로 노출 */
+.tabbar a.rail-only{display:none}
 .tabbar a span{display:block;font-size:1.45em;line-height:1.2;filter:grayscale(1);opacity:.7}
 .tabbar a.on{color:var(--ink);font-weight:700;background:#f3ecdd}.tabbar a.on span{filter:none;opacity:1}
 
@@ -257,6 +269,8 @@ table.cmp td:nth-child(2),table.cmp td:nth-child(3),table.cmp th:nth-child(2),ta
   }
   .tabbar::before{display:block;content:"메뉴";font-size:.76em;letter-spacing:.12em;color:var(--sub);padding:2px 12px 10px;font-weight:700}
   .tabbar a{flex:0 0 auto;flex-direction:row;justify-content:flex-start;gap:10px;text-align:left;font-size:.95em;padding:11px 12px;min-height:var(--tap);border-radius:12px}
+  .tabbar a.rail-only{display:flex}          /* 좌측 레일에서는 계획·상점까지 한눈에 */
+  .tabbar a.rail-only::after{content:"";flex:1}
   .tabbar a span{display:inline-block;font-size:1.3em}
   .tabbar a.on{background:var(--card);box-shadow:inset 0 0 0 1px var(--line)}
   .tabbar::after{display:block;content:"🪷 마음정원사 : 절로가 — 데모 프로토타입";margin-top:auto;padding:14px 12px 2px;font-size:.72em;line-height:1.5;color:var(--sub);border-top:1px dashed var(--line)}
