@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#f4f7f5" />
+<meta name="theme-color" content="#f6f1e7" />
+<meta name="color-scheme" content="light" />
 <meta name="description" content="전국 사찰의 기원·역사·전설을 이야기로 읽고, 순례 미션으로 모으고, 여행을 계획하는 사찰 순례·힐링 여행 앱입니다." />
 <meta property="og:title" content="마음정원사 : 절로가 — 사찰 순례 & 힐링 여행" />
 <meta property="og:description" content="전국 사찰의 기원·역사·전설을 이야기로 읽고, 순례 미션으로 모으고, 여행을 계획하는 사찰 순례·힐링 여행 앱입니다." />
@@ -23,32 +24,77 @@
 </head>
 <body>
 <a class="skip-link" href="#view">본문으로 바로가기</a>
+<!-- 아이콘 스프라이트 — 이모지는 OS마다 모양·크기가 다르고 스크린리더가 글자로 읽는다.
+     화면의 '구조'를 나타내는 아이콘은 여기서 24px 그리드 선 아이콘으로 쓴다 (js: ic()). -->
+<svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"><defs>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M3.6 10.9 12 4.3l8.4 6.6M5.6 9.5V19a1.4 1.4 0 0 0 1.4 1.4h10a1.4 1.4 0 0 0 1.4-1.4V9.5M9.6 20.4v-5.6h4.8v5.6"/></symbol>
+<symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M14.9 9.1l-1.7 4.1-4.1 1.7 1.7-4.1z"/></symbol>
+<symbol id="i-map" viewBox="0 0 24 24"><path d="M9.4 4.4 4.2 6.2v13.2l5.2-1.8 5.2 1.8 5.2-1.8V4.4l-5.2 1.8zM9.4 4.4v13.2M14.6 6.2v13.2"/></symbol>
+<symbol id="i-stamp" viewBox="0 0 24 24"><path d="M6.2 3.9h11.6v10.6l-2.4-1.6-3.4 2-3.4-2-2.4 1.6zM8.9 7.5h6.2M8.9 10.4h4"/></symbol>
+<symbol id="i-book" viewBox="0 0 24 24"><path d="M12 6.6C10.4 5.1 8 4.5 4.4 5v13.2c3.6-.5 6 .1 7.6 1.6 1.6-1.5 4-2.1 7.6-1.6V5c-3.6-.5-6 .1-7.6 1.6zM12 6.6V20"/></symbol>
+<symbol id="i-calendar" viewBox="0 0 24 24"><path d="M4.6 6.6h14.8v13.2H4.6zM8.4 4v4.4M15.6 4v4.4M4.6 11.2h14.8"/></symbol>
+<symbol id="i-bag" viewBox="0 0 24 24"><path d="M5.4 8h13.2l-1.1 11.2H6.5zM9 8V6.5a3 3 0 0 1 6 0V8"/></symbol>
+<symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M11 4.2l1.8 4.6 4.6 1.8-4.6 1.8L11 17l-1.8-4.6L4.6 10.6l4.6-1.8zM17.8 15l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.6"/><path d="M15.9 15.9 20.4 20.4"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6.4 6.4l11.2 11.2M17.6 6.4 6.4 17.6"/></symbol>
+<symbol id="i-chevron" viewBox="0 0 24 24"><path d="M9.6 5.6 16 12l-6.4 6.4"/></symbol>
+<symbol id="i-back" viewBox="0 0 24 24"><path d="M19.2 12H5.2M11 5.8 4.8 12l6.2 6.2"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M4.8 12.6l4.6 4.6L19.2 7.2"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><path d="M6.6 10.6h10.8v9.2H6.6zM9.2 10.6V8a2.8 2.8 0 0 1 5.6 0v2.6"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="M8.4 5.6l10 6.4-10 6.4z"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3.8v11.4M7.6 10.8 12 15.2l4.4-4.4M4.6 19.8h14.8"/></symbol>
+<symbol id="i-share" viewBox="0 0 24 24"><path d="M12 15.4V4M8 8l4-4 4 4M5.4 13.8v6.2h13.2v-6.2"/></symbol>
+<symbol id="i-headphones" viewBox="0 0 24 24"><path d="M4.4 15.4v-3.2a7.6 7.6 0 0 1 15.2 0v3.2M4.4 14.4h2.2a1.2 1.2 0 0 1 1.2 1.2v3.6a1.2 1.2 0 0 1-1.2 1.2H5.6a1.2 1.2 0 0 1-1.2-1.2zM19.6 14.4h-2.2a1.2 1.2 0 0 0-1.2 1.2v3.6a1.2 1.2 0 0 0 1.2 1.2h.8a1.2 1.2 0 0 0 1.2-1.2z"/></symbol>
+<symbol id="i-wind" viewBox="0 0 24 24"><path d="M3.6 9h10.2a2.8 2.8 0 1 0-2.8-2.8M3.6 15h7.4a2.8 2.8 0 1 1-2.8 2.8M14.6 12h5.8"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 20.6s6.6-6.4 6.6-10.6a6.6 6.6 0 1 0-13.2 0c0 4.2 6.6 10.6 6.6 10.6z"/><circle cx="12" cy="9.9" r="2.3"/></symbol>
+<symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.6"/><circle cx="12" cy="12" r="2.8"/><path d="M12 1.9v2.5M12 19.6v2.5M1.9 12h2.5M19.6 12h2.5"/></symbol>
+<symbol id="i-nav" viewBox="0 0 24 24"><path d="M20 4 4.4 10.4l6.6 2.8 2.8 6.6z"/></symbol>
+<symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4.6 19.4h3.8L20 7.8a2.2 2.2 0 0 0-3.1-3.1L5.3 16.3zM15.4 6.2l2.4 2.4"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4.2 2.9 20.1h18.2zM12 10v4.4M12 17.2v.2"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M12 11v5.6M12 7.6v.2"/></symbol>
+<symbol id="i-leaf" viewBox="0 0 24 24"><path d="M20.2 4.2C10.8 3.8 4.8 8.4 4.4 16.2c6.8.5 14.2-3.2 15.8-12zM4.4 19.8C6.8 14.2 11 11 15.2 9.4"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.2V12l3.4 2.1"/></symbol>
+<symbol id="i-textsize" viewBox="0 0 24 24"><path d="M3.4 18.6 8 6.2l4.6 12.4M5.2 14.4h5.8M15.4 18.6v-7M13 14.6h5"/></symbol>
+<symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M3.6 12h16.8M12 3.4c2.4 2.5 2.4 14.7 0 17.2M12 3.4c-2.4 2.5-2.4 14.7 0 17.2"/></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><path d="M8.4 7h11.2M8.4 12h11.2M8.4 17h11.2M4.4 7h.2M4.4 12h.2M4.4 17h.2"/></symbol>
+<symbol id="i-filter" viewBox="0 0 24 24"><path d="M4.4 7h15.2M7.2 12h9.6M10 17h4"/></symbol>
+<symbol id="i-lotus" viewBox="0 0 24 24"><path d="M12 6.4c1.9 2.1 2.9 4.2 2.9 6.5M12 6.4c-1.9 2.1-2.9 4.2-2.9 6.5M5.8 9.4c2.5.7 4.3 2.2 5.3 4.5M18.2 9.4c-2.5.7-4.3 2.2-5.3 4.5M3.6 13.9c1.7 3.1 4.7 4.7 8.4 4.7s6.7-1.6 8.4-4.7c-2.8-.8-5.3-.6-7.4.6-2.1-1.2-4.6-1.4-7.4-.6z"/></symbol>
+<symbol id="i-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.4"/><circle cx="12" cy="4.6" r="1.5" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24"><path d="M19.4 12a7.4 7.4 0 1 1-2.2-5.3M19.8 4.2v4.2h-4.2"/></symbol>
+<symbol id="i-quote" viewBox="0 0 24 24"><path d="M9.2 6.4C6.4 7.6 5 9.8 5 12.8c0 2.6 1.4 4.2 3.4 4.2 1.8 0 3-1.2 3-2.9 0-1.6-1.1-2.7-2.6-2.7-.3 0-.6 0-.8.1.2-1.6 1.2-2.8 2.9-3.6zM19 6.4c-2.8 1.2-4.2 3.4-4.2 6.4 0 2.6 1.4 4.2 3.4 4.2 1.8 0 3-1.2 3-2.9 0-1.6-1.1-2.7-2.6-2.7-.3 0-.6 0-.8.1.2-1.6 1.2-2.8 2.9-3.6z"/></symbol>
+<symbol id="i-file" viewBox="0 0 24 24"><path d="M6.4 3.8h7L18.6 9v11.2H6.4zM13.2 3.8V9h5.4M9 13h6M9 16.4h5.4"/></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 3.4v2.2M12 18.4v2.2M3.4 12h2.2M18.4 12h2.2M5.9 5.9l1.6 1.6M16.5 16.5l1.6 1.6M18.1 5.9l-1.6 1.6M7.5 16.5l-1.6 1.6"/></symbol>
+</defs></svg>
 <div id="app">
-  <div id="offlineBanner" class="offline-banner hidden">📶 오프라인 모드 — 저장된 캐시 데이터를 사용합니다.</div>
+  <div id="offlineBanner" class="offline-banner hidden"><svg class="ic sm" aria-hidden="true"><use href="#i-alert"/></svg> 오프라인 모드 — 저장해 둔 사찰 정보를 먼저 보여 드려요.</div>
   <header class="topbar">
     <button class="logo" data-go="#/home" aria-label="홈으로">
-      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><b>心</b></span>
-      <span class="brand-copy"><b>마음정원사</b><small>사찰 순례 · 기록 · 쉼</small></span>
+      <span class="brand-mark" aria-hidden="true"><b>心</b></span>
+      <span class="brand-copy"><b>마음정원사</b><small>절로가 · 사찰 순례 기록</small></span>
     </button>
     <div class="topright">
-      <button id="installBtn" class="chip pwa-btn hidden" title="앱 설치">📲 설치</button>
+      <button id="installBtn" class="chip pwa-btn hidden" title="앱 설치"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg><span>설치</span></button>
       <button id="langToggle" class="chip lang-btn" title="언어 전환 (KO / EN)">EN</button>
-      <a class="chip pluschip" href="#/plus" id="plusChip">✨ 플러스</a>
-      <button id="bigToggle" class="chip" aria-pressed="false" title="큰 글씨·간편 모드">가 큰글씨</button>
+      <a class="chip pluschip" href="#/plus" id="plusChip">플러스</a>
+      <button id="bigToggle" class="chip" aria-pressed="false" title="큰 글씨·간편 모드"><svg class="ic" aria-hidden="true"><use href="#i-textsize"/></svg><span>큰 글씨</span></button>
     </div>
   </header>
   <div id="audioBar" class="audio-bar hidden"></div>
   <main id="view" tabindex="-1">
-    <div class="boot-splash" role="status" aria-live="polite"><span>🪷</span><p>마음정원을 열고 있어요…</p></div>
+    <div class="boot-splash" role="status" aria-live="polite">
+      <div class="skel rail-skel" aria-hidden="true"><i></i><i></i><i></i></div>
+      <p>마음정원을 열고 있어요…</p>
+    </div>
   </main>
   <nav class="tabbar" aria-label="주요 메뉴">
-    <a href="#/home" data-tab="home"><span>🏠</span><span class="tab-label">홈</span></a>
-    <a href="#/explore" data-tab="explore"><span>🧭</span><span class="tab-label">탐색</span></a>
-    <a href="#/map" data-tab="map"><span>🗺️</span><span class="tab-label">지도</span></a>
-    <a href="#/missions" data-tab="missions"><span>🏅</span><span class="tab-label">순례</span></a>
-    <a href="#/journal" data-tab="journal"><span>📔</span><span class="tab-label">수첩</span></a>
-    <a href="#/planner" data-tab="journal" class="rail-only"><span>🗓️</span><span class="tab-label">계획</span></a>
-    <a href="#/store" data-tab="plus" class="rail-only"><span>🛍</span><span class="tab-label">상점</span></a>
+    <a href="#/home" data-tab="home"><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg><span class="tab-label">홈</span></a>
+    <a href="#/explore" data-tab="explore"><svg class="ic" aria-hidden="true"><use href="#i-compass"/></svg><span class="tab-label">탐색</span></a>
+    <a href="#/map" data-tab="map"><svg class="ic" aria-hidden="true"><use href="#i-map"/></svg><span class="tab-label">지도</span></a>
+    <a href="#/missions" data-tab="missions"><svg class="ic" aria-hidden="true"><use href="#i-stamp"/></svg><span class="tab-label">순례</span></a>
+    <a href="#/journal" data-tab="journal"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg><span class="tab-label">수첩</span></a>
+    <a href="#/planner" data-tab="journal" class="rail-only"><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg><span class="tab-label">계획</span></a>
+    <a href="#/store" data-tab="plus" class="rail-only"><svg class="ic" aria-hidden="true"><use href="#i-bag"/></svg><span class="tab-label">상점</span></a>
   </nav>
   <div id="toast" role="status" aria-live="polite"></div>
   <div id="modal" class="modal hidden" role="dialog" aria-modal="true"></div>
