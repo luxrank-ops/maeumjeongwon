@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#f6f1e7" />
+<meta name="theme-color" content="#f4f7f5" />
 <meta name="description" content="전국 사찰의 기원·역사·전설을 이야기로 읽고, 순례 미션으로 모으고, 여행을 계획하는 사찰 순례·힐링 여행 앱입니다." />
 <meta property="og:title" content="마음정원사 : 절로가 — 사찰 순례 & 힐링 여행" />
 <meta property="og:description" content="전국 사찰의 기원·역사·전설을 이야기로 읽고, 순례 미션으로 모으고, 여행을 계획하는 사찰 순례·힐링 여행 앱입니다." />
@@ -26,7 +26,10 @@
 <div id="app">
   <div id="offlineBanner" class="offline-banner hidden">📶 오프라인 모드 — 저장된 캐시 데이터를 사용합니다.</div>
   <header class="topbar">
-    <button class="logo" data-go="#/home" aria-label="홈으로">🪷 <b>마음정원사 : 절로가</b></button>
+    <button class="logo" data-go="#/home" aria-label="홈으로">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><b>心</b></span>
+      <span class="brand-copy"><b>마음정원사</b><small>사찰 순례 · 기록 · 쉼</small></span>
+    </button>
     <div class="topright">
       <button id="installBtn" class="chip pwa-btn hidden" title="앱 설치">📲 설치</button>
       <button id="langToggle" class="chip lang-btn" title="언어 전환 (KO / EN)">EN</button>
