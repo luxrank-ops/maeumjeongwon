@@ -852,13 +852,24 @@
     updateStreak();
     const done = ritualDoneToday(), verse = getDailyVerse(), streak = S.streak || 0;
 
-    const heroCard = `<section class="card hero">
-      <div class="sub">${g.cur ? `현재 등급` : '순례를 시작해 보세요'}</div>
-      <div class="row between"><div class="grade">${g.cur ? g.cur.name : '첫걸음 전'}</div><div class="sub">염주 ${beads()}/108</div></div>
-      <div class="row between" style="margin-top:8px"><b>도감 ${v.size}/100</b><span class="sub">${g.next ? `다음 ${g.left}곳이면 '${g.next.name}' 등급!` : '회향 완성 🙏'}</span></div>
-      <div class="progress" style="margin-top:6px"><i style="width:${Math.min(100, v.size)}%"></i></div>
-      ${near ? `<p class="sub" style="margin:10px 0 0">${near.m.icon} ${near.m.name.replace(/ 완주| 순례/, '')} 완주까지 <b>${near.p.total - near.p.done}곳</b> 남았어요</p>` : ''}
-      <div class="row wrap" style="margin-top:12px;gap:8px">
+    const homeIntro = `<header class="home-intro">
+      <div class="home-intro-meta"><span class="eyebrow">MAEUM JOURNEY</span><span class="home-date">${today().replace(/-/g, '.')} · 오늘의 여정</span></div>
+      <h1>오늘도, 마음을 고르는 시간</h1>
+      <p>걸음을 기록하고 고요한 이야기를 만나는<br class="mobile-only"> 나만의 사찰 순례 공간</p>
+    </header>`;
+
+    const heroCard = `<section class="card hero home-hero">
+      <div class="hero-orb" aria-hidden="true"></div>
+      <div class="hero-topline"><span class="eyebrow">MY JOURNEY · 순례 기록</span><span class="hero-status"><i></i> 오늘도 이어가는 중</span></div>
+      <div class="home-hero-main">
+        <div><div class="hero-label">${g.cur ? '현재 등급' : '순례를 시작해 보세요'}</div><div class="grade">${g.cur ? g.cur.name : '첫걸음 전'}</div>
+          <p class="hero-copy">작은 걸음이 모여<br><b>나만의 순례 지도</b>가 돼요.</p></div>
+        <div class="hero-beads"><span class="hero-beads-label">DIGITAL MALA</span><strong>${beads()}<small>/108</small></strong><span>염주</span></div>
+      </div>
+      <div class="hero-progress-head"><b>도감 ${v.size}/100</b><span>${g.next ? `다음 ${g.left}곳이면 '${g.next.name}' 등급!` : '회향 완성 🙏'}</span></div>
+      <div class="progress hero-progress"><i style="width:${Math.min(100, v.size)}%"></i></div>
+      ${near ? `<p class="hero-mission"><span>${near.m.icon}</span> ${near.m.name.replace(/ 완주| 순례/, '')} 완주까지 <b>${near.p.total - near.p.done}곳</b> 남았어요</p>` : ''}
+      <div class="hero-actions">
         <button class="btn small" data-act="cert-open">📜 디지털 완주증 발급</button>
         <a class="btn ghost small" style="text-decoration:none" href="#/missions">🏅 순례 현황 보기</a>
       </div>
@@ -866,84 +877,76 @@
 
     const onboard = !S.onboarded ? `<section class="card onboard-hint"><div class="row between"><h2 style="margin:0">🪷 마음정원에 오신 것을 환영해요</h2></div><p class="sub" style="margin:6px 0">관심 분야를 알려주시면 오늘 가기 좋은 사찰을 추천해 드려요.</p><button class="btn" data-act="start-onboarding">추천 받기 (3문항)</button></section>` : '';
 
-    const ritualCard = `<section class="card">
-      <div class="row between"><h2 style="margin:0">${streakMilestoneHTML(streak)} 오늘의 리추얼</h2>${streak > 0 ? `<span class="tag ok">🔥 ${streak}일 연속</span>` : '<span class="tag">시작해 보세요</span>'}</div>
-      <div class="card legend" style="margin:8px 0;background:var(--bg)">
+    const ritualCard = `<section class="card home-ritual">
+      <div class="section-heading"><div><span class="section-label">DAILY RITUAL · 매일의 루틴</span><h2>${streakMilestoneHTML(streak)} 오늘의 리추얼</h2></div>${streak > 0 ? `<span class="tag ok">🔥 ${streak}일 연속</span>` : '<span class="tag">시작해 보세요</span>'}</div>
+      <div class="card ritual-quote legend">
         <span class="lbl">📖 오늘의 한 구절 · ${esc(verse.src)}</span>
-        <p style="margin:8px 0 4px;font-size:1.05em;line-height:1.7">"${esc(verse.text)}"</p>
+        <p>"${esc(verse.text)}"</p>
       </div>
-      <div class="grid2" style="margin-top:6px">
+      <div class="grid2 ritual-actions">
         <button class="btn ${done ? 'ghost' : ''}" data-act="daily-ritual" ${done ? 'disabled' : ''}>${done ? '✅ 오늘 완료' : '📿 108 염주·기도'}</button>
         <button class="btn ghost" data-act="daily-breathing">🧘 3분 호흡</button>
       </div>
-      ${S.streakFreezes > 0 ? `<p class="sub" style="margin:6px 0 0;font-size:.82em">프리즈 ${S.streakFreezes}개 보유 (하루 안 켜도 스트릭 유지)</p>` : ''}
+      ${S.streakFreezes > 0 ? `<p class="sub ritual-foot">프리즈 ${S.streakFreezes}개 보유 · 하루 쉬어도 스트릭을 지켜드려요</p>` : ''}
     </section>`;
 
-    const moodCard = `<section class="card">
-      <div class="row between"><h2 style="margin:0">오늘의 마음 처방전</h2><a class="sub" href="#/mind">심화 리포트 →</a></div>
-      <p class="sub">지금 기분을 골라 보세요. 어울리는 사찰과 이야기를 골라 드려요.</p>
-      <div class="moods">${MOODS.map((m, i) => `<button class="mood ${i === mi ? 'on' : ''}" data-mood="${i}"><span>${m.icon}</span>${m.label}</button>`).join('')}</div>
-      <div class="card legend" style="margin:12px 0 0">
-        <div class="row between"><span class="lbl">처방</span><button class="btn ghost small" data-act="reshuffle">다른 곳 추천</button></div>
-        <p style="margin:8px 0">${esc(MOODS[mi].line)}</p>
-        <h3 style="margin:4px 0">${esc(t.name)} <span class="sub">${esc(t.sido)} ${esc(t.sgg)}</span></h3>
-        ${t.legend ? `<p class="sub" style="margin:4px 0">📖 전해지는 이야기 — 「${esc(t.legend.title)}」</p>` : ''}
-        <a class="btn small" href="#/temple/${t.id}" style="display:inline-block;text-decoration:none;margin-top:6px">이야기 열기 →</a>
-      </div>
-    </section>`;
-
-    const seasonCard = `<section class="card">
-      <div class="row between">
-        <h2 style="margin:0">${season.icon} 지금 가기 좋은 계절 사찰 (${season.name.split(' ')[0]})</h2>
-        <a class="sub" href="#/explore/theme/autumn">더보기 →</a>
-      </div>
-      <p class="sub" style="margin:4px 0 8px">${season.advice}</p>
-      <div class="row wrap">
-        ${seasonTemples.map(st => `<a class="chip" style="text-decoration:none" href="#/temple/${st.id}">${season.icon} <b>${esc(st.name)}</b> <span class="sub">${esc(st.sido)} ${esc(st.sgg)}</span></a>`).join('')}
+    const moodCard = `<section class="card home-mood">
+      <div class="section-heading"><div><span class="section-label">MOOD CHECK-IN · 마음 체크인</span><h2>오늘의 마음 처방전</h2></div><a class="text-link" href="#/mind">심화 리포트 <span>↗</span></a></div>
+      <p class="sub mood-intro">지금의 마음과 가장 가까운 상태를 골라 주세요.<br class="mobile-only"> 어울리는 사찰과 이야기를 골라 드려요.</p>
+      <div class="moods">${MOODS.map((m, i) => `<button class="mood ${i === mi ? 'on' : ''}" data-mood="${i}"><span>${m.icon}</span><b>${m.label}</b><i></i></button>`).join('')}</div>
+      <div class="card legend prescription-card">
+        <div class="row between"><span class="lbl">오늘의 처방</span><button class="btn ghost small" data-act="reshuffle">다른 곳 추천</button></div>
+        <p class="prescription-copy">${esc(MOODS[mi].line)}</p>
+        <div class="prescription-place"><div class="place-marker">${t.name.charAt(0)}</div><div><h3>${esc(t.name)} <span class="sub">${esc(t.sido)} ${esc(t.sgg)}</span></h3>${t.legend ? `<p class="sub">📖 전해지는 이야기 — 「${esc(t.legend.title)}」</p>` : ''}</div></div>
+        <a class="btn small" href="#/temple/${t.id}" style="display:inline-block;text-decoration:none;margin-top:10px">이야기 열기 →</a>
       </div>
     </section>`;
 
-    const plannerCard = `<section class="card">
-      <div class="row between"><h2 style="margin:0">🗓️ 사찰 여행 계획 짜기</h2><a class="sub" href="#/planner">전체 보기 →</a></div>
-      <p class="sub" style="margin:4px 0 8px">당일치기부터 2박 3일까지 — 사찰 동선·거리·소요시간·준비물을 한눈에 계획해요.</p>
-      <div class="row wrap">
-        <a class="btn small" style="text-decoration:none" href="#/planner/new">+ 새 여행 계획 만들기</a>
-        <a class="btn ghost small" style="text-decoration:none" href="#/planner">추천 코스·내 일정 (${(S.trips || []).length})</a>
+    const seasonCard = `<section class="card home-season">
+      <div class="section-heading"><div><span class="section-label">SEASONAL PICKS · 계절의 추천</span><h2>${season.icon} 지금 가기 좋은 사찰</h2></div><a class="text-link" href="#/explore/theme/autumn">더보기 <span>↗</span></a></div>
+      <p class="sub season-copy">${season.advice}</p>
+      <div class="row wrap season-picks">
+        ${seasonTemples.map(st => `<a class="chip" style="text-decoration:none" href="#/temple/${st.id}"><span class="season-icon">${season.icon}</span><b>${esc(st.name)}</b><span class="sub">${esc(st.sido)} ${esc(st.sgg)}</span><span class="pick-arrow">↗</span></a>`).join('')}
       </div>
+    </section>`;
+
+    const plannerCard = `<section class="card home-planner">
+      <div class="section-heading"><div><span class="section-label">TRAVEL PLANNER · 여행 도구</span><h2>사찰 여행 계획 짜기</h2></div><a class="text-link" href="#/planner">전체 보기 <span>↗</span></a></div>
+      <p class="sub">당일치기부터 2박 3일까지 — 사찰 동선·거리·소요시간·준비물을 한눈에 계획해요.</p>
+      <div class="planner-quick"><a class="btn small" style="text-decoration:none" href="#/planner/new"><span>＋</span> 새 여행 계획</a><a class="btn ghost small" style="text-decoration:none" href="#/planner">추천 코스·내 일정 <em>${(S.trips || []).length}</em></a></div>
     </section>`;
 
     // 명상·AI 상담은 '도구' 한 줄로 묶는다 (예전에는 히어로 버튼 + 큰 카드가 따로 있어 중복이었다)
-    const toolsCard = `<div class="grid2">
+    const toolsCard = `<div class="grid2 home-tools">
       <section class="card tool-card">
-        <h3 style="margin:2px 0 4px">🧘 마음 쉼터</h3>
-        <p class="sub" style="margin:0 0 8px">범종·풍경·목탁·계곡물소리</p>
-        <button class="btn small block" data-act="meditation-open">명상 시작</button>
+        <div class="tool-icon tool-icon-breathe">◌</div><div><span class="section-label">MINDFUL BREAK</span><h3>마음 쉼터</h3></div>
+        <p class="sub">범종·풍경·목탁·계곡물소리</p><button class="btn small block" data-act="meditation-open">명상 시작 <span>→</span></button>
       </section>
       <section class="card tool-card">
-        <h3 style="margin:2px 0 4px">🪷 AI 마음 상담</h3>
-        <p class="sub" style="margin:0 0 8px">구절·사찰·참배법 안내</p>
-        <button class="btn small block" data-act="ai-counsel">상담 받기</button>
+        <div class="tool-icon tool-icon-ai">✦</div><div><span class="section-label">AI GUIDE</span><h3>AI 마음 상담</h3></div>
+        <p class="sub">구절·사찰·참배법 안내</p><button class="btn small block" data-act="ai-counsel">상담 받기 <span>→</span></button>
       </section>
     </div>`;
 
-    const themeCard = `<section class="card simple-hide">
-      <h2>테마로 떠나기</h2>
+    const themeCard = `<section class="card simple-hide home-themes">
+      <div class="section-heading"><div><span class="section-label">EXPLORE BY FEELING</span><h2>테마로 떠나기</h2></div><a class="text-link" href="#/explore">전체 탐색 <span>↗</span></a></div>
       <div class="row wrap">${Object.entries(THEMES).map(([k, th]) => `<a class="chip" style="text-decoration:none" href="#/explore/theme/${k}">${th.icon} ${th.name}</a>`).join('')}</div>
     </section>`;
 
-    const topCard = `<section class="card simple-hide">
-      <h2>많이 찾는 사찰</h2><p class="sub">예시 데이터 (실시간 집계 아님)</p>
+    const topCard = `<section class="card simple-hide home-popular">
+      <div class="section-heading"><div><span class="section-label">POPULAR TRAILS</span><h2>많이 찾는 사찰</h2></div><span class="sub">예시 데이터 · 실시간 아님</span></div>
       <div class="tlist">${top.map(x => templeItem(x)).join('')}</div>
     </section>`;
 
-    const storyCard = STORIES[0] ? `<section class="card legend simple-hide"><div class="row between"><span class="lbl">이번 주 심화 스토리</span>${isPlus() ? '' : '<span class="tag">첫 장 무료</span>'}</div><h3 style="margin:8px 0 4px">${esc(STORIES[0].title)}</h3><p class="sub" style="margin:0">${esc(byId[STORIES[0].tid].name)} · ${esc(STORIES[0].series)} ${STORIES[0].ep}편 · 약 ${STORIES[0].minutes}분</p><a class="btn small" href="#/story/${STORIES[0].id}" style="display:inline-block;text-decoration:none;margin-top:8px">읽기 →</a></section>` : '';
+    const storyCard = STORIES[0] ? `<section class="card legend simple-hide home-story"><div class="row between"><span class="lbl">이번 주 심화 스토리</span>${isPlus() ? '' : '<span class="tag">첫 장 무료</span>'}</div><h3 style="margin:8px 0 4px">${esc(STORIES[0].title)}</h3><p class="sub" style="margin:0">${esc(byId[STORIES[0].tid].name)} · ${esc(STORIES[0].series)} ${STORIES[0].ep}편 · 약 ${STORIES[0].minutes}분</p><a class="btn small" href="#/story/${STORIES[0].id}" style="display:inline-block;text-decoration:none;margin-top:8px">읽기 →</a></section>` : '';
 
-    const storeCard = `<section class="card simple-hide"><div class="row between"><h2 style="margin:0">🛍 콘텐츠 상점</h2><a class="sub" href="#/store">전체 보기 →</a></div><p class="sub" style="margin:4px 0 8px">구독 없이 필요한 것만 · 1회 결제 · 데모</p><div class="row wrap">${STORE.slice(0, 4).map(o => `<a class="chip" style="text-decoration:none" href="${owns(o.id) ? o.go : '#/store'}">${o.icon} ${esc(o.name.split(' (')[0])}</a>`).join('')}</div></section>`;
+    const storeCard = `<section class="card simple-hide home-store"><div class="section-heading"><div><span class="section-label">DIGITAL STORE</span><h2>콘텐츠 상점</h2></div><a class="text-link" href="#/store">전체 보기 <span>↗</span></a></div><p class="sub" style="margin:4px 0 8px">구독 없이 필요한 것만 · 1회 결제 · 데모</p><div class="row wrap">${STORE.slice(0, 4).map(o => `<a class="chip" style="text-decoration:none" href="${owns(o.id) ? o.go : '#/store'}">${o.icon} ${esc(o.name.split(' (')[0])}</a>`).join('')}</div></section>`;
 
     const plusBanner = isPlus() ? '' : `<a class="card plusbanner simple-hide" href="#/plus"><span style="font-size:1.6em">✨</span><span><b>마음정원사 : 절로가 플러스</b> <span class="demo-ribbon">데모</span><br><span class="sub">원작 심화 스토리·오디오·코스 플래너·순례 리포트 · 7일 무료 체험</span></span></a>`;
 
     return `
     ${consentCard()}
+    ${homeIntro}
     ${heroCard}
     ${onboard}
     ${ritualCard}
