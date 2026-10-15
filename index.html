@@ -15,7 +15,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="마음정원" />
-<link rel="stylesheet" href="vendor/leaflet.css" />
+<!-- 첫 화면에 반드시 필요한 것만 여기서 받는다. 지도(leaflet)·전통사찰·기도·풍수·스토리 데이터는
+     js/lib/loader.js 가 해당 화면에 들어갈 때 내려받는다 (라우트 → 자산 표는 loader.js 의 NEEDS). -->
+<link rel="preload" as="script" href="js/data-temples.js?v=20261009analytics" />
+<link rel="preload" as="script" href="js/app.js?v=20261016split" />
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -32,27 +35,27 @@
     </div>
   </header>
   <div id="audioBar" class="audio-bar hidden"></div>
-  <main id="view" tabindex="-1"></main>
+  <main id="view" tabindex="-1">
+    <div class="boot-splash" role="status" aria-live="polite"><span>🪷</span><p>마음정원을 열고 있어요…</p></div>
+  </main>
   <nav class="tabbar" aria-label="주요 메뉴">
     <a href="#/home" data-tab="home"><span>🏠</span><span class="tab-label">홈</span></a>
     <a href="#/explore" data-tab="explore"><span>🧭</span><span class="tab-label">탐색</span></a>
     <a href="#/map" data-tab="map"><span>🗺️</span><span class="tab-label">지도</span></a>
     <a href="#/missions" data-tab="missions"><span>🏅</span><span class="tab-label">순례</span></a>
     <a href="#/journal" data-tab="journal"><span>📔</span><span class="tab-label">수첩</span></a>
+    <a href="#/planner" data-tab="journal" class="rail-only"><span>🗓️</span><span class="tab-label">계획</span></a>
+    <a href="#/store" data-tab="plus" class="rail-only"><span>🛍</span><span class="tab-label">상점</span></a>
   </nav>
   <div id="toast" role="status" aria-live="polite"></div>
   <div id="modal" class="modal hidden" role="dialog" aria-modal="true"></div>
 </div>
-<script src="vendor/leaflet.js"></script>
+<script src="js/lib/loader.js?v=20261016split"></script>
 <script src="js/data-temples.js?v=20261009analytics"></script>
-<script src="js/data-prayer.js?v=20261012prayer"></script>
-<script src="js/data-stories.js?v=20261009analytics"></script>
-<script src="js/data-traditional.js"></script>
 <script src="js/planner-reco.js?v=20261012reco"></script>
-<script src="js/data-fengshui.js?v=20261012fengshui"></script>
 <script src="js/config.js?v=20261009analytics"></script>
 <script src="js/analytics.js?v=20261009analytics"></script>
 <script src="js/features.js"></script>
-<script src="js/app.js?v=20261012no-videos"></script>
+<script src="js/app.js?v=20261016split"></script>
 </body>
 </html>

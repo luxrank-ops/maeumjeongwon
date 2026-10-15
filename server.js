@@ -19,6 +19,8 @@ const SEO_OUT = path.join(__dirname, 'seo-out');
 
 function sendIfExists(filePath, res, next) {
   if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+    // sitemap·robots는 하루, 정적 SEO 페이지는 재검증(no-cache) — 배포 즉시 반영
+    res.setHeader('Cache-Control', /\.(?:xml|txt)$/.test(filePath) ? 'public, max-age=86400' : 'no-cache');
     return res.sendFile(filePath);
   }
   return next();
@@ -29,6 +31,7 @@ const coreApp = createApp({ secret: SESSION_SECRET });
 
 const express = require('express');
 const app = express();
+app.disable('x-powered-by');   // 바깥 래퍼 앱 — createApp 과 같은 헤더 정책을 유지한다
 
 // 검색·광고 네트워크 검증용 루트 파일. ads.txt는 애드센스 설정 시에만 seo-out에 생성된다.
 app.get(['/sitemap.xml', '/robots.txt', '/ads.txt'], (req, res, next) =>

@@ -2,6 +2,7 @@
 
 require('./env');
 const express = require('express');
+const compression = require('compression');
 const path = require('path');
 const crypto = require('crypto');
 const identity = require('./identity');
@@ -15,6 +16,33 @@ const { generateCounsel, getAiConfig } = require('./ai');
 
 const AD_DAILY_LIMIT = 2;
 const AD_UNLOCK_HOURS = 24;
+
+// 캐시 정책: 파일 확장자마다 "언제 다시 받아야 하는지"를 서버가 정해 준다.
+// - ?v= 가 붙은 자산은 내용이 바뀌면 URL도 바뀌므로 1년 immutable
+// - 그 밖의 정적 자산은 7일(개발 중 갱신이 늦지 않게), HTML·SW는 매번 재검증
+const IMMUTABLE_MAX_AGE = 31536000;
+const ASSET_MAX_AGE = 604800;
+const IMMUTABLE_RE = /[?&]v=/;
+const ASSET_EXT_RE = /\.(?:js|mjs|css|png|jpe?g|gif|svg|webp|avif|ico|woff2?|ttf|otf|txt|xml|webmanifest)$/i;
+
+function cachePolicy() {
+  return function cachePolicyMiddleware(req, res, next) {
+    if (req.path.startsWith('/api/')) return next();
+    const versioned = IMMUTABLE_RE.test(req.originalUrl || req.url || '');
+    // 서비스워커와 매니페스트는 '오래 캐시하면 안 되는 .js/.webmanifest' — 배포 즉시 반영돼야 한다
+    const alwaysRevalidate = req.path === '/sw.js' || req.path.endsWith('.webmanifest');
+    if (alwaysRevalidate || !ASSET_EXT_RE.test(req.path)) {
+      // index.html·sw.js·매니페스트·SEO 페이지: 배포하면 바로 반영되도록 항상 재검증
+      res.setHeader('Cache-Control', 'no-cache');
+    } else {
+      res.setHeader('Cache-Control', versioned
+        ? `public, max-age=${IMMUTABLE_MAX_AGE}, immutable`
+        : `public, max-age=${ASSET_MAX_AGE}`);
+    }
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    next();
+  };
+}
 
 const STORE_PACK_IDS = new Set([
   'pack-south-coast',
@@ -62,6 +90,9 @@ function createApp(opts = {}) {
   const adKeys = opts.adKeys || (async () => null);
 
   const app = express();
+  app.disable('x-powered-by');
+  // 텍스트 자산은 전부 압축해 보낸다 (js 715KB → 약 1/4). 이미지·폰트는 compression 기본 필터가 걸러 준다.
+  app.use(compression({ threshold: 1400 }));
   app.use(express.json());
 
   // 세션 토큰 추출 미들웨어 (Bearer 토큰 검증 또는 테스트/하위호환 X-MJ-UID)
@@ -320,7 +351,8 @@ function createApp(opts = {}) {
   });
 
   const staticRoot = path.join(__dirname, '..');
-  app.use(express.static(staticRoot));
+  app.use(cachePolicy());
+  app.use(express.static(staticRoot, { etag: true, lastModified: true, maxAge: 0 }));
 
   app.get('*', (req, res) => {
     if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'not_found' });

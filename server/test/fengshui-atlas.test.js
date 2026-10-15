@@ -7,8 +7,19 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const ROOT = path.join(__dirname, '..', '..');
-const appSource = fs.readFileSync(path.join(ROOT, 'js', 'app.js'), 'utf8');
+const { readAppSources } = require('./_sources');
+const appSource = readAppSources();   // 셸(js/app.js) + 모듈(js/app/*.js)
 const indexHtml = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+
+// 지연 로딩 표(js/lib/loader.js)만 따로 실행해 "어느 화면이 무엇을 받는지"를 검사한다.
+function loadLoader() {
+  const window = { document: { createElement: () => ({ setAttribute() {} }), head: { appendChild() {} } } };
+  const context = { window, console };
+  vm.createContext(context);
+  const full = path.join(ROOT, 'js', 'lib', 'loader.js');
+  vm.runInContext(fs.readFileSync(full, 'utf8'), context, { filename: full });
+  return window.MJ_LOADER;
+}
 
 function loadBrowserData() {
   const window = {};
@@ -65,7 +76,11 @@ test('목적별 맞춤 사찰 매트릭스와 방문법이 데이터로 제공�
 });
 
 test('앱이 대백과·동행 스타일·추천 코스를 연결한다', () => {
-  assert.equal(indexHtml.includes('js/data-fengshui.js'), true, 'index.html에 대백과 데이터 스크립트 연결');
+  // 대백과 데이터(15KB)는 첫 화면에서 받지 않는다 — 풍수 화면에 들어갈 때 로더가 내려준다.
+  const loader = loadLoader();
+  assert.equal(loader.ASSETS.fengshui.js[0], 'js/data-fengshui.js', '로더가 대백과 데이터를 담당');
+  assert.ok(loader.needsFor('#/fengshui').includes('fengshui'), '풍수 대백과 화면 → 대백과 데이터');
+  assert.ok(loader.needsFor('#/explore/theme/fengshui').includes('fengshui'), '풍수 테마 화면 → 대백과 데이터');
   assert.ok(appSource.includes('window.FENGSHUI_ATLAS'), '앱이 대백과 데이터를 읽음');
   assert.ok(appSource.includes("case 'fengshui': html = viewFengshuiAtlas()"), '대백과 화면 라우트');
   assert.ok(appSource.includes('목적별 맞춤 사찰 매트릭스'), '매트릭스 화면 표시');
