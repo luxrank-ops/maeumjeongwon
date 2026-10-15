@@ -42,6 +42,7 @@ class El {
   setAttribute(k, v) { this.attributes[k] = String(v); }
   getAttribute(k) { return Object.prototype.hasOwnProperty.call(this.attributes, k) ? this.attributes[k] : null; }
   addEventListener(ev, fn) { (this._listeners[ev] = this._listeners[ev] || []).push(fn); }
+  click() { for (const fn of (this._listeners.click || []).slice()) fn({}); }
   querySelectorAll() { return []; }
   querySelector() { return null; }
   closest() { return null; }
@@ -66,6 +67,7 @@ function loadApp(opts = {}) {
   modal.classList.add('hidden');
   make('plusChip', 'a');
   make('bigToggle', 'button');
+  make('themeToggle', 'button');   // 낮 / 저조도 토글 (⑮-1d)
   make('langToggle', 'button');
   make('installBtn', 'button');
   const offlineBanner = make('offlineBanner', 'div');
@@ -80,12 +82,18 @@ function loadApp(opts = {}) {
     return a;
   });
 
-  const store = {};
+  // opts.store 로 저장소를 미리 채울 수 있다 — '처음 온 사용자'와 '기록이 쌓인 사용자'를 갈라 본다.
+  const store = Object.assign({}, opts.store || {});
   const localStorage = {
     getItem: k => (Object.prototype.hasOwnProperty.call(store, k) ? store[k] : null),
     setItem: (k, v) => { store[k] = String(v); },
     removeItem: k => { delete store[k]; }
   };
+
+  // 화면을 innerHTML 로 그리기 때문에 '그려진 요소'는 실제 노드가 없다.
+  // 렌더 직후 app.js 가 getElementById 로 붙이는 입력(검색칸 등)을 검사할 수 있도록,
+  // 알 수 없는 id 는 요청 시 한 번만 만들어 되돌려 준다 (같은 id → 같은 객체).
+  const autoEls = {};
 
   const locationObj = { hash: '#/home', protocol: 'http:', href: 'http://127.0.0.1/#/home' };
   const windowListeners = {};
@@ -95,7 +103,7 @@ function loadApp(opts = {}) {
     documentElement: new El('html'),
     body: new El('body'),
     head: new El('head'),
-    getElementById: id => byId[id] || null,
+    getElementById: id => byId[id] || (autoEls[id] = autoEls[id] || new El('div', id)),
     querySelector: sel => (sel === '.tabbar a' ? tabs[0] : null),
     querySelectorAll: sel => (sel === '.tabbar a' ? tabs : []),
     createElement: tag => new El(tag),
@@ -172,6 +180,7 @@ function loadApp(opts = {}) {
     speechSynthesis: { cancel() {}, speaking: false },
     fetch: fakeFetch,
     setTimeout: fn => { try { fn(); } catch (e) {} return 1; },
+    clearTimeout() {},
     setInterval: () => 1,
     clearInterval() {},
     innerWidth: 390,
@@ -201,6 +210,7 @@ function loadApp(opts = {}) {
     L,
     console,
     setTimeout: windowObj.setTimeout,
+    clearTimeout: windowObj.clearTimeout,
     setInterval: windowObj.setInterval,
     clearInterval: windowObj.clearInterval,
     fetch: fakeFetch,
@@ -390,4 +400,95 @@ test('홈은 스토리 데이터를 기다리지 않고 먼저 그린다 — 도
   await app.goAsync('#/home');                    // 도착 후 다시 그린 화면
   assert.match(app.view.innerHTML, /이번 주 심화 스토리/);
   assert.ok(app.loadedScripts().includes('js/data-stories.js'));
+});
+
+/* ---------------------------------------------------------------------------
+   2026-10 2차 리프레시 (docs/design-refresh.md 5절) — 정적 grep으로는 못 잡는 것들
+   --------------------------------------------------------------------------- */
+
+test('탐색 검색은 탭 위에 항상 있고, 검색어가 주소·결과에 함께 반영된다', () => {
+  const { go } = loadApp();
+
+  // 검색 칸은 탭(순위별·테마별·지역별·전통사찰) 어디를 열어도 같은 자리에 있다
+  for (const hash of ['#/explore', '#/explore/theme/energy', '#/explore/region/경북', '#/explore/all']) {
+    const html = go(hash);
+    assert.match(html, /id="eq"/, `${hash} 에 상시 검색칸이 있어야 함`);
+    assert.ok(html.indexOf('id="eq"') < html.indexOf('class="seg"'), `${hash} 검색칸이 탭보다 위여야 함`);
+  }
+
+  // 수록 사찰 검색: '해인사'는 걸리고 '없는절'은 안 걸린다
+  const hit = go('#/explore/list/해인사');
+  assert.match(hit, /해인사/);
+  assert.equal(hit.includes('전체 수록 사찰'), false, '검색 중에는 전체 목록을 늘어놓지 않는다');
+  const miss = go('#/explore/list/없는절이름');
+  assert.match(miss, /못 찾았어요/);
+  assert.match(miss, /#\/explore\/all\/.*%E.*|#\/explore\/all\//, '못 찾으면 991곳으로 넘어가는 길을 준다');
+
+  // 테마·지역 탭은 '선택값 + 검색어' 두 칸을 함께 들고 다닌다
+  const themed = go('#/explore/theme/energy/해인사');
+  assert.ok(themed.includes('href="#/explore/theme/energy'), '테마 선택값이 주소에 남아야 함');
+});
+
+test('탐색 검색 입력이 결과만 다시 그리고, 주소는 replaceState 로 따라간다', () => {
+  const { window: win, view, go } = loadApp();
+  const replaced = [];
+  win.history = { replaceState: (a, b, url) => replaced.push(url) };
+  go('#/explore');
+
+  const input = win.document.getElementById('eq');
+  assert.ok(input, '검색칸이 DOM에 있어야 함');
+  input.value = '통도사';
+  for (const fn of (input._listeners.input || [])) fn({});   // 디바운스는 테스트에서 즉시 실행된다
+
+  assert.ok(replaced.length >= 1, '주소를 replaceState 로 갱신해야 함');
+  assert.match(replaced[replaced.length - 1], /#\/explore\/list\//);
+  assert.match(view.innerHTML, /통도사/, '결과가 다시 그려져야 함');
+});
+
+test('홈 순서는 "내가 남긴 기록" 3건을 기준으로 바뀐다 — 데모 표본 기록은 세지 않는다', () => {
+  // 처음 열었을 때 자동으로 채워지는 표본 14건은 '내 기록'이 아니다 → 처방전이 먼저
+  const fresh = loadApp({ store: {} });
+  const freshHtml = fresh.go('#/home');
+  assert.ok(freshHtml.indexOf('마음 처방전') < freshHtml.indexOf('내 순례'),
+    '처음 온 사용자에게는 마음 처방전이 먼저여야 함');
+  assert.match(freshHtml, /data-home-order="new"/);
+
+  // 사용자가 직접 남긴 기록이 3건 쌓이면 '내 순례'가 처방전 위로 올라온다
+  const own = {
+    visits: [{ tid: 'tongdosa', date: '2026-10-09', method: 'gps' }],
+    journal: [
+      { id: 'a', tid: 'tongdosa', date: '2026-10-09', note: '첫 걸음' },
+      { id: 'b', tid: 'haeinsa', date: '2026-10-10', note: '두 번째' }
+    ]
+  };
+  const returning = loadApp({ store: { 'maeumjeongwon.v1': JSON.stringify(own) } });
+  const html = returning.go('#/home');
+  assert.ok(html.indexOf('내 순례') < html.indexOf('마음 처방전'),
+    '기록이 쌓인 사용자에게는 내 순례가 먼저여야 함');
+  assert.match(html, /data-home-order="returning"/);
+});
+
+test('낮 / 저조도 토글은 <html data-theme> 하나만 바꾼다', () => {
+  const { window: win, view, go } = loadApp();
+  go('#/home');
+  const root = win.document.documentElement;
+  // 시스템 설정이 '밝음'인 환경 → 처음은 낮
+  assert.equal(root.getAttribute('data-theme'), 'light');
+
+  const btn = win.document.getElementById('themeToggle');
+  assert.ok(btn, '테마 토글 버튼이 있어야 함');
+  btn.click();
+  assert.equal(root.getAttribute('data-theme'), 'dark');
+  assert.equal(btn.getAttribute('aria-pressed'), 'true');
+  assert.equal(win.localStorage.getItem('maeumjeongwon.theme.v1'), 'dark');
+
+  btn.click();
+  assert.equal(root.getAttribute('data-theme'), 'light');
+  assert.equal(win.localStorage.getItem('maeumjeongwon.theme.v1'), 'light');
+
+  // 저장된 값이 있으면 시스템 설정보다 '사용자가 고른 것'이 이긴다
+  const dark = loadApp({ store: { 'maeumjeongwon.theme.v1': 'dark' } });
+  dark.go('#/home');
+  assert.equal(dark.window.document.documentElement.getAttribute('data-theme'), 'dark');
+  assert.ok(view.innerHTML.length > 0);
 });

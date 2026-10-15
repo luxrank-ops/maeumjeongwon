@@ -228,8 +228,12 @@
   };
 
   function populateSampleValues() {
-    S.visits = SAMPLE_DATA.visits.map(x => Object.assign({}, x));
-    S.journal = SAMPLE_DATA.journal.map(x => Object.assign({}, x));
+    /* 데모 표본에는 sample 표지를 붙여 둔다.
+     * '이 앱을 처음 열면 바로 채워지는' 표본 기록은 사용자가 남긴 기록이 아니다.
+     * 그런데 화면에는 똑같이 보이므로 — 홈 순서를 '기록 3건 이상'으로 개인화하려면
+     * "사용자가 직접 남긴 것"만 세어야 한다. 지워도 표본만 빠지니 개수는 저절로 맞다. */
+    S.visits = SAMPLE_DATA.visits.map(x => Object.assign({ sample: true }, x));
+    S.journal = SAMPLE_DATA.journal.map(x => Object.assign({ sample: true }, x));
     S.trips = SAMPLE_DATA.trips.map(x => Object.assign({}, x, { stops: x.stops.slice() }));
     S.tripChecks = Object.assign({}, SAMPLE_DATA.tripChecks);
     S.moodLog = SAMPLE_DATA.moodLog.map(x => Object.assign({}, x));
@@ -879,10 +883,20 @@
     updateStreak();
     const done = ritualDoneToday(), verse = getDailyVerse(), streak = S.streak || 0;
 
-    const todayHead = `<header class="today">
+    /* 홈 순서 개인화 (docs/design-refresh.md 5절)
+     * 기록이 3건 이상 쌓인 사람에게는 '내 순례'를 마음 처방전보다 위에 둔다.
+     *   · 처음 온 사람에게 이 앱이 시키는 일은 하나 — 마음을 고르는 것. 그래서 처방전이 1등이다.
+     *   · 이미 걷기 시작한 사람은 다르다. "어디까지 왔고, 다음이 무엇인지"가 먼저 읽혀야
+     *     오늘의 한 걸음이 정해진다. 처방전은 그다음에 내려와도 늦지 않다.
+     * 카드의 내용·생김새는 그대로 두고 **순서만** 바꾼다 — 순서가 효력이 있는지, 내용이
+     * 효력이 있는지 갈라 보려면 한 번에 하나만 움직여야 한다. (A/B 분배는 아직 붙이지 않았다) */
+    const ownRecords = (S.visits || []).filter(x => !x.sample).length + (S.journal || []).filter(x => !x.sample).length;
+    const returning = ownRecords >= 3;
+
+    const todayHead = `<header class="today" data-home-order="${returning ? 'returning' : 'new'}">
       <div class="today-date"><span>${today().replace(/-/g, '.')} · ${greetPart()}</span><span class="state ${done ? 'ok' : ''}"><i class="dot"></i>${done ? '오늘 리추얼 완료' : '오늘 남긴 한 가지'}</span></div>
       <h1>오늘, 마음은<br class="mobile-only"> 어디에 놓을까요</h1>
-      <p>기분을 고르면 어울리는 사찰 이야기와 걷는 순례길을 골라 드려요.</p>
+      <p>${returning ? '어디까지 왔는지 먼저 보고, 오늘의 마음을 골라 보세요.' : '기분을 고르면 어울리는 사찰 이야기와 걷는 순례길을 골라 드려요.'}</p>
     </header>`;
 
     const moodCard = `<section class="card mood-card">
@@ -1008,9 +1022,8 @@
     ${todayHead}
     ${consentCard()}
     ${onboard}
-    ${moodCard}
+    ${returning ? pilgrimCard + moodCard : moodCard + pilgrimCard}
     ${ritualCard}
-    ${pilgrimCard}
     ${railCard}
     ${plannerCard}
     ${toolsCard}
@@ -1026,41 +1039,100 @@
 
   // ---------- 화면: 탐색 ----------
   const SIDO_ORDER = ['서울', '인천', '경기', '강원', '충북', '충남', '대전', '세종', '전북', '전남', '광주', '경북', '대구', '경남', '울산', '부산', '제주'];
-  function viewExplore(tab, arg) {
-    tab = tab || 'list';
-    const tabs = [['list', '순위별'], ['theme', '테마별'], ['region', '지역별'], ['all', '전통사찰 991']];
-    let body = '';
-    if (tab === 'list') {
-      body = Object.entries(LL).map(([k, name]) => {
-        const items = TEMPLES.filter(t => t.lists.includes(k));
-        const m = MISSIONS.find(x => x.id === k);
-        return `<section class="card"><h2>${name} <span class="sub">${items.length}곳</span></h2>${m && m.note ? `<p class="notice">${m.note}</p>` : ''}<div class="tlist">${items.map(t => templeItem(t)).join('')}</div></section>`;
-      }).join('') + `<section class="card"><h2>전체 수록 사찰 <span class="sub">${TEMPLES.length}곳</span></h2><div class="tlist">${TEMPLES.map(t => templeItem(t)).join('')}</div></section>`;
-    } else if (tab === 'theme') {
-      const cur = arg || 'energy';
-      body = `<div class="tabs">${Object.entries(THEMES).map(([k, th]) => `<a class="chip ${k === cur ? 'on' : ''}" style="text-decoration:none" href="#/explore/theme/${k}">${th.icon} ${th.name}</a>`).join('')}</div>
-      <p class="sub">${THEMES[cur].desc}</p>${cur === 'wish' || cur === 'energy' || cur === 'fengshui' || cur === 'prayer' ? '<p class="notice">기도·풍수 관련 소개는 종교적 전승이나 전해지는 이야기이며, 효험·기운을 보장하지 않아요.</p>' : ''}
-      ${themeBody(cur)}`;
-    } else if (tab === 'region') {
-      const sidos = SIDO_ORDER.filter(s => TEMPLES.some(t => t.sido === s));
-      const cur = arg || sidos[0];
-      body = `<div class="tabs">${sidos.map(s => `<a class="chip ${s === cur ? 'on' : ''}" style="text-decoration:none" href="#/explore/region/${encodeURIComponent(s)}">${s} ${TEMPLES.filter(t => t.sido === s).length}</a>`).join('')}</div>
-      <div class="tlist">${TEMPLES.filter(t => t.sido === cur).map(t => templeItem(t, esc(t.mountain))).join('')}</div>`;
-    } else {
+  /* 탐색의 검색 상시화 (docs/design-refresh.md 5절)
+   * 원래 검색은 '전통사찰 991' 탭 안에만 있었다. 그런데 찾아보지 않으면 991곳이 있다는 사실 자체를
+   * 모른다 — 탭 하나 뒤에 숨겨 둔 검색은 '없는 기능'과 같다. 그래서 검색을 탭 위, 항상 보이는
+   * 자리로 올리고 각 탭이 그 검색어로 걸러지게 했다.
+   * 주소 규칙: #/explore/<탭>[/<탭의 선택값>]/<검색어>
+   *   · list · all : 선택값이 없으므로 두 번째 칸이 곧 검색어
+   *   · theme·region: 두 번째 칸은 테마·시도, 검색어는 마지막 칸
+   *   · 입력마다 replaceState 로 주소만 갱신한다 — 뒤로가기 기록을 더럽히지 않으면서
+   *     '지금 보고 있는 목록'을 그대로 공유·북마크할 수 있게. */
+  function exploreQueryOf(tab, arg, q) {
+    // 탭이 무엇이든 '검색어' 하나로 돌려준다 (주소에서 읽은 두 칸을 탭에 맞게 해석)
+    return (tab === 'theme' || tab === 'region') ? String(q || '') : String(arg || '');
+  }
+  function templeHay(t) {
+    return [t.name, t.hanja, t.sido, t.sgg, t.mountain, t.addr, t.order,
+      (t.lists || []).map(l => LL[l] || '').join(' '),
+      (t.themes || []).map(k => (THEMES[k] && THEMES[k].name) || '').join(' ')]
+      .filter(Boolean).join(' ').toLowerCase();
+  }
+  function matchTemple(t, q) {
+    const k = String(q || '').trim().toLowerCase();
+    return !k || templeHay(t).indexOf(k) > -1;
+  }
+  function matchTrad(r, q) {
+    const k = String(q || '').trim().toLowerCase();
+    if (!k) return true;
+    return [r.name, r.sido, r.sgg, r.addr, r.order, String(r.no)].join(' ').toLowerCase().indexOf(k) > -1;
+  }
+  // 수록 사찰에서 못 찾았을 때 '끝'이라고 말하지 않는다 — 991곳 전체로 넘어가는 길을 알려 준다
+  function tradHint(query, n) {
+    if (!query) return '';
+    const href = `#/explore/all/${encodeURIComponent(query)}`;
+    if (n) return `<p class="notice" style="margin:10px 0 0">수록 사찰에서 ${n}곳을 찾았어요. <a href="${href}">전통사찰 991곳에서 '${esc(query)}' 더 찾기 →</a></p>`;
+    return `<div class="empty">${ic('search')}<b>수록 사찰에서 '${esc(query)}'을 못 찾았어요</b><p>문화체육관광부 「전통사찰 현황」 991곳 전체에서는 찾을 수 있어요.</p><a class="btn" style="text-decoration:none" href="${href}">전통사찰 991곳에서 찾기</a></div>`;
+  }
+  function exploreBody(tab, facet, query) {
+    if (tab === 'all') {
       const orders = [...new Set(TRAD.map(r => r.order))].sort();
-      body = `<section class="card hero data-note">
+      return `<section class="card hero data-note">
         <div class="row between"><span class="section-kicker">${ic('file')} 공식 데이터</span><span class="tag ok">${TRAD.length}곳 수록</span></div>
         <p class="sub" style="margin:6px 0 0">「전통사찰 현황」(2026.6.1. 현재) 991곳 전체 목록이에요. 사찰을 누르면 상세 주소·종단을 보고, <b>여행 계획·수첩·방문 인증</b>에 바로 쓸 수 있어요.</p>
       </section>
       <div class="searchbar">
-        <span class="search-wrap">${ic('search')}<input id="tq" placeholder="사찰명 · 지역 · 종단 (예: 보광사, 강남구, 천태종)" value="${esc(arg || '')}" aria-label="전통사찰 검색" /></span>
         <select id="ts" class="filter-sel" aria-label="시·도 필터"><option value="">전체 시·도</option>${SIDO_ORDER.map(s => `<option value="${esc(s)}">${esc(s)} (${TRAD.filter(r => r.sido === s).length})</option>`).join('')}</select>
         <select id="to" class="filter-sel" aria-label="종단 필터"><option value="">전체 종단</option>${orders.map(o => `<option value="${esc(o)}">${esc(o)} (${TRAD.filter(r => r.order === o).length})</option>`).join('')}</select>
       </div>
       <div id="tres"></div>`;
     }
+    const q = String(query || '').trim();
+    if (tab === 'list') {
+      if (q) {
+        const hits = TEMPLES.filter(t => matchTemple(t, q));
+        return `<div class="tlist">${hits.map(t => templeItem(t)).join('')}</div>${tradHint(q, hits.length)}`;
+      }
+      return Object.entries(LL).map(([k, name]) => {
+        const items = TEMPLES.filter(t => t.lists.includes(k));
+        const m = MISSIONS.find(x => x.id === k);
+        return `<section class="card"><h2>${name} <span class="sub">${items.length}곳</span></h2>${m && m.note ? `<p class="notice">${m.note}</p>` : ''}<div class="tlist">${items.map(t => templeItem(t)).join('')}</div></section>`;
+      }).join('') + `<section class="card"><h2>전체 수록 사찰 <span class="sub">${TEMPLES.length}곳</span></h2><div class="tlist">${TEMPLES.map(t => templeItem(t)).join('')}</div></section>`;
+    }
+    if (tab === 'theme') {
+      const cur = facet || 'energy';
+      const chips = `<div class="tabs">${Object.entries(THEMES).map(([k, th]) => `<a class="chip ${k === cur ? 'on' : ''}" style="text-decoration:none" href="#/explore/theme/${k}${q ? '/' + encodeURIComponent(q) : ''}">${th.icon} ${th.name}</a>`).join('')}</div>`;
+      if (q) {
+        const hits = TEMPLES.filter(t => t.themes.includes(cur) && matchTemple(t, q));
+        return chips + `<div class="tlist">${hits.map(t => templeItem(t)).join('')}</div>${tradHint(q, hits.length)}`;
+      }
+      return chips + `<p class="sub">${THEMES[cur].desc}</p>${cur === 'wish' || cur === 'energy' || cur === 'fengshui' || cur === 'prayer' ? '<p class="notice">기도·풍수 관련 소개는 종교적 전승이나 전해지는 이야기이며, 효험·기운을 보장하지 않아요.</p>' : ''}
+      ${themeBody(cur)}`;
+    }
+    const sidos = SIDO_ORDER.filter(s => TEMPLES.some(t => t.sido === s));
+    const cur = facet || sidos[0];
+    const chips = `<div class="tabs">${sidos.map(s => `<a class="chip ${s === cur ? 'on' : ''}" style="text-decoration:none" href="#/explore/region/${encodeURIComponent(s)}${q ? '/' + encodeURIComponent(q) : ''}">${s} ${TEMPLES.filter(t => t.sido === s).length}</a>`).join('')}</div>`;
+    if (q) {
+      const hits = TEMPLES.filter(t => t.sido === cur && matchTemple(t, q));
+      return chips + `<div class="tlist">${hits.map(t => templeItem(t, esc(t.mountain))).join('')}</div>${tradHint(q, hits.length)}`;
+    }
+    return chips + `<div class="tlist">${TEMPLES.filter(t => t.sido === cur).map(t => templeItem(t, esc(t.mountain))).join('')}</div>`;
+  }
+
+  function viewExplore(tab, arg, q) {
+    tab = tab || 'list';
+    const tabs = [['list', '순위별'], ['theme', '테마별'], ['region', '지역별'], ['all', '전통사찰 991']];
+    const query = exploreQueryOf(tab, arg, q).trim();
+    const facet = (tab === 'theme' || tab === 'region') ? (arg || '') : '';
+    const qs = query ? '/' + encodeURIComponent(query) : '';
+    const search = `<div class="searchbar explore-search">
+        <span class="search-wrap">${ic('search')}<input id="eq" type="search" placeholder="사찰명 · 지역 · 테마 (예: 해인사, 경주, 단풍)" value="${esc(query)}" aria-label="사찰 검색" autocomplete="off" enterkeyhint="search" /></span>
+        <button type="button" class="chip${query ? '' : ' hidden'}" id="eclear">지우기</button>
+      </div>`;
     return `<div class="screen-head"><h1>사찰 탐색</h1><p class="sub"> 수록 ${TEMPLES.length}곳 · 전통사찰 ${TRAD.length}곳 · 이야기 ${STORIES.length}편</p></div>
-      <nav class="seg" aria-label="탐색 방식">${tabs.map(([k, n]) => `<a class="${k === tab ? 'on' : ''}" style="text-decoration:none" href="#/explore/${k}"${k === tab ? ' aria-current="page"' : ''}>${n}</a>`).join('')}</nav>${body}`;
+      ${search}
+      <nav class="seg" aria-label="탐색 방식">${tabs.map(([k, n]) => `<a class="${k === tab ? 'on' : ''}" style="text-decoration:none" href="#/explore/${k}${qs}"${k === tab ? ' aria-current="page"' : ''}>${n}</a>`).join('')}</nav>
+      <div id="eres">${exploreBody(tab, facet, query)}</div>`;
   }
 
   function themeBody(cur) {
@@ -1117,16 +1189,33 @@
       ${courses.length ? `<h2>테마 순례 코스 <span class="tag">플러스</span></h2>${courses.map(courseCard).join('')}` : ''}
       ${rest.length ? `<h2>함께 보기 <span class="sub">${rest.length}곳</span></h2><p class="sub" style="font-size:.85em">풍수 이야기 등으로 분류된 곳이에요.</p><div class="tlist">${rest.map(t => templeItem(t)).join('')}</div>` : ''}`;
   }
-  function bindTrad() {
-    const q = document.getElementById('tq'); if (!q) return;
-    const s = document.getElementById('ts');
-    const o = document.getElementById('to');
-    const out = document.getElementById('tres');
+  /* 탐색 화면의 입력 묶음 — 검색어(상시) · 시·도 · 종단(전통사찰 탭).
+   * 입력을 칠 때마다 화면 전체를 다시 그리지 않는다. 결과 칸(#eres)만 갈아 끼워서
+   * 커서가 튀지 않게 하고, 주소는 replaceState 로만 따라간다. */
+  function bindExplore() {
+    const q = document.getElementById('eq'); if (!q) return;
+    const clear = document.getElementById('eclear');
+    const box = document.getElementById('eres');
     let limit = 100;
-    function run(resetLimit) {
-      if (resetLimit !== false) limit = 100;
-      const k = q.value.trim(), sd = s.value, od = o ? o.value : '';
-      const rows = TRAD.filter(r => (!sd || r.sido === sd) && (!od || r.order === od) && (!k || r.name.includes(k) || r.addr.includes(k) || r.sgg.includes(k) || r.order.includes(k) || String(r.no) === k));
+    let t = null;
+
+    function ctx() {
+      const parts = (location.hash || '#/explore').slice(2).split('/');
+      const tab = parts[1] || 'list';
+      return { tab, facet: (tab === 'theme' || tab === 'region') ? decodeURIComponent(parts[2] || '') : '' };
+    }
+    function syncUrl(qs) {
+      const { tab, facet } = ctx();
+      const url = (tab === 'theme' || tab === 'region')
+        ? `#/explore/${tab}/${encodeURIComponent(facet || (tab === 'theme' ? 'energy' : ''))}${qs ? '/' + encodeURIComponent(qs) : ''}`
+        : `#/explore/${tab}${qs ? '/' + encodeURIComponent(qs) : ''}`;
+      if (url === location.hash) return;
+      // replaceState — 입력마다 pushState 하면 '뒤로' 한 번에 검색어 한 글자씩 되돌아간다
+      if (window.history && window.history.replaceState) window.history.replaceState(null, '', url);
+    }
+    function drawTradList(sd, od, k) {
+      const out = document.getElementById('tres'); if (!out) return;
+      const rows = TRAD.filter(r => (!sd || r.sido === sd) && (!od || r.order === od) && matchTrad(r, k));
       const shown = rows.slice(0, limit);
       const v = visited();
       out.innerHTML = `<div class="row between" style="margin-bottom:6px"><span class="sub">검색 결과 <b>${rows.length}</b>곳 (전체 ${TRAD.length}곳)</span>${rows.length > limit ? `<span class="sub">앞 ${limit}곳 표시 중</span>` : ''}</div>
@@ -1144,14 +1233,33 @@
         </a>`;
       }).join('') + `</div>` + (rows.length > limit ? `<button type="button" class="btn ghost block" id="tradMoreBtn" style="margin-top:10px">더 보기 (${rows.length - limit}곳 남음)</button>` : '');
       const moreBtn = document.getElementById('tradMoreBtn');
-      if (moreBtn) {
-        moreBtn.addEventListener('click', () => { limit += 150; run(false); });
-      }
+      if (moreBtn) moreBtn.addEventListener('click', () => { limit += 150; run(false); });
     }
-    q.addEventListener('input', () => run(true));
-    s.addEventListener('change', () => run(true));
-    if (o) o.addEventListener('change', () => run(true));
-    run(true);
+    function run(resetLimit, sync) {
+      if (resetLimit !== false) limit = 100;
+      const k = q.value.trim();
+      const { tab, facet } = ctx();
+      if (clear) clear.classList.toggle('hidden', !k);
+      if (sync !== false) syncUrl(k);        // 최초 바인딩 때는 주소가 이미 답을 들고 있다
+      if (tab === 'all') {
+        const sd = (document.getElementById('ts') || {}).value || '';
+        const od = (document.getElementById('to') || {}).value || '';
+        drawTradList(sd, od, k);
+        return;
+      }
+      if (!box) return;
+      box.innerHTML = exploreBody(tab, facet, k);
+    }
+    // 칠 때마다 다시 그리면 한 글자에 한 번씩 화면이 튄다 — 손가락이 멈춘 뒤에 한 번만
+    function onInput() {
+      if (t) clearTimeout(t);
+      t = setTimeout(() => { t = null; run(true); }, 180);
+    }
+    q.addEventListener('input', onInput);
+    q.addEventListener('keydown', e => { if (e.key === 'Enter') { if (t) clearTimeout(t); run(true); q.blur(); } });
+    if (clear) clear.addEventListener('click', () => { q.value = ''; run(true); q.focus(); });
+    ['ts', 'to'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', () => run(true)); });
+    run(false, false);
   }
 
   // ---------- 화면: 전국 명당 사찰 풍수 대백과 ----------
@@ -1561,7 +1669,7 @@
   let prevRoute = null, enterT = null;
   function render() {
     const parts = (location.hash || '#/home').slice(2).split('/').map(decodeURIComponent);
-    const [r, a, b] = parts;
+    const [r, a, b, c] = parts;
     if (mapObj) { mapObj.remove(); mapObj = null; }
     let html, tab = r;
     // 화면(라우트)별 배치 규칙이 CSS에서 고를 수 있도록 태깅 — 넓은 화면에서 카드를 몇 열로 둘지 결정
@@ -1570,7 +1678,7 @@
     $view.dataset.route = route;
     $view.dataset.flow = WIDE_FLOW.includes(route) && a !== 'new' ? 'cards' : '';
     switch (r) {
-      case 'explore': html = viewExplore(a, b); break;
+      case 'explore': html = viewExplore(a, b, c); break;
       case 'fengshui': html = viewFengshuiAtlas(); tab = 'explore'; break;
       case 'temple': html = viewTemple(a); tab = 'explore'; break;
       case 'map': html = viewMap(); break;
@@ -1625,7 +1733,7 @@
     if (r === 'map') { mapObj = initMap(a); }
     if (r === 'missions') { mapObj = initMap(null, 'pmap', true); }
     if (r === 'planner' && a === 'view') { const tr = (S.trips || []).find(x => x.id === b); if (tr) withPlanner(m => { mapObj = m.initPlanMap(tr.stops); }); }
-    if (r === 'explore' && a === 'all') bindTrad();
+    if (r === 'explore') bindExplore();
     if (r === 'journal' && a === 'new') bindJournalForm();
     if (r === 'planner' && a === 'new') { const m = plannerMod(); if (m) m.bindPlannerForm(); }
     else { const m = plannerMod(); if (m) m.state.refreshTempleOptions = null; }
@@ -1975,10 +2083,51 @@
   function applyBig() {
     document.body.classList.toggle('big', !!S.big);
     bt.setAttribute('aria-pressed', !!S.big ? 'true' : 'false');
+    bt.setAttribute('aria-label', '큰 글씨·간편 모드');
     bt.innerHTML = ic('textsize') + `<span>큰 글씨</span>`;   // 상태는 aria-pressed 로만 알린다 (문구가 길면 상단이 흔들린다)
   }
   bt.addEventListener('click', () => { S.big = !S.big; save(); applyBig(); render(); toast(S.big ? '큰 글씨·간편 모드를 켰어요' : '기본 모드로 돌아왔어요'); });
   applyBig();
+
+  /* ---------- 테마: 낮 / 저조도 ----------
+   * CSS 는 <html data-theme> 하나만 본다. 정하는 순서는 '사용자가 고른 것 > 시스템 설정'이고,
+   * 고른 적이 없으면 OS 의 low-light 설정이 바뀔 때 따라간다.
+   * 값은 앱 상태(S)와 섞지 않고 별도 키에 둔다 — 첫 페인트 전(<head> 의 인라인 스크립트)에도
+   * 읽어야 하므로, 앱 상태 JSON 전체를 기다릴 수 없다. */
+  const THEME_KEY = 'maeumjeongwon.theme.v1';
+  const THEME_BAR = { light: '#f6f1e7', dark: '#121815' };
+  let themePref = '';
+  try { themePref = localStorage.getItem(THEME_KEY) || ''; } catch (e) { themePref = ''; }
+  const systemDark = () => !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const isDark = () => themePref ? themePref === 'dark' : systemDark();
+  function applyTheme() {
+    const dark = isDark();
+    const root = document.documentElement;
+    root.setAttribute('data-theme', dark ? 'dark' : 'light');
+    const btn = document.getElementById('themeToggle');
+    if (btn) {
+      btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+      btn.setAttribute('title', dark ? '낮 모드로 보기' : '저조도(어두운 화면)로 보기');
+      btn.innerHTML = ic(dark ? 'sun' : 'moon') + `<span class="sr">${dark ? '낮 모드로 보기' : '저조도 모드로 보기'}</span>`;
+    }
+    // 상태바 색도 같이 갈아준다 — OS 테마와 어긋나면 앱이 열리는 순간 색이 한 번 튄다
+    document.querySelectorAll('meta[name="theme-color"]').forEach(m => {
+      if (!m.hasAttribute('media')) m.setAttribute('content', dark ? THEME_BAR.dark : THEME_BAR.light);
+    });
+  }
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    themePref = isDark() ? 'light' : 'dark';
+    try { localStorage.setItem(THEME_KEY, themePref); } catch (e) {}
+    applyTheme();
+    toast(isDark() ? '저조도 모드 — 새벽예불·야간 산행에서 눈이 편해요' : '낮 모드로 돌아왔어요');
+  });
+  applyTheme();
+  if (window.matchMedia) {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const onSysTheme = () => { if (!themePref) applyTheme(); };   // 직접 고른 적이 없을 때만 따라간다
+    if (mq.addEventListener) mq.addEventListener('change', onSysTheme);
+    else if (mq.addListener) mq.addListener(onSysTheme);
+  }
   window.addEventListener('hashchange', () => { clearInterval(openAd._t); closeModal(); navigate(); });
   // 스크롤 위치로만 상단 바의 경계를 그린다 — 늘 그림자를 달면 화면이 '무게'를 잃는다
   let scrolledT = null;

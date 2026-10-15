@@ -61,6 +61,25 @@ test('3. Service Worker sw.js 오프라인 캐시 및 인덱스 HTML 연동 검�
   assert.ok(html.includes('mobile-web-app-capable'), 'PWA 메타태그');
   assert.ok(html.includes('id="installBtn"'), '인앱 설치 버튼');
   assert.ok(html.includes('id="offlineBanner"'), '오프라인 알림 배너');
+
+  /* 버전 태그가 어긋나면 '새 캐시'가 옛 URL 을 미리 받아 놓는다 — 겉으로는 멀쩡하고
+     실제로는 지연 자산이 캐시되지 않는다. 세 곳(index.html · sw.js · loader.js)이
+     같은 태그를 가리키는지 여기서 묶어 둔다. */
+  const versioned = src => [...src.matchAll(/["'](\/(?:js|css)\/[^"']+\.js\?v=[^"']+)["']/g)].map(m => m[1]);
+  const swUrls = versioned(swContent).filter(u => !/\/js\/(?:data-prayer|data-stories|data-traditional|data-fengshui|app\/planner)\.js/.test(u));
+  for (const url of swUrls) {
+    // index.html 은 상대경로(js/…), sw.js 는 절대경로(/js/…)로 적는다 — 경로 앞 '/'만 맞춰 비교
+    assert.ok(html.includes(url.replace(/^\//, '')),
+      `sw.js 가 미리 받는 ${url} 이 index.html 에 없다 (버전 태그 불일치)`);
+  }
+  const lazy = versioned(swContent).filter(u => /\/js\/(?:data-prayer|data-stories|data-traditional|data-fengshui|app\/planner)\.js/.test(u));
+  assert.ok(lazy.length >= 5, '지연 자산 목록이 있어야 함');
+  const loaderSrc = fs.readFileSync(path.join(ROOT, 'js', 'lib', 'loader.js'), 'utf-8');
+  const loaderVersion = (/var VERSION = '([^']+)'/.exec(loaderSrc) || [])[1];
+  for (const url of lazy) {
+    assert.ok(url.endsWith('?v=' + loaderVersion),
+      `지연 자산 ${url} 의 버전이 loader.js(VERSION=${loaderVersion}) 와 다르다`);
+  }
 });
 
 test('4. 9대 제안 기능 모듈 (js/features.js) 구조 및 i18n / Web Audio / 도슨트 검증', () => {
