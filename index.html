@@ -9,36 +9,50 @@
 <meta property="og:description" content="전국 사찰의 기원·역사·전설을 이야기로 읽고, 순례 미션으로 모으고, 여행을 계획하는 사찰 순례·힐링 여행 앱입니다." />
 <title>마음정원사 : 절로가 — 사찰 순례 & 힐링 여행</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E🪷%3C/text%3E%3C/svg%3E" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="manifest" href="/manifest.webmanifest" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="마음정원" />
 <link rel="stylesheet" href="vendor/leaflet.css" />
-<link rel="stylesheet" href="css/style.css?v=20261011resp" />
+<link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-<a class="skip" href="#view">본문 바로가기</a>
+<a class="skip-link" href="#view">본문으로 바로가기</a>
 <div id="app">
+  <div id="offlineBanner" class="offline-banner hidden">📶 오프라인 모드 — 저장된 캐시 데이터를 사용합니다.</div>
   <header class="topbar">
     <button class="logo" data-go="#/home" aria-label="홈으로">🪷 <b>마음정원사 : 절로가</b></button>
-    <div class="topright"><a class="chip pluschip" href="#/plus" id="plusChip">✨ 플러스</a><button id="bigToggle" class="chip" aria-pressed="false" title="큰 글씨·간편 모드">가 큰글씨</button></div>
+    <div class="topright">
+      <button id="installBtn" class="chip pwa-btn hidden" title="앱 설치">📲 설치</button>
+      <button id="langToggle" class="chip lang-btn" title="언어 전환 (KO / EN)">EN</button>
+      <a class="chip pluschip" href="#/plus" id="plusChip">✨ 플러스</a>
+      <button id="bigToggle" class="chip" aria-pressed="false" title="큰 글씨·간편 모드">가 큰글씨</button>
+    </div>
   </header>
+  <div id="audioBar" class="audio-bar hidden"></div>
   <main id="view" tabindex="-1"></main>
   <nav class="tabbar" aria-label="주요 메뉴">
-    <a href="#/home" data-tab="home"><span>🏠</span>홈</a>
-    <a href="#/explore" data-tab="explore"><span>🧭</span>탐색</a>
-    <a href="#/map" data-tab="map"><span>🗺️</span>지도</a>
-    <a href="#/missions" data-tab="missions"><span>🏅</span>순례</a>
-    <a href="#/journal" data-tab="journal"><span>📔</span>수첩</a>
+    <a href="#/home" data-tab="home"><span>🏠</span><span class="tab-label">홈</span></a>
+    <a href="#/explore" data-tab="explore"><span>🧭</span><span class="tab-label">탐색</span></a>
+    <a href="#/map" data-tab="map"><span>🗺️</span><span class="tab-label">지도</span></a>
+    <a href="#/missions" data-tab="missions"><span>🏅</span><span class="tab-label">순례</span></a>
+    <a href="#/journal" data-tab="journal"><span>📔</span><span class="tab-label">수첩</span></a>
   </nav>
   <div id="toast" role="status" aria-live="polite"></div>
   <div id="modal" class="modal hidden" role="dialog" aria-modal="true"></div>
 </div>
 <script src="vendor/leaflet.js"></script>
-<script src="js/data-temples.js?v=20261011fengshui"></script>
+<script src="js/data-temples.js?v=20261009analytics"></script>
 <script src="js/data-prayer.js?v=20261012prayer"></script>
-<script src="js/data-fengshui.js?v=20261011fengshui"></script>
 <script src="js/data-stories.js?v=20261009analytics"></script>
 <script src="js/data-traditional.js"></script>
-<script src="js/planner-reco.js?v=20261011reco"></script>
+<script src="js/planner-reco.js?v=20261012reco"></script>
+<script src="js/data-fengshui.js?v=20261012fengshui"></script>
 <script src="js/config.js?v=20261009analytics"></script>
 <script src="js/analytics.js?v=20261009analytics"></script>
-<script src="js/app.js?v=20261011reco"></script>
+<script src="js/features.js"></script>
+<script src="js/app.js?v=20261012no-videos"></script>
 </body>
 </html>

@@ -1,5 +1,6 @@
 'use strict';
 
+require('./env');
 const express = require('express');
 const path = require('path');
 const crypto = require('crypto');
@@ -10,6 +11,7 @@ const { findTemple } = require('./content/temples');
 const { listTraditional, findTraditionalByNo } = require('./content/traditional');
 const { publicStory, fullStory, templeExtras } = require('./content/project');
 const { createStore } = require('./store');
+const { generateCounsel, getAiConfig } = require('./ai');
 
 const AD_DAILY_LIMIT = 2;
 const AD_UNLOCK_HOURS = 24;
@@ -68,7 +70,7 @@ function createApp(opts = {}) {
     if (auth.startsWith('Bearer ')) {
       const tok = auth.slice(7).trim();
       const uid = identity.verify(secret, tok);
-      if (!uid && req.path.startsWith('/api/') && req.path !== '/api/session' && req.path !== '/api/webhooks/revenuecat' && req.path !== '/api/ads/ssv') {
+      if (!uid && req.path.startsWith('/api/') && req.path !== '/api/session' && req.path !== '/api/webhooks/revenuecat' && req.path !== '/api/ads/ssv' && !req.path.startsWith('/api/ai/')) {
         return res.status(401).json({ error: 'invalid_token' });
       }
       req.uid = uid || '';
@@ -175,8 +177,25 @@ function createApp(opts = {}) {
         used: u ? store.getAdLog(uid, day) : 0,
         limit: AD_DAILY_LIMIT
       },
-      adUnlocks
+      adUnlocks,
+      ai: getAiConfig()
     });
+  });
+
+  // Google AI Pro 설정 및 상태 조회
+  app.get('/api/ai/config', (req, res) => {
+    res.json(getAiConfig());
+  });
+
+  // Google AI Pro 사찰·마음 상담 및 맞춤 도슨트
+  app.post('/api/ai/counsel', async (req, res) => {
+    try {
+      const { prompt, mood, templeId } = req.body || {};
+      const result = await generateCounsel({ prompt, mood, templeId });
+      res.json(result);
+    } catch (err) {
+      res.status(500).json({ ok: false, error: 'ai_error', message: err.message || 'AI 응답 생성 중 오류가 발생했습니다.' });
+    }
   });
 
   // 사찰 추가 본문 (무료는 제목만, 플러스만 전문)

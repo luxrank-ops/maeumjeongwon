@@ -82,6 +82,126 @@
   });
   let S;
   try { S = Object.assign({}, defaults, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { S = Object.assign({}, defaults); }
+
+  const SAMPLE_DATA = {
+    visits: [
+      { tid: 'tongdosa', date: '2026-10-09', method: 'gps' },
+      { tid: 'haeinsa', date: '2026-10-10', method: 'gps' },
+      { tid: 'songgwangsa', date: '2026-10-11', method: 'gps' },
+      { tid: 'bulguksa', date: '2026-10-08', method: 'gps' },
+      { tid: 'naksansa', date: '2026-10-12', method: 'gps' },
+      { tid: 'woljeongsa', date: '2026-10-13', method: 'gps' },
+      { tid: 'buseoksa', date: '2026-10-14', method: 'gps' }
+    ],
+    journal: [
+      {
+        id: 'j-buseoksa',
+        tid: 'buseoksa',
+        date: '2026-10-14',
+        weather: '☀️ 맑음',
+        note: '무량수전 배흘림기둥에 서서 소백산 능선 너머로 번지는 황금빛 노을을 마주했습니다. 가을바람에 풍경 소리가 맑게 울려 퍼질 때, 마음속 모든 번뇌가 씻겨 내려가는 듯한 고요함을 느꼈습니다.',
+        photo: null
+      },
+      {
+        id: 'j-woljeongsa',
+        tid: 'woljeongsa',
+        date: '2026-10-13',
+        weather: '⛅ 구름',
+        note: '오대산 천년 전나무숲길을 맨발로 걸었습니다. 피톤치드 향기와 계곡 물소리 속에서 오롯이 나의 숨과 걸음에 집중하며 내면의 평화를 되찾았습니다.',
+        photo: null
+      },
+      {
+        id: 'j-naksansa',
+        tid: 'naksansa',
+        date: '2026-10-12',
+        weather: '☀️ 맑음',
+        note: '새벽 동해 바다의 붉은 해돋이를 홍련암 법당 마루 틈으로 바라보았습니다. 해수관음보살상 앞에서 합장하며 한 가지 간절한 소원을 마음속 깊이 담았습니다.',
+        photo: null
+      },
+      {
+        id: 'j-songgwangsa',
+        tid: 'songgwangsa',
+        date: '2026-10-11',
+        weather: '⛅ 구름',
+        note: '보조국사 지눌 스님의 정혜결사 정신이 깃든 승보사찰 송광사. 우화각 다리 아래 맑은 물에 비친 누각을 바라보며 나를 돌아보는 침묵의 시간을 가졌습니다. 이로써 삼보사찰 순례를 원만하게 회향했습니다!',
+        photo: null
+      },
+      {
+        id: 'j-haeinsa',
+        tid: 'haeinsa',
+        date: '2026-10-10',
+        weather: '☀️ 맑음',
+        note: '가야산 소리길의 맑은 물소리를 따라 걸어 장경판전에 다다랐습니다. 팔만대장경판의 경이로운 보존과 선조들의 숭고한 정성에 가슴 뭉클한 감동을 받았습니다.',
+        photo: null
+      },
+      {
+        id: 'j-tongdosa',
+        tid: 'tongdosa',
+        date: '2026-10-09',
+        weather: '☀️ 맑음',
+        note: '영축산 무풍한송로의 굽은 소나무 숲길을 걸었습니다. 금강계단 앞 고요한 침묵 속에서 나 자신과 마주하는 참된 휴식을 얻었습니다.',
+        photo: null
+      },
+      {
+        id: 'j-bulguksa',
+        tid: 'bulguksa',
+        date: '2026-10-08',
+        weather: '☀️ 맑음',
+        note: '토함산 자락의 다보탑과 석가탑, 청운교·백운교를 천천히 음미했습니다. 신라 천년의 미소와 기도가 오늘날까지 고스란히 전해져 오는 듯합니다.',
+        photo: null
+      }
+    ],
+    trips: [
+      {
+        id: 'trip_templestay_sample',
+        title: '산사 1박 2일 템플스테이 & 참선 힐링 코스',
+        date: '2026-10-14',
+        days: '1박 2일',
+        transport: '대중교통·도보',
+        companion: '혼자 조용히',
+        stops: ['woljeongsa', 'sangwonsa'],
+        memo: '1. 1일차 14:00 — 사찰 도착 및 방사 배정 · 수련복 착용 및 사찰 안내\n2. 1일차 16:00 — 사물 타종 관람 및 타종 체험\n3. 1일차 17:30 — 저녁 공양 (사찰음식 발우공양)\n4. 1일차 18:30 — 저녁 예불 및 108배 염주 꿰기 체험\n5. 2일차 04:30 — 새벽 예불 및 전나무숲길 포행 명상\n6. 2일차 09:30 — 오대산 상원사·중대 적멸보궁 참배\n\n💡 팁: 산중 사찰은 일교차가 크므로 따뜻한 겉옷을 준비하세요.',
+        createdAt: '2026-10-14T00:00:00.000Z'
+      },
+      {
+        id: 'trip_yeongnam_sample',
+        title: '팔공산·영남 기운 충전 순례 코스',
+        date: '2026-10-14',
+        days: '당일치기',
+        transport: '자가용',
+        companion: '가족·부모님과',
+        stops: ['gatbawi', 'donghwasa'],
+        memo: '1. 오전 08:30 — 관봉 석조여래좌상(갓바위) 돌계단 산행 및 한 가지 소원 발원\n2. 오전 11:30 — 팔공산 동화사 이동 및 통일대불 참배\n3. 오후 13:00 — 산채비빔밥 점심 공양 및 계곡 산책\n\n💡 팁: 갓바위 돌계단은 편한 등산화가 필수입니다.',
+        createdAt: '2026-10-13T00:00:00.000Z'
+      }
+    ],
+    tripChecks: {
+      shoes: true,
+      clothes: true,
+      water: true,
+      hours: true,
+      etiquette: true
+    },
+    moodLog: [
+      { ts: Date.now() - 86400000 * 3, mood: 1, note: '산사 숲길 걷기로 복잡한 마음 비우기' },
+      { ts: Date.now() - 86400000 * 2, mood: 3, note: '낙산사 홍련암에서 간절한 발원' },
+      { ts: Date.now() - 86400000 * 1, mood: 2, note: '부석사 석양 바라보며 평온과 설렘' }
+    ]
+  };
+
+  function populateSampleValues() {
+    S.visits = SAMPLE_DATA.visits.map(x => Object.assign({}, x));
+    S.journal = SAMPLE_DATA.journal.map(x => Object.assign({}, x));
+    S.trips = SAMPLE_DATA.trips.map(x => Object.assign({}, x, { stops: x.stops.slice() }));
+    S.tripChecks = Object.assign({}, SAMPLE_DATA.tripChecks);
+    S.moodLog = SAMPLE_DATA.moodLog.map(x => Object.assign({}, x));
+    save();
+  }
+  window.MJ_POPULATE_SAMPLE = populateSampleValues;
+
+  if ((!S.visits || S.visits.length === 0) && (!S.journal || S.journal.length === 0)) {
+    populateSampleValues();
+  }
   const CFG = window.MJ_CONFIG || { apiBase: '', demoPaywall: false };
   const API = CFG.apiBase || '';
   const MODE = { devEntitlement: true, devAdReward: true };
@@ -268,8 +388,8 @@
   const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
   const fmtDate = iso => { const d = new Date(iso); return isNaN(d) ? esc(iso) : `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`; };
   const sealChar = t => t.name.replace(/\(.*\)/, '').trim().charAt(0);
-  function haversine(a, b, c, d) { const R = 6371000, r = x => x * Math.PI / 180; const dLat = r(c - a), dLng = r(d - b); const h = Math.sin(dLat / 2) ** 2 + Math.cos(r(a)) * Math.cos(r(c)) * Math.sin(dLng / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); }
-  function toast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('show'), 2600); }
+  function toast(msg) { const el = document.getElementById('toast'); if (!el) return; el.textContent = msg; el.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('show'), 2600); }
+  window.MJ_TOAST = toast;
   const fmtDist = m => m >= 1000 ? (m / 1000).toFixed(1) + 'km' : Math.round(m) + 'm';
   const val = v => (!v || /확인 필요/.test(v)) ? `<span class="needs">${esc(v || '확인 필요')}</span>` : esc(v);
 
@@ -413,6 +533,16 @@
     const cell = v => v === true ? '✅' : v === false ? '—' : `<span class="sub">${esc(v)}</span>`;
     return `<h1>마음정원사 : 절로가 플러스 <span class="demo-ribbon">데모 · 실제 결제 없음</span></h1>
     ${status}
+    <section class="card hero" style="border-left:4px solid var(--gold)">
+      <div class="row between">
+        <div>
+          <span class="tag ok">✨ Google AI Pro 적용됨</span>
+          <h2 style="margin:4px 0 2px">Google AI Pro 도슨트 · 마음 상담 엔진</h2>
+          <div class="sub">모델: <b>${esc((CFG && CFG.aiModel) || 'gemini-4-argon')}</b> · 폴백: ${esc((CFG && CFG.aiFallbackModel) || 'gemini-3.8-flash')}</div>
+        </div>
+        <button class="btn small" data-act="ai-counsel">AI 상담 열기</button>
+      </div>
+    </section>
     <section class="card hero"><p style="margin:0 0 6px"><b>순례·지도·스탬프·기도 안내는 계속 무료</b>예요. 플러스는 이 앱이 직접 만드는 <b>깊은 이야기와 여행 도구</b>를 위한 선택이에요.</p>
       ${planCards()}
       <div class="grid2">${ps.on ? `<button class="btn ghost" data-act="plus-off">구독 해지 (데모)</button><a class="btn ghost" style="text-align:center;text-decoration:none" href="#/story/haeinsa-1">심화 스토리 읽기</a>` : `<button class="btn ghost" data-act="plus-on">🧪 바로 플러스 켜기</button><button class="btn" data-act="trial-start">7일 무료 체험 (데모)</button>`}</div>
@@ -486,7 +616,10 @@
     return `<a href="javascript:history.back()" class="sub" style="text-decoration:none">← 뒤로</a>
       <section class="card hero" style="margin-top:8px"><div class="sub">📖 마음정원사 : 절로가 심화 스토리 · ${esc(st.series)} ${st.ep}편 · 약 ${st.minutes}분</div>
         <h1 style="margin:6px 0">${esc(st.title)}</h1><p style="margin:0">${esc(st.hook)}</p>
-        ${t ? `<p class="sub" style="margin:8px 0 0"><a href="#/temple/${t.id}">${esc(t.name)} 상세 보기 →</a></p>` : ''}
+        <div class="row wrap" style="margin-top:8px;gap:6px">
+          <button class="btn ghost small" data-act="docent-story" data-id="${st.id}">🎧 이야기 오디오 듣기</button>
+          ${t ? `<a class="btn ghost small" style="text-decoration:none" href="#/temple/${t.id}">${esc(t.name)} 상세 보기 →</a>` : ''}
+        </div>
         ${adOn ? `<p class="statusbar trial" style="margin:8px 0 0">📺 광고 보상으로 열림 · 약 ${left}시간 남음</p>` : ''}</section>
       ${open ? chapters.map(chapterHtml).join('') : chapterHtml(st.chapters[0]) + storyLock(st)}
       <section class="card"><h2>이 글은 이렇게 만들었어요</h2><p class="sub">공개된 역사 기록·백과사전의 <b>사실</b>을 바탕으로 이 앱이 직접 쓴 글이에요. 다른 글·영상의 문장을 옮기지 않았고, '전해지는 이야기' 표시가 있는 부분은 역사적 사실과 다를 수 있어요. 출시 전 전문가 감수를 받을 예정이에요.</p>
@@ -675,6 +808,8 @@
     const mi = S.moodIdx || 0; const t = prescribe(mi, S.shift || 0);
     const near = MISSIONS.filter(m => m.ids).map(m => ({ m, p: missionProgress(m) })).filter(x => x.p.done < x.p.total).sort((a, b) => (a.p.total - a.p.done) - (b.p.total - b.p.done))[0];
     const top = ['bulguksa', 'naksansa', 'tongdosa'].map(id => byId[id]);
+    const season = (window.MJ_FEATURES && window.MJ_FEATURES.Weather) ? window.MJ_FEATURES.Weather.getCurrentSeason() : { name: '가을 (단풍)', icon: '🍁', advice: '단풍이 물든 고즈넉한 산사를 걸어보세요.', templeIds: ['bulguksa', 'baegyangsa', 'naesosa'] };
+    const seasonTemples = (season.templeIds || []).map(id => byId[id]).filter(Boolean);
     return `
     ${consentCard()}
     <section class="card hero">
@@ -683,6 +818,39 @@
       <div class="row between" style="margin-top:8px"><b>도감 ${v.size}/100</b><span class="sub">${g.next ? `다음 ${g.left}곳이면 '${g.next.name}' 등급!` : '회향 완성 🙏'}</span></div>
       <div class="progress" style="margin-top:6px"><i style="width:${Math.min(100, v.size)}%"></i></div>
       ${near ? `<p class="sub" style="margin:10px 0 0">${near.m.icon} ${near.m.name.replace(/ 완주| 순례/, '')} 완주까지 <b>${near.p.total - near.p.done}곳</b> 남았어요</p>` : ''}
+      <div class="row wrap" style="margin-top:12px;gap:8px">
+        <button class="btn small" data-act="cert-open">📜 디지털 완주증 발급</button>
+        <button class="btn ghost small" data-act="meditation-open">🧘 마음 쉼터 & 명상</button>
+      </div>
+    </section>
+    <section class="card">
+      <div class="row between">
+        <h2 style="margin:0">${season.icon} 지금 가기 좋은 계절 사찰 (${season.name.split(' ')[0]})</h2>
+        <a class="sub" href="#/explore/theme/autumn">더보기 →</a>
+      </div>
+      <p class="sub" style="margin:4px 0 8px">${season.advice}</p>
+      <div class="row wrap">
+        ${seasonTemples.map(st => `<a class="chip" style="text-decoration:none" href="#/temple/${st.id}">${season.icon} <b>${esc(st.name)}</b> <span class="sub">${esc(st.sido)} ${esc(st.sgg)}</span></a>`).join('')}
+      </div>
+    </section>
+    <section class="card hero templestay-hero">
+      <div class="row between">
+        <div>
+          <h2 style="margin:0">🧘 마음 쉼터 & 명상 타이머</h2>
+          <div class="sub" style="margin-top:2px">범종·풍경소리·목탁·계곡물소리 백색소음</div>
+        </div>
+        <button class="btn small" data-act="meditation-open">명상 시작하기</button>
+      </div>
+    </section>
+    <section class="card hero" style="border-left:4px solid var(--gold)">
+      <div class="row between">
+        <div>
+          <span class="tag ok">✨ Google AI Pro</span>
+          <h2 style="margin:4px 0 2px">🪷 AI 마음·풍수·기도 맞춤 상담</h2>
+          <div class="sub">내 마음 상태와 소원에 맞는 경전 구절·사찰·참배법을 안내해 드려요</div>
+        </div>
+        <button class="btn small" data-act="ai-counsel">상담 받기</button>
+      </div>
     </section>
     ${!S.onboarded ? `<section class="card onboard-hint"><div class="row between"><h2 style="margin:0">🪷 마음정원에 오신 것을 환영해요</h2></div><p class="sub" style="margin:6px 0">관심 분야를 알려주시면 오늘 가기 좋은 사찰을 추천해 드려요.</p><button class="btn" data-act="start-onboarding">추천 받기 (3문항)</button></section>` : ''}
     ${(() => { updateStreak(); const done = ritualDoneToday(); const verse = getDailyVerse(); const n = S.streak || 0; return `<section class="card">
@@ -959,23 +1127,39 @@
       <div class="row between"><div><h1 style="margin:0">${esc(t.name)}</h1><div class="sub">${esc(t.hanja)} · ${esc(t.mountain)}</div></div>
       <div class="seal ${vs.length ? '' : 'off'}" style="flex-basis:56px;height:56px">${sealChar(t)}</div></div>
       <div style="margin-top:6px"><span class="tag">${esc(t.order)}</span>${t.tradNo ? `<span class="tag">전통사찰 No.${t.tradNo}</span>` : ''}${t.lists.map(l => `<span class="tag">${LL[l]}</span>`).join('')}${t.themes.map(th => `<span class="tag">${THEMES[th].icon} ${THEMES[th].name}</span>`).join('')}</div>
+      <div id="templeWeatherBox" class="row wrap" style="margin-top:8px"><span class="weather-chip" id="twChip"><span class="wicon">⛅</span> 날씨 조회 중...</span></div>
       ${vs.length ? `<p class="sub" style="margin:8px 0 0">✅ ${vs.length}회 방문 · 최근 ${fmtDate(vs[vs.length - 1].date)}${vs.some(x => x.method === 'demo') ? ' (데모 포함)' : ''}</p>` : ''}
       <div class="grid2" style="margin-top:12px">
         <button class="btn" data-act="gps" data-id="${t.id}">📍 GPS 방문 인증</button>
         <button class="btn ghost" data-act="demo" data-id="${t.id}">🧪 데모 체크인(테스트)</button>
+        <button class="btn ghost" data-act="nav-hub" data-id="${t.id}">🚗 길찾기·내비게이션</button>
+        <button class="btn ghost" data-act="docent-temple" data-id="${t.id}">🎧 오디오 도슨트 듣기</button>
+        <button class="btn ghost" data-act="ai-counsel" data-id="${t.id}">✨ AI 맞춤 참배 안내</button>
         <a class="btn ghost" style="text-align:center;text-decoration:none" href="#/journal/new/${t.id}">📔 수첩 쓰기</a>
         <button class="btn ghost" data-act="plan-pick" data-id="${t.id}">🗓️ 여행 계획에 담기</button>
       </div>
       <div class="grid2" style="margin-top:8px"><button class="btn ghost" data-act="offline" data-id="${t.id}">${S.offline.includes(t.id) && isPlus() ? '✅ 오프라인 저장됨' : '⬇ 오프라인 저장' + (isPlus() ? '' : ' 🔒')}</button>
-        ${t.isTradOnly ? `<a class="btn ghost" style="text-align:center;text-decoration:none" href="https://map.kakao.com/?q=${mapQuery}" target="_blank" rel="noopener">🧭 길찾기·외부지도</a>` : `<a class="btn ghost" style="text-align:center;text-decoration:none" href="#/map/${t.id}">🗺️ 앱 지도</a>`}</div>
+        <a class="btn ghost" style="text-align:center;text-decoration:none" href="#/map/${t.id}">🗺️ 앱 지도 보기</a></div>
       <div class="row" style="margin-top:8px">${STORIES.some(x => x.tid === t.id) ? `<a class="btn ghost block" style="text-align:center;text-decoration:none" href="#/story/${STORIES.find(x => x.tid === t.id).id}">📖 심화 스토리 읽기</a>` : `<a class="btn ghost block" style="text-align:center;text-decoration:none" href="#/explore/all">📋 전통사찰 991 전체 목록</a>`}</div>
       <p class="sub" style="margin:8px 0 0;font-size:.8em">GPS 인증 반경 ${t.radius}m · 하루 1회</p>
+    </section>
+    <section class="card templestay-hero">
+      <div class="row between">
+        <span class="templestay-tag">🎋 템플스테이</span>
+        <span class="sub">한국불교문화사업단 연동</span>
+      </div>
+      <h2 style="margin:6px 0 2px">${esc(t.name)} 템플스테이 안내</h2>
+      <p class="sub" style="margin:0">${esc(t.practical ? t.practical.templestay : '운영 여부 조회')}</p>
+      <div class="grid2" style="margin-top:10px">
+        <button class="btn small" data-act="templestay-hub" data-id="${t.id}">프로그램 & 예절 안내</button>
+        <a class="btn ghost small" style="text-align:center;text-decoration:none" href="https://www.templestay.com/select-temple?search=${encodeURIComponent(t.name)}" target="_blank" rel="noopener">공식 예약 바로가기 ↗</a>
+      </div>
     </section>
     <section class="card"><h2>한눈에 보기</h2><dl class="kv">
       <dt>종단</dt><dd>${esc(t.order)}</dd><dt>소재지</dt><dd>${esc(t.addr)}</dd><dt>창건</dt><dd>${esc(t.founded)}</dd>
       <dt>대표 문화재</dt><dd>${t.treasures.map(esc).join('<br>')}</dd><dt>관람 소요</dt><dd>${val(t.duration)}</dd></dl></section>
     <section class="card"><h2>기원·역사</h2><ul class="timeline">${t.timeline.map(([y, d]) => `<li><b>${esc(y)}</b>${esc(d)}</li>`).join('')}</ul></section>
-    ${(t.legend || (t.legends && t.legends.length)) ? `<section class="card legend"><div class="row between"><span class="lbl">전해지는 이야기</span><button class="btn ghost small" data-act="audio" data-id="${id}">🎧 듣기${isPlus() ? '' : ' 🔒'}</button></div>
+    ${(t.legend || (t.legends && t.legends.length)) ? `<section class="card legend"><div class="row between"><span class="lbl">전해지는 이야기</span><button class="btn ghost small" data-act="docent-temple" data-id="${id}">🎧 듣기</button></div>
       ${legendsHtml(t)}
       <p class="sub" style="font-size:.8em">설화·전승은 역사적 사실과 다를 수 있으며 효험을 보장하지 않습니다. (전문가 감수 예정)</p></section>` : ''}
     ${storyCards(id)}
@@ -986,6 +1170,7 @@
     <section class="card"><h2>방문 실용정보</h2><dl class="kv">
       <dt>주차</dt><dd>${val(t.practical.parking)}</dd><dt>입장료</dt><dd>${val(t.practical.fee)}</dd><dt>개방시간</dt><dd>${val(t.practical.hours)}</dd>
       <dt>대중교통</dt><dd>${val(t.practical.transit)}</dd><dt>템플스테이</dt><dd>${val(t.practical.templestay)}</dd><dt>좌표</dt><dd>${t.lat.toFixed(5)}, ${t.lng.toFixed(5)}</dd></dl>
+      <div class="row" style="margin-top:10px"><button class="btn ghost small block" data-act="nav-hub" data-id="${t.id}">🚗 내비게이션 길찾기 앱 열기</button></div>
       <p class="notice" style="margin-top:8px">방문 전 사찰·국립공원 공지에서 개방시간·통제 여부를 꼭 확인하세요.</p></section>
     ${t.verify.length ? `<section class="card"><h2>확인 필요 항목</h2><ul style="padding-left:18px;margin:0">${t.verify.map(v => `<li class="needs">${esc(v)}</li>`).join('')}</ul></section>` : ''}
     <p class="notice">자료: 주소·종단 = 「전통사찰 현황」(2026.6.1.) · 좌표 = OpenStreetMap · 연혁 = 공개 자료 요약(감수 전)${t.prayer ? ' · 기도 안내 = 언론·백과사전·지자체·사찰 공식 자료(위 출처)' : ''}</p>`;
@@ -1098,6 +1283,10 @@
       <p class="sub" style="margin:4px 0">방문할 때마다 염주 한 알 · 108알을 모으면 '108 염주' 완성${demoN ? ` · 데모 ${demoN}회 포함` : ''}</p>
       <div class="row wrap" style="justify-content:center;gap:4px">${GRADES.map(x => `<span class="tag ${g.cur && v.size >= x.n ? 'ok' : ''}">${x.name} ${x.n}</span>`).join('→')}</div>
       ${g.next ? `<p style="margin:8px 0 0">다음 <b>${g.left}곳</b>이면 '<b>${g.next.name}</b>' 등급!</p>` : ''}
+      <div class="grid2" style="margin-top:12px">
+        <button class="btn" data-act="cert-open">📜 디지털 완주증 발급</button>
+        <button class="btn ghost" data-act="meditation-open">🧘 마음 쉼터</button>
+      </div>
     </section>
     <section class="card"><h2>순례 미션 · 배지</h2><div class="badges">${MISSIONS.map(m => { const p = missionProgress(m); const done = p.done >= p.total; return `<div class="badge ${done ? 'done' : ''}" title="${esc(m.note || '')}"><span class="ic">${m.icon}</span><b>${m.name}</b><div class="sub">${p.done}/${p.total}</div><div class="progress"><i style="width:${p.done / p.total * 100}%"></i></div><div class="sub simple-hide" style="font-size:.85em">${m.reward}</div></div>`; }).join('')}</div>
       <p class="notice" style="margin-top:10px">7대 총림 지정 현황과 100대 사찰 선정 기준은 확정 후 반영 예정이에요.</p></section>
@@ -1109,7 +1298,10 @@
       <div class="tilemap">${TILE.flat().map(s => { if (!s) return '<div class="empty"></div>'; const n = sidoCount(s), tot = TEMPLES.filter(t => t.sido === s).length; const lv = n === 0 ? '' : n >= 3 ? 'l3' : 'l' + n; return `<div class="${lv}">${s}<br>${n}/${tot}</div>`; }).join('')}</div>
       <div id="pmap" style="margin-top:10px"></div></section>
     <section class="card simple-hide"><h2>방문 기록</h2>${S.visits.length ? `<div class="tlist">${S.visits.slice().reverse().slice(0, 20).map(x => { const rt = resolveTemple(x.tid); return rt ? templeItem(rt, fmtDate(x.date) + (x.method === 'demo' ? ' · 🧪데모' : ' · 📍GPS')) : ''; }).join('')}</div>` : '<p class="sub">아직 방문 기록이 없어요.</p>'}
-      <button class="btn ghost small" data-act="reset" style="margin-top:10px">모든 기록 초기화</button></section>`;
+      <div class="row wrap" style="margin-top:10px;gap:6px">
+        <button class="btn small" data-act="sample-populate">✨ 샘플 값 채우기</button>
+        <button class="btn ghost small" data-act="reset">모든 기록 초기화</button>
+      </div></section>`;
   }
   function dexCells(limit) {
     const v = visited(); const cells = [];
@@ -1129,7 +1321,7 @@
   function viewJournal() {
     const list = S.journal.slice().sort((a, b) => b.date.localeCompare(a.date));
     const trips = (S.trips || []).slice();
-    return `<div class="row between"><h1>사찰 수첩</h1><div class="row"><a class="btn ghost small" style="text-decoration:none" href="#/planner">🗓️ 여행 계획 (${trips.length})</a><a class="btn small" style="text-decoration:none" href="#/journal/new/">+ 기록</a></div></div>
+    return `<div class="row between"><h1>사찰 수첩</h1><div class="row wrap" style="gap:4px"><button class="btn ghost small" data-act="sample-populate">✨ 샘플 값 채우기</button><button class="btn ghost small" data-act="cert-open">📜 완주증</button><a class="btn ghost small" style="text-decoration:none" href="#/planner">🗓️ 계획 (${trips.length})</a><a class="btn small" style="text-decoration:none" href="#/journal/new/">+ 기록</a></div></div>
       <p class="sub">사진·날씨·다짐을 남겨 두면 나중에 \'1년 전 오늘\'로 다시 만나요. (이 기기에만 저장)</p>
       ${list.length ? list.map(j => { const t = resolveTemple(j.tid); return `<article class="card jentry"><div class="row between"><b>${t ? esc(t.name) : '기타'}</b><span class="sub">${fmtDate(j.date)} ${esc(j.weather || '')}</span></div><p style="white-space:pre-wrap;margin:6px 0">${esc(j.note)}</p>${j.photo ? `<img src="${j.photo}" alt="${t ? esc(t.name) : ''} 사진">` : ''}<div class="row" style="margin-top:8px"><button class="btn ghost small" data-act="jdel" data-id="${j.id}">삭제</button></div></article>`; }).join('') : '<div class="card"><p>아직 기록이 없어요. 첫 사찰 수첩을 남겨 보세요 📔</p></div>'}`;
   }
@@ -1165,6 +1357,26 @@
 
   // ---------- 사찰 여행 계획 (Trip Planner) ----------
   const TRIP_TEMPLATES = [
+    {
+      id: 'tpl-templestay-1n2d',
+      theme: 'quiet',
+      title: '산사 1박 2일 템플스테이 & 참선 힐링 코스',
+      days: '1박 2일',
+      transport: '대중교통·도보',
+      companion: '혼자 조용히',
+      stops: ['woljeongsa', 'sangwonsa'],
+      schedule: [
+        '1일차 14:00 — 사찰 도착 및 방사 배정 · 수련복 착용 및 사찰 안내',
+        '1일차 16:00 — 사물(범종·법고·목어·운판) 타종 관람 및 타종 체험',
+        '1일차 17:30 — 저녁 공양 (사찰음식 발우공양 예절 체험)',
+        '1일차 18:30 — 저녁 예불 및 108배 염주 꿰기 체험',
+        '1일차 21:00 — 취침 및 소등 (밤하늘 별빛과 산사 고요 체험)',
+        '2일차 04:30 — 새벽 도량석 및 새벽 예불',
+        '2일차 06:00 — 아침 공양 및 포행 (전나무숲길 걷기 명상)',
+        '2일차 09:00 — 스님과의 따뜻한 차담(다도) 및 소감 나누기 · 회향'
+      ],
+      tip: '산사의 밤은 기온이 크게 떨어지니 따뜻한 옷을 준비하세요. 휴대폰을 잠시 내려놓고 자연의 소리에 귀를 기울여보세요.'
+    },
     {
       id: 'tpl-gyeongju-day',
       theme: 'history',
@@ -2134,11 +2346,24 @@
     $view.innerHTML = html;
     document.querySelectorAll('.tabbar a').forEach(x => x.classList.toggle('on', x.dataset.tab === tab));
     updatePlusChip();
+    if (window.MJ_FEATURES && window.MJ_FEATURES.I18N) window.MJ_FEATURES.I18N.apply();
     MJAnalytics.track('page_view', { page: r || 'home' });
     if (r === 'story') MJAnalytics.track('story_open', { page: 'story', item: a });
-    if (r === 'temple') MJAnalytics.track('temple_open', { page: 'temple', item: a });
+    if (r === 'temple') {
+      MJAnalytics.track('temple_open', { page: 'temple', item: a });
+      const curT = resolveTemple(a);
+      if (curT && window.MJ_FEATURES && window.MJ_FEATURES.Weather) {
+        window.MJ_FEATURES.Weather.fetchWeather(curT.lat, curT.lng).then(w => {
+          const box = document.getElementById('templeWeatherBox');
+          if (box && w) {
+            box.innerHTML = `<span class="weather-chip"><span class="wicon">${w.icon}</span> <b>${w.temp}°C</b> ${w.desc} (바람 ${w.wind}m/s)</span>
+            <span class="sub" style="font-size:.8em;margin-left:4px">💡 ${w.advice}</span>`;
+          }
+        });
+      }
+    }
     if (r === 'plus') MJAnalytics.track('paywall_view', { feature: 'plus_page' });
-    if ('speechSynthesis' in window) speechSynthesis.cancel();
+    if ('speechSynthesis' in window && !window.MJ_AUDIO_ACTIVE) speechSynthesis.cancel();
     if (r === 'map') { mapObj = initMap(a); }
     if (r === 'missions') { mapObj = initMap(null, 'pmap', true); }
     if (r === 'planner' && a === 'view') { const tr = (S.trips || []).find(x => x.id === b); if (tr) mapObj = initPlanMap(tr.stops); }
@@ -2261,8 +2486,12 @@
     else if (act === 'skin') { S.skin = S.skin === 'maple' ? null : 'maple'; save(); render(); toast(S.skin ? '단풍 염주를 적용했어요' : '기본 염주로 돌아왔어요'); }
     else if (act === 'print') window.print();
     else if (act === 'offline') { if (!isPlus()) openPaywall('offline'); else { if (!S.offline.includes(el.dataset.id)) S.offline.push(el.dataset.id); save(); render(); toast('이 기기에 저장해 두었어요 (데모: 앱 출시 때 실제 오프라인 캐시로 구현)'); } }
-    else if (act === 'audio') playAudio(el.dataset.id);
-    else if (act === 'reset') { if (confirm('방문·수첩 기록을 모두 지울까요? (이 기기에서만)')) { S.visits = []; S.journal = []; save(); render(); } }
+    else if (act === 'reset') { if (confirm('방문·수첩 기록을 모두 지울까요? (이 기기에서만)')) { S.visits = []; S.journal = []; S.trips = []; S.tripChecks = {}; S.moodLog = []; save(); render(); } }
+    else if (act === 'sample-populate') {
+      populateSampleValues();
+      toast('✨ 실감나는 순례·수첩·플래너 샘플 데이터를 채웠어요');
+      render();
+    }
     else if (act === 'trip-chk') {
       ensureDefaultTrips();
       const cid = el.dataset.id;
@@ -2369,6 +2598,68 @@
         closeModal();
         toast(`「${rt.name}」을(를) 여행 계획에 추가했어요 🗓️`);
         location.hash = '#/planner/view/' + encodeURIComponent(tr.id);
+      }
+    }
+    else if (act === 'nav-hub') {
+      const t = resolveTemple(el.dataset.id);
+      if (t && window.MJ_FEATURES && window.MJ_FEATURES.Nav) {
+        window.MJ_FEATURES.Nav.openModal(t);
+      }
+    }
+    else if (act === 'copy-addr') {
+      const addr = el.dataset.addr;
+      if (addr && navigator.clipboard) {
+        navigator.clipboard.writeText(addr).then(() => toast('소재지 주소를 복사했어요 📋'));
+      }
+    }
+    else if (act === 'templestay-hub') {
+      const t = resolveTemple(el.dataset.id);
+      if (t && window.MJ_FEATURES && window.MJ_FEATURES.Templestay) {
+        window.MJ_FEATURES.Templestay.openModal(t);
+      }
+    }
+    else if (act === 'meditation-open') {
+      if (window.MJ_FEATURES && window.MJ_FEATURES.Meditation) {
+        window.MJ_FEATURES.Meditation.openModal();
+      }
+    }
+    else if (act === 'cert-open') {
+      const v = visited();
+      const mTitles = MISSIONS.filter(m => m.ids && missionProgress(m).done >= missionProgress(m).total).map(m => m.name);
+      if (window.MJ_FEATURES && window.MJ_FEATURES.Certificate) {
+        window.MJ_FEATURES.Certificate.openModal('마음여행자', v.size, beads(), mTitles);
+      }
+    }
+    else if (act === 'docent-temple') {
+      const t = resolveTemple(el.dataset.id);
+      if (t && window.MJ_FEATURES && window.MJ_FEATURES.Docent) {
+        const text = [
+          `안녕하세요. 마음정원 오디오 도슨트입니다. 지금부터 ${t.name}을 안내해 드리겠습니다.`,
+          `${t.name}은 ${t.sido} ${t.sgg} ${t.mountain}에 자리 잡고 있으며, ${t.founded}로 전해집니다.`,
+          t.treasures && t.treasures.length ? `대표적인 문화재로는 ${t.treasures.join(', ')} 등이 있습니다.` : '',
+          t.legend ? `이곳에 전해지는 옛 이야기로는 '${t.legend.title}'이 있습니다. ${t.legend.text}` : '',
+          t.tip ? `관람 시 참고하실 점입니다. ${t.tip}` : '',
+          '사찰 경내에서는 합장으로 인사하며 고요히 마음을 맑혀보세요.'
+        ].filter(Boolean).join(' ');
+        window.MJ_FEATURES.Docent.play(t.name, text);
+      }
+    }
+    else if (act === 'docent-story') {
+      const st = RAW_STORIES.find(x => x.id === el.dataset.id);
+      if (st && window.MJ_FEATURES && window.MJ_FEATURES.Docent) {
+        const text = [
+          `${st.series} ${st.ep}편, ${st.title}.`,
+          st.hook,
+          ...(st.chapters || []).map(c => `${c.h}. ${(c.body || []).join(' ')}`)
+        ].join(' ');
+        window.MJ_FEATURES.Docent.play(st.title, text);
+      }
+    }
+    else if (act === 'ai-counsel') {
+      const t = el.dataset.id ? resolveTemple(el.dataset.id) : null;
+      const m = MOODS[S.moodIdx || 0];
+      if (window.MJ_FEATURES && window.MJ_FEATURES.AICounsel) {
+        window.MJ_FEATURES.AICounsel.openModal({ temple: t, mood: m ? m.label : '' });
       }
     }
   });

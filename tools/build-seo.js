@@ -1,5 +1,6 @@
 'use strict';
 
+require('../server/env');
 const fs = require('fs');
 const path = require('path');
 const { listStories } = require('../server/content/stories');

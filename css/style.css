@@ -360,3 +360,52 @@ table.cmp td:nth-child(2),table.cmp td:nth-child(3),table.cmp th:nth-child(2),ta
 .tag.web{background:#e8f0fe;color:#1a56db}
 .tag.lifetime{background:#fef3c7;color:#92400e}
 #breathCircle{user-select:none;pointer-events:none}
+
+/* ---- 오프라인 배너 및 PWA ---- */
+.offline-banner{background:#b5643c;color:#fff;text-align:center;font-size:.82em;padding:6px 12px;font-weight:600;letter-spacing:-.01em}
+.offline-banner.hidden{display:none}
+.pwa-btn{background:#e8f0fe;color:#1967d2;border-color:#aecbfa;font-weight:700}
+.lang-btn{background:var(--card);font-weight:700;color:var(--accent2);min-width:38px}
+
+/* ---- 오디오 도슨트 플로팅 플레이어 ---- */
+.audio-bar{position:sticky;top:53px;z-index:490;background:#2b2620;color:#fff;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 4px 12px rgba(0,0,0,.15);border-bottom:1px solid #453d34}
+.audio-bar.hidden{display:none}
+.audio-info{flex:1;min-width:0;font-size:.84em;line-height:1.2}
+.audio-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700}
+.audio-sub{font-size:.78em;color:#cfc5b8}
+.audio-controls{display:flex;gap:6px;align-items:center}
+.audio-btn{background:#453d34;border:0;color:#fff;border-radius:8px;padding:5px 8px;font-size:.82em}
+.audio-btn.play{background:var(--gold);color:#2b2620;font-weight:700}
+
+/* ---- 날씨 칩 및 계절 배지 ---- */
+.weather-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:#f3ece0;border-radius:99px;font-size:.82em;color:var(--ink);border:1px solid var(--line)}
+.weather-chip .wicon{font-size:1.15em}
+.season-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:99px;font-size:.78em;font-weight:600;background:#fceee6;color:#a24c22}
+
+/* ---- 길찾기 / 내비게이션 모달 ---- */
+.nav-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.nav-btn{display:flex;align-items:center;gap:8px;justify-content:center;padding:12px;border-radius:12px;border:1px solid var(--line);text-decoration:none;font-weight:700;font-size:.92em;transition:.15s}
+.nav-btn.kakao{background:#fee500;color:#191919;border-color:#ecd200}
+.nav-btn.naver{background:#03c75a;color:#fff;border-color:#02b350}
+.nav-btn.tmap{background:#e61c24;color:#fff;border-color:#d4171e}
+.nav-btn.google{background:#fff;color:#4285f4;border-color:#dadce0}
+.addr-box{background:#f4efe4;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.88em}
+
+/* ---- 디지털 순례 완주증 / 인증서 ---- */
+.cert-preview{width:100%;max-width:380px;margin:10px auto;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.12);border:2px solid var(--line);overflow:hidden;background:#fff}
+.cert-preview canvas{width:100%;height:auto;display:block}
+
+/* ---- 명상 타이머 & 백색소음 플레이어 ---- */
+.meditation-box{text-align:center;padding:16px 8px}
+.breath-circle{width:140px;height:140px;margin:16px auto;border-radius:50%;background:radial-gradient(circle,#e4ecd8,#7a8f5c);display:grid;place-items:center;color:#fff;font-size:1.05em;font-weight:700;transition:transform 4s ease-in-out;box-shadow:0 0 25px rgba(122,143,92,.35)}
+.breath-circle.inhale{transform:scale(1.22)}
+.breath-circle.exhale{transform:scale(0.88)}
+.timer-digits{font-size:2.4em;font-weight:800;font-family:"Noto Serif CJK KR",monospace;color:var(--accent2);margin:8px 0}
+.sound-selector{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0}
+.sound-btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 4px;font-size:.82em;text-align:center}
+.sound-btn.on{border-color:var(--accent);background:#f1f4ea;font-weight:700;color:var(--accent)}
+
+/* ---- 템플스테이 전용 카드 ---- */
+.templestay-hero{border-left:4px solid var(--accent);background:linear-gradient(135deg,#fcfbf7,#f4efe4)}
+.templestay-tag{background:#e7f3e8;color:#2e6930;font-weight:700;padding:2px 8px;border-radius:6px;font-size:.8em}
+.tabbar a span.tab-label{display:inline;font-size:1em;filter:none;opacity:1}
