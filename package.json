@@ -10,7 +10,8 @@
     "test": "node --test server/test/*.test.js",
     "test:content": "node tools/content-smoke.js",
     "test:temples": "node tools/temple-smoke.js",
-    "verify": "npm test && npm run test:content && npm run test:temples && npm run build",
+    "budget": "node tools/payload-budget.js",
+    "verify": "npm test && npm run test:content && npm run test:temples && npm run budget -- --check && npm run build",
     "push": "node tools/git-push.js",
     "start": "node server.js"
   },

@@ -125,3 +125,44 @@ test('5. 첫 화면이 받는 스크립트는 지연 자산(leaflet·전통사�
     await s.close();
   }
 });
+
+test('6. 첫 화면·정적 페이지가 부르는 자산에는 캐시 버전이 붙는다 (버전 없는 자산은 7일 캐시 → 배포가 안 먹는다)', async () => {
+  const s = await startServer();
+  try {
+    const res = await s.get('/');
+    const refs = [...res.text.matchAll(/<(?:script|link)[^>]*(?:src|href)="([^"]+)"/g)]
+      .map(m => m[1])
+      .filter(u => /\.(?:js|css)$/.test(u.split('?')[0]));
+    assert.ok(refs.length >= 5, `첫 화면 JS/CSS 참조 ${refs.length}개`);
+    for (const u of refs) {
+      assert.match(u, /[?&]v=/, `버전 태그가 없다: ${u}`);
+    }
+  } finally {
+    await s.close();
+  }
+
+  // 정적 SEO 페이지도 같은 규칙 (버전은 tools/build-seo.js 의 ASSET_V)
+  const os = require('node:os');
+  const { buildSeo, ASSET_V } = require('../../tools/build-seo');
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'mj-delivery-seo-'));
+  try {
+    buildSeo(out, { siteUrl: 'https://example.test', env: {} });
+    const files = [];
+    (function walk(dir) {
+      for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, ent.name);
+        if (ent.isDirectory()) walk(full);
+        else if (ent.name.endsWith('.html')) files.push(full);
+      }
+    })(out);
+    assert.ok(files.length > 0, 'SEO 페이지가 만들어졌다');
+    for (const f of files.slice(0, 3)) {
+      const html = fs.readFileSync(f, 'utf-8');
+      const cssRef = html.match(/<link rel="stylesheet" href="([^"]+)"/)[1];
+      assert.match(cssRef, /[?&]v=/, `SEO 페이지 스타일시트에 버전 태그가 없다: ${cssRef}`);
+      assert.ok(cssRef.includes(ASSET_V), `SEO 페이지 버전은 ASSET_V(${ASSET_V}) 를 쓴다`);
+    }
+  } finally {
+    fs.rmSync(out, { recursive: true, force: true });
+  }
+});

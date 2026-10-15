@@ -8,6 +8,8 @@ const { listTemples } = require('../server/content/temples');
 const { publicStory } = require('../server/content/project');
 
 const DEFAULT_OUT = path.join(__dirname, '..', 'seo-out');
+// 정적 페이지가 부르는 자산의 캐시 버전 — index.html·js/lib/loader.js(VERSION)·sw.js(CACHE_NAME)와 함께 올린다.
+const ASSET_V = '20261016split';
 
 const ADS_PUB_RE = /^pub-\d{16}$/;
 const ADS_SLOT_RE = /^\d{6,}$/;
@@ -51,6 +53,7 @@ function page({ base, urlPath, title, desc, body, ld, ads = null, ga = null, tra
   const gaMeta = ga ? `<meta name="mj-ga-id" content="${esc(ga)}">\n` : '';
   const bodyAttr = ga && track ? ` data-mj-page="${esc(track.page)}" data-mj-item="${esc(track.item)}"` : '';
   const analyticsJs = ga ? '<script src="/js/analytics.js" defer></script>\n' : '';
+
   const settingsLink = ga ? ' · <a href="#" data-mj-consent-open>분석 설정</a>' : '';
 
   return `<!doctype html>
@@ -65,7 +68,7 @@ function page({ base, urlPath, title, desc, body, ld, ads = null, ga = null, tra
 <meta property="og:title" content="${esc(title)} — 마음정원사 : 절로가" />
 <meta property="og:description" content="${esc(desc)}" />
 <meta property="og:url" content="${esc(url)}" />
-${gaMeta}${jsonLd}${adLoader}${analyticsJs}<link rel="stylesheet" href="/css/style.css" />
+${gaMeta}${jsonLd}${adLoader}${analyticsJs}<link rel="stylesheet" href="/css/style.css?v=${ASSET_V}" />
 </head>
 <body${bodyAttr}>
 <main style="width:min(100% - 32px, 780px);max-width:100%;margin-inline:auto;padding:clamp(14px,3.4vw,26px) 0 calc(36px + env(safe-area-inset-bottom))">
@@ -184,6 +187,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+  ASSET_V,
   ADS_PUB_RE,
   ADS_SLOT_RE,
   ADS_CERT_ID,

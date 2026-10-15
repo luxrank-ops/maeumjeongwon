@@ -13,7 +13,8 @@ GPS 인증은 브라우저 보안상 `localhost` 또는 HTTPS에서만 동작합
 ## 검증·GitHub 동기화
 
 - GitHub Actions의 `.github/workflows/ci.yml`은 `main` 푸시와 `main` 대상 Pull Request에서 Node.js 22로 `npm ci`, `npm test`, 콘텐츠·사찰 데이터 검사, API 스모크 테스트, SEO 정적 페이지 빌드를 실행합니다. 이 워크플로우는 읽기 전용 권한만 사용하며 배포 자격 증명은 필요하지 않습니다.
-- 로컬에서 전체 검증: `npm run verify` (단위/통합 테스트 → 스토리·전설·풍수 콘텐츠 검사 → 큐레이션/전통사찰 991건·API 스모크 검사 → `npm run build`). 개별 명령은 `npm test`, `npm run test:content`, `npm run test:temples`, `npm run build`입니다.
+- 로컬에서 전체 검증: `npm run verify` (단위/통합 테스트 → 스토리·전설·풍수 콘텐츠 검사 → 큐레이션/전통사찰 991건·API 스모크 검사 → **첫 화면 전송 예산** → `npm run build`). 개별 명령은 `npm test`, `npm run test:content`, `npm run test:temples`, `npm run budget`, `npm run build`입니다.
+- `npm run budget` — 첫 화면이 실제로 받는 파일과 화면별 지연 자산을 gzip 으로 재서 표로 보여줍니다. 목록은 손으로 적지 않고 `index.html` 과 `js/lib/loader.js` 표에서 읽습니다. `npm run budget -- --check` 는 첫 화면 gzip 이 140KB 를 넘으면 실패합니다(그래서 `verify` 에 포함).
 - 선택적 GitHub 푸시 도구: 실제 PAT는 저장소 루트의 무시된 `.env.local`에 `GITHUB_REPO`, `GITHUB_BRANCH`(기본 `main`), `GITHUB_TOKEN`으로 설정하고 `npm run push`를 실행합니다. 커밋 메시지는 `node tools/git-push.js "원하는 커밋 메시지"`처럼 지정할 수 있습니다. 토큰을 채팅·커밋 메시지에 붙여 넣지 마세요.
 - 푸시 도구는 토큰을 Git 원격 URL이나 `.git/config`에 저장하지 않고, Git 네트워크 명령의 일회성 Authorization 설정으로만 전달합니다. `.git`이 없으면 초기화하고 원격 브랜치를 가져와 작업 파일을 보존한 채 기준 인덱스를 복구합니다. 원격 변경은 리베이스하며 충돌 시 푸시하지 않고 중단합니다. `.env`·`.env.local`이 추적되거나 무시되지 않은 경우에도 안전을 위해 중단합니다.
 - PAT는 대상 저장소만 허용하는 Fine-grained token으로 만들고, `Contents: Read and write` 권한만 부여하는 방식을 권장합니다. `.env.local`은 Git 추적 대상이 아닙니다 (`.env.example`만 빈 템플릿으로 추적).
@@ -28,7 +29,7 @@ GPS 인증은 브라우저 보안상 `localhost` 또는 HTTPS에서만 동작합
   - 상세: `docs/responsive-layout.md` · 가드: `server/test/responsive-layout.test.js`
 - `js/lib/loader.js` — **지연 자산 표**와 로더: 라우트 → 필요한 데이터·지도(`ASSETS`·`NEEDS`), 첫 화면을 막지 않는 자산(`SOFT`). 라우터와 서비스워커가 같은 표를 본다. 가드: `server/test/app-runtime.test.js`
 - `js/app.js` — **앱 셸**: 해시 라우터, 마음 처방전, 탐색, 상세, GPS/데모 체크인, 미션·배지, 염주(108), 등급, 도감, 순례 지도, 사찰 수첩, 풍수 대백과(`#/fengshui`), 지연 데이터 채우기(`hydrateLazyData`)
-  - 2026-10: 단일 파일 2,768줄 → 셸 1,869줄. 계획 화면은 `js/app/planner.js`로 분리했고, 무거운 데이터는 `js/lib/loader.js`가 화면에 맞춰 내려준다. 첫 화면 전송량 699KB→393KB(원본)·208KB→124KB(gzip)
+  - 2026-10: 단일 파일 2,768줄 → 셸 1,869줄. 계획 화면은 `js/app/planner.js`로 분리했고, 무거운 데이터는 `js/lib/loader.js`가 화면에 맞춰 내려준다. 첫 화면 전송량 699KB→364KB(원본)·208KB→118KB(gzip)
   - 구조·배치 설계와 측정값: `docs/architecture.md`
   - 2026-10: **전국 명당 사찰 풍수 대백과** 화면 신규 — 권역별(수도권·강원/충청/영남/호남) 명당 사찰 18편의 형국·핵심 기운·풍수 해설, 목적별 맞춤 사찰 매트릭스(6종), 사찰 방문법 3가지. 사찰 상세 '풍수 이야기'에서 형국·핵심 기운 요약과 함께 연결
 - `js/app/planner.js` — **사찰 여행 계획(Trip Planner)** 화면 모듈: 추천 코스 템플릿·준비물 체크리스트·새 계획 짜기(경유 사찰 구성·동선 정렬·거리/소요시간)·조건별 추천 코스. 셸이 상태·유틸을 넘겨 주는 `MJ_PLANNER_FACTORY(ctx)` 형태라 계획 화면에서만 로드된다(58KB, gzip 17.7KB)
@@ -53,6 +54,7 @@ GPS 인증은 브라우저 보안상 `localhost` 또는 HTTPS에서만 동작합
 - `docs/scripture-content.md` — 불경(경전) 콘텐츠 검토(2026-10): 시장 근거, 유형별 품질 분석, 저작권·번역·음원 조건, 무료 미끼 + 유료 상품 설계, 로드맵
 - `docs/architecture.md` — **앱 구조와 배치**: 계층 지도, 라우트→자산 표, 첫 화면 로딩 예산(측정), 셸/모듈 경계를 정한 근거, 홈 카드 위계·내비게이션 배치, 서버 캐시 정책, 가드 테스트 지도
 - `docs/responsive-layout.md` — 화면(모바일·태블릿·웹)별 구성 배치 설계: 브레이크포인트 표, 셸 그리드 구조, 유동 타이포·여백 토큰, 지도·모달·SEO 페이지 대응, 알려진 한계
+- `tools/payload-budget.js` — 전송 예산 측정: 첫 화면 파일 목록은 `index.html` 에서, 지연 자산은 `js/lib/loader.js` 의 `ASSETS` 에서 읽어 gzip 크기와 라우트별 추가 전송량을 계산. `npm run budget [-- --check]`
 - `tools/_dep-audit.js` — 구조 감사 도구: `node tools/_dep-audit.js js/app.js` 로 섹션별 줄 범위와 밖에서 참조하는 심볼(결합도)을 센다. 모듈 경계를 정할 때 사용(`docs/architecture.md` 4절)
 - `tools/content-smoke.js` — 스토리·전설·풍수·기도 콘텐츠 정합성 검사, `tools/temple-smoke.js` — 큐레이션·전통사찰 991건 및 API 스모크 검사. `tools/test-content.js`·`tools/test-plus.js`·`tools/smoke-test.js`는 Playwright 브라우저 테스트/스크린샷용, `tools/geocode.py`는 좌표 조회 스크립트
 

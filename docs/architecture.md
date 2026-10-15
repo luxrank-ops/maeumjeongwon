@@ -12,7 +12,7 @@
 
 | | 이전 | 이후 |
 | --- | --- | --- |
-| 첫 화면이 내려받는 양 | 699KB (gzip 208KB) | **393KB (gzip 124KB)** — 40% 감소 |
+| 첫 화면이 내려받는 양 | 699KB (gzip 208KB) | **364KB (gzip 118KB)** — 43% 감소 (`npm run budget`) |
 | 앱 셸 한 파일 | `js/app.js` 2,768줄 · 196KB | `js/app.js` 1,869줄 · 143KB + `js/app/planner.js` 989줄(계획 화면에서만) |
 | 지연 로딩 | 없음 (모든 화면이 전부 로드) | 화면별 자산 표(`js/lib/loader.js` NEEDS) — leaflet·전통사찰 991곳·기도·풍수·스토리·계획 모듈 |
 | 압축 | 없음 | gzip 전 자산 (JS 196→60KB 등), 약 1/3 |
@@ -74,7 +74,8 @@ var NEEDS = {
 
 ## 2. 첫 화면 로딩 예산
 
-gzip(level 6) 기준 실제 전송 크기.
+gzip(level 6) 기준 실제 전송 크기 — `npm run budget` 이 `index.html` 과 `js/lib/loader.js` 표를 읽어 그대로 계산한다
+(숫자를 손으로 적지 않는다. `npm run verify` 에 `--check` 로 들어 있어 140KB 를 넘으면 실패한다).
 
 | 파일 | 크기 | gzip | 이전 첫 화면 | 지금 첫 화면 |
 | --- | --- | --- | --- | --- |
@@ -92,8 +93,9 @@ gzip(level 6) 기준 실제 전송 크기.
 | js/data-prayer.js | 31.5KB | 11.6KB | ✅ → **지연** | 기도 테마·가이드에서 |
 | js/data-fengshui.js | 15.1KB | 6.3KB | ✅ → **지연** | 풍수 화면에서 |
 | js/data-stories.js | 32.7KB | 11.5KB | ✅ | 홈은 **먼저 그리고** 도착하면 채움(SOFT) |
+| apple-touch-icon.png + manifest | 8.1KB | 7.6KB | ✅ | ✅ |
 | js/app/planner.js | 58.3KB | 17.7KB | (셸에 포함) | 계획 화면에서 |
-| **합계** | | | **208KB** | **124KB** |
+| **합계** | | | **699KB / gzip 208KB** | **364KB / gzip 118KB** |
 
 두 가지 장치가 체감 속도를 만든다.
 
@@ -237,17 +239,22 @@ function viewPlanner(a, b) { const m = plannerMod(); return m ? m.viewPlanner(a,
 
 ```js
 app.disable('x-powered-by');
-app.use(compression({ threshold: 1400 }));   // 텍스트 자산 전부 gzip (앱 셸 196KB → 60KB)
+app.use(compression({ threshold: 1400 }));   // 텍스트 자산·API JSON 전부 gzip (앱 셸 143KB → 45KB)
 app.use(cachePolicy());                      // 아래 표
 app.use(express.static(staticRoot, { etag: true, lastModified: true, maxAge: 0 }));
 ```
 
 | 경로 | Cache-Control | 이유 |
 | --- | --- | --- |
-| `*.js?…&v=…` (버전 쿼리 있음) | `public, max-age=31536000, immutable` | 내용이 바뀌면 URL도 바뀐다 |
+| `*.js?…&v=…` (버전 쿼리 있음) | `public, max-age=31536000, immutable` | 내용이 바뀌면 URL도 바뀐다 — 재검증 요청 자체가 사라진다 |
 | 그 밖의 정적 자산 | `public, max-age=604800` (7일) | 새로 추가한 파일이 오래 남지 않게 |
 | `index.html`·정적 SEO 페이지·`sw.js`·`*.webmanifest` | `no-cache` | 배포 즉시 반영. **서비스워커를 길게 캐시하면 업데이트가 멈춘다** |
 | `/api/*` | (없음) | 사용자·결제 상태는 캐시 금지 |
+
+버전 태그(`?v=`)는 **네 곳을 함께 올린다** — `index.html` · `tools/build-seo.js`(`ASSET_V`) ·
+`js/lib/loader.js`(`VERSION`) · `sw.js`(`CACHE_NAME`).
+첫 화면·정적 페이지가 부르는 JS/CSS 에 태그가 빠지면 7일 캐시에 갇혀 배포가 반영되지 않으므로
+`delivery.test.js` 6번이 그 규칙을 지킨다(태그 없는 참조가 있으면 실패).
 
 정적 SEO 페이지(`/temple/:id/`)는 `server.js`가 `sendFile`로 내보내므로 XML·TXT는 1일, HTML은 no-cache를 따로 지정한다.
 서비스워커는 첫 설치에 **셸만** 캐시하고, 지연 자산은 활성화 뒤 백그라운드에서 채운다(`prefetchLazy()`).
