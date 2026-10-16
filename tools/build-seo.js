@@ -62,10 +62,10 @@ function page({ base, urlPath, title, desc, body, ld, ads = null, ga = null, tra
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#f6f1e7" />
-<title>${esc(title)} — 마음정원사 : 절로가</title>
+<title>${esc(title)} — 마음정사  : 절로가자~춘학아~</title>
 <meta name="description" content="${esc(desc)}" />
 <link rel="canonical" href="${esc(url)}" />
-<meta property="og:title" content="${esc(title)} — 마음정원사 : 절로가" />
+<meta property="og:title" content="${esc(title)} — 마음정사  : 절로가자~춘학아~" />
 <meta property="og:description" content="${esc(desc)}" />
 <meta property="og:url" content="${esc(url)}" />
 ${gaMeta}${jsonLd}${adLoader}${analyticsJs}<link rel="stylesheet" href="/css/style.css?v=${ASSET_V}" />
@@ -75,7 +75,7 @@ ${gaMeta}${jsonLd}${adLoader}${analyticsJs}<link rel="stylesheet" href="/css/sty
 ${body}
 ${adBlock}
 <footer style="margin-top:24px;padding-top:12px;border-top:1px solid #e3d8c4;font-size:.85em;color:#7a6f62">
-  <a href="/#/home">🪷 마음정원사 : 절로가 앱으로 열기</a>${settingsLink}
+  <a href="/#/home">🪷 마음정사  : 절로가자~춘학아~ 앱으로 열기</a>${settingsLink}
 </footer>
 </main>
 </body>
