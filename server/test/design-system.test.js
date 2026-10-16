@@ -135,8 +135,11 @@ test('8. 홈 순서 개인화는 내가 남긴 기록만 센다 — 데모 표�
   assert.match(appSource, /filter\(x => !x\.sample\)/, '내가 남긴 것만 센다');
   assert.match(appSource, /ownRecords >= 3/, '기준은 3건');
   assert.match(appSource, /data-home-order=/, '순서를 화면(CSS·분석)에서도 읽을 수 있게 태깅');
-  // 순서만 바꾸고 카드 내용은 그대로 — 무엇이 효력이 있는지 갈라 보기 위해
-  assert.match(appSource, /returning \? pilgrimCard \+ moodCard : moodCard \+ pilgrimCard/);
+  // 처음 온 사용자에게는 마음 추천을 먼저, 기록이 쌓인 사용자에게는 다음 순례를 먼저 보여 준다.
+  assert.match(appSource, /returning \? pilgrimCard \+ moodCard : moodCard/);
+  assert.match(appSource, /returning \? '' : pilgrimCard/);
+  // 선택 온보딩과 분석 동의는 핵심 추천 이후에 나와 첫 행동을 막지 않는다.
+  assert.match(appSource, /\$\{returning \? pilgrimCard \+ moodCard : moodCard\}\s*\$\{onboard\}\s*\$\{returning \? '' : pilgrimCard\}\s*\$\{consentCard\(\)\}/);
 });
 
 test('9. 저조도에서만 손대는 예외는 한 블록에 모아 둔다', () => {
@@ -146,4 +149,16 @@ test('9. 저조도에서만 손대는 예외는 한 블록에 모아 둔다', ()
   assert.match(css, /:root\[data-theme=dark\] \.leaflet-tile-pane/);
   // 도감의 '아직' 칸은 밝혀서 지우는 방식이라 어두운 화면에서 반대로 뒤집어야 한다
   assert.match(css, /:root\[data-theme=dark\] \.dex \.cell\.sil \.s/);
+});
+
+test('10. 앱 셸과 PWA 표기는 같은 절로가 브랜드를 쓴다', () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'manifest.webmanifest'), 'utf8'));
+  const metadata = JSON.parse(fs.readFileSync(path.join(ROOT, 'metadata.json'), 'utf8'));
+  const brand = '절로가 — 마음 따라 걷는 사찰 순례';
+  assert.equal(manifest.name, brand);
+  assert.equal(manifest.short_name, '절로가');
+  assert.equal(metadata.name, brand);
+  assert.match(shellHtml, new RegExp(`<title>${brand}</title>`));
+  assert.match(shellHtml, /<meta name="apple-mobile-web-app-title" content="절로가"/);
+  assert.doesNotMatch(`${shellHtml} ${manifest.name} ${metadata.name}`, /마음정사|마음정원사|절로가자~춘학아~/);
 });

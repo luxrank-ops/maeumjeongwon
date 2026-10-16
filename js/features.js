@@ -1,4 +1,4 @@
-/* 마음정사  : 절로가자~춘학아~ — 9대 핵심 기능 모듈 (PWA, 날씨/계절, 내비게이션, 완주증, 플래너, 템플스테이, 명상, i18n, 오디오 도슨트) */
+/* 절로가 — 9대 핵심 기능 모듈 (PWA, 날씨/계절, 내비게이션, 완주증, 플래너, 템플스테이, 명상, i18n, 오디오 도슨트) */
 (function (root) {
   'use strict';
 
@@ -380,7 +380,7 @@
       // 발행처 명칭
       ctx.font = 'bold 17px "Noto Serif CJK KR", serif';
       ctx.fillStyle = '#2f2a24';
-      ctx.fillText('마음정사  : 절로가자~춘학아~', 335, 910);
+      ctx.fillText('절로가', 335, 910);
 
       // 직인 (전통 붉은 사각 도장)
       ctx.save();
@@ -395,8 +395,8 @@
       ctx.font = 'bold 16px "Noto Serif CJK KR", serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('마음정사', 0, -10);
-      ctx.fillText('절로가자', 0, 12);
+      ctx.fillText('절로가', 0, -10);
+      ctx.fillText('순례', 0, 12);
       ctx.restore();
 
       // 하단 각주
@@ -461,8 +461,8 @@
               canvas.toBlob(async blob => {
                 const file = new File([blob], 'pilgrimage-cert.png', { type: 'image/png' });
                 await navigator.share({
-                  title: '마음정사 사찰 순례 완주증',
-                  text: `전국 사찰 ${templeCount}곳을 순례하고 마음정사 완주증을 받았습니다! 🪷`,
+                  title: '절로가 사찰 순례 완주증',
+                  text: `전국 사찰 ${templeCount}곳을 순례하고 절로가 완주증을 받았습니다! 🪷`,
                   files: [file]
                 });
               });
@@ -902,7 +902,7 @@
 
   const DICTIONARY = {
     ko: {
-      app_title: '마음정사  : 절로가자~춘학아~',
+      app_title: '절로가',
       nav_home: '홈',
       nav_explore: '탐색',
       nav_map: '지도',
@@ -924,13 +924,13 @@
       templestay_title: '템플스테이 안내',
       meditation_title: '마음 쉼터 & 명상 타이머',
       meditation_sub: '사찰의 소리와 함께 숨을 고르고 지친 마음을 맑혀보세요.',
-      pwa_installed: '마음정사 앱이 설치되었습니다 📲',
+      pwa_installed: '절로가 앱이 설치되었습니다 📲',
       pwa_browser_guide: '브라우저 메뉴에서 "홈 화면에 추가"를 선택해 설치하세요.',
       pwa_ios_title: 'iPhone / iPad 앱 설치 안내',
       pwa_ios_desc: '홈 화면에 추가하시면 앱처럼 편리하게 이용하실 수 있습니다.'
     },
     en: {
-      app_title: 'Maeumjeongsa : Jeorogaja~Chunhaga~',
+      app_title: 'Jeoroga : Jeorogaja~Chunhaga~',
       nav_home: 'Home',
       nav_explore: 'Explore',
       nav_map: 'Map',
@@ -952,7 +952,7 @@
       templestay_title: 'Templestay Information',
       meditation_title: 'Mindfulness & Meditation Timer',
       meditation_sub: 'Breathe with serene temple ambient sounds and restore peace.',
-      pwa_installed: 'Maeumjeongsa app installed! 📲',
+      pwa_installed: 'Jeoroga app installed! 📲',
       pwa_browser_guide: 'Tap browser menu and select "Add to Home Screen".',
       pwa_ios_title: 'Install on iOS Safari',
       pwa_ios_desc: 'Add to Home screen for full offline and standalone experience.'

@@ -1,5 +1,5 @@
 /* ============================================================================
-   마음정사  : 절로가자~춘학아~ — 화면 최적화 스타일 (모바일 ↔ 태블릿 ↔ 웹 데스크톱)
+   절로가 — 화면 최적화 스타일 (모바일 ↔ 태블릿 ↔ 웹 데스크톱)
    전략: 모바일 우선(mobile-first) + 유동 스케일(clamp) + 컨테이너 쿼리식 auto-fill 그리드
    브레이크포인트  560 큰폰/좁은 창 · 760 태블릿 세로 · 1120 태블릿 가로/노트북(사이드 내비)
                    1440 와이드 데스크톱(카드 2열 배치) · 1760 울트라와이드
@@ -286,7 +286,7 @@ table.cmp td:nth-child(2),table.cmp td:nth-child(3),table.cmp th:nth-child(2),ta
   .tabbar a.rail-only::after{content:"";flex:1}
   .tabbar a span{display:inline-block;font-size:1.3em}
   .tabbar a.on{background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--border-1)}
-  .tabbar::after{display:block;content:"🪷 마음정사  : 절로가자~춘학아~ — 데모 프로토타입";margin-top:auto;padding:14px 12px 2px;font-size:.72em;line-height:1.5;color:var(--text-3);border-top:1px dashed var(--border-1)}
+  .tabbar::after{display:block;content:"🪷 절로가 — 마음 따라 걷는 사찰 순례";margin-top:auto;padding:14px 12px 2px;font-size:.72em;line-height:1.5;color:var(--text-3);border-top:1px dashed var(--border-1)}
   #toast{bottom:26px}
   .hero:after{font-size:120px;right:8px;bottom:-22px}
   #map{height:66vh;height:clamp(480px,66svh,820px)}
@@ -434,7 +434,7 @@ table.cmp td:nth-child(2),table.cmp td:nth-child(3),table.cmp th:nth-child(2),ta
 .templestay-hero{border-left:4px solid var(--accent);background:linear-gradient(135deg,var(--tint-warm-1),var(--tint-warm-2))}
 .templestay-tag{background:var(--pine-soft);color:var(--pine-ink);font-weight:700;padding:2px 8px;border-radius:6px;font-size:.8em}
 /* ============================================================================
-   ⑮ 마음정원 디자인 시스템 v3 — "산사의 낮" (2026-10 디자인 리뷰)
+   ⑮ 절로가 디자인 시스템 v3 — "산사의 낮" (2026-10 디자인 리뷰)
    ----------------------------------------------------------------------------
    이 앱이 시키는 일은 셋뿐이다. ① 마음을 고른다(처방전) ② 사찰을 읽는다(이야기)
    ③ 걸어본다(인증·기록·여행 계획). 그런데 첫 화면이 등급·염주·상점·배너를 같은
@@ -860,10 +860,44 @@ input[type=search]::-webkit-search-cancel-button,input[type=search]::-webkit-sea
 /* ---------- ⑮-13 사찰 상세: 하단 고정 행동판 ---------- */
 .actionbar{
   position:sticky;bottom:0;z-index:600;display:flex;gap:var(--s2);align-items:center;
-  margin:var(--s4) calc(var(--pad-x) * -1) calc(var(--pad-y) * -1);padding:11px var(--pad-x) calc(11px + var(--safe-b));
+  margin:var(--s3) calc(var(--pad-x) * -1) 0;padding:11px var(--pad-x) calc(11px + var(--safe-b));
   background:color-mix(in srgb,var(--surface-2) 94%,transparent);border-top:1px solid var(--border-1);
   -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)
 }
+.actionbar .btn{display:flex;align-items:center;justify-content:center;gap:8px;line-height:1.25}
+.actionbar .btn>span{display:block}
+.actionbar .btn small{display:block;margin-top:2px;font-size:.7em;font-weight:500;opacity:.82;line-height:1.2}
+.visit-card{border-color:var(--pine-line);background:linear-gradient(168deg,var(--surface-2),var(--surface-3))}
+.visit-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;margin:8px 0 0}
+.visit-facts>div{min-width:0;padding:9px 10px;border-top:1px solid var(--border-2)}
+.visit-facts>div:first-child{grid-column:1/-1}
+.visit-facts dt{font-size:.82em;color:var(--text-3);font-weight:700}
+.visit-facts dd{margin:3px 0 0;font-weight:600;line-height:1.5;overflow-wrap:anywhere}
+.visit-facts .needs{font-weight:700}
+.visit-note{display:flex;align-items:flex-start;gap:7px;margin:10px 0 0;padding:9px 10px;border-radius:10px;background:var(--surface-3);color:var(--text-3);font-size:.86em;line-height:1.5}
+.visit-note .ic{color:var(--pine);margin-top:2px}
+.visit-alert{margin-top:10px;padding:10px 12px;border:1px solid var(--danger-line);border-radius:12px;background:var(--tint-danger-1)}
+.visit-alert> b{display:flex;align-items:center;gap:6px;color:var(--danger)}
+.visit-alert .verify-list{margin-top:4px}
+.rx-reason{display:flex;align-items:flex-start;gap:6px;margin:8px 0 0;color:var(--text-3);font-size:.84em;line-height:1.5}
+.rx-reason .ic{color:var(--pine);margin-top:2px}
+.map-view-switch{display:inline-flex;gap:3px;padding:3px;border:1px solid var(--border-1);border-radius:999px;background:var(--surface-2)}
+.map-view-switch .chip{border:0;background:transparent;min-height:36px}
+.map-view-switch .chip[aria-pressed=true]{background:var(--pine);color:var(--on-pine)}
+.map-view-switch .chip[aria-pressed=true] .ic{color:var(--on-pine)}
+.temple-cluster{background:transparent;border:0}
+.temple-cluster>span{display:grid;place-items:center;width:42px;height:42px;border:2px solid var(--surface-2);border-radius:50%;background:var(--pine);color:var(--on-pine);font-weight:800;font-size:1em;box-shadow:0 2px 8px rgba(var(--shade),.28)}
+.journey-timeline{list-style:none;margin:4px 0 0;padding:0 0 0 10px;border-left:2px solid var(--border-1)}
+.journey-event{position:relative;display:grid;grid-template-columns:1fr;gap:3px;padding:0 0 16px 17px}
+.journey-event:last-child{padding-bottom:0}
+.journey-event:before{content:"";position:absolute;left:-7px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--pine);border:2px solid var(--surface-2)}
+.journey-event.sample:before{background:var(--text-3)}
+.journey-event-head{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:.86em;color:var(--text-3)}
+.journey-event-title{font-weight:700;color:var(--text-1)}
+.journey-event-title a{text-decoration:none}
+.journey-event-title a:hover{color:var(--pine-ink)}
+.journey-event-note{margin:2px 0 0;color:var(--text-2);font-size:.92em;line-height:1.55;overflow-wrap:anywhere}
+.journey-event .tag{margin:0}
 @supports not (background:color-mix(in srgb,red 50%,transparent)){.actionbar{background:rgba(var(--card-rgb),.97)}}
 .actionbar .btn{flex:1 1 0;min-width:0}
 .actionbar .btn.primary{flex:1.5 1 0}
@@ -1024,6 +1058,8 @@ body.big .tabbar a{font-size:.8em}
 body.big .mood{min-height:96px}
 body.big .tag{font-size:.9em}
 body.big .notice,body.big .sub{font-size:1em}
+body.big .visit-facts{grid-template-columns:1fr}
+body.big .visit-facts>div:first-child{grid-column:auto}
 
 /* ---------- ⑮-20.5 유틸리티 ---------- */
 /* .hidden 은 컴포넌트마다 다시 정의하지 않고 한 번만 — 이 레이어(파일 끝)에 두어
@@ -1101,6 +1137,15 @@ body.big .notice,body.big .sub{font-size:1em}
 .map-head{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);flex-wrap:wrap}
 .map-head h1{margin:0}
 .map-head .sub{margin:2px 0 0}
+.map-controls{display:flex;align-items:center;justify-content:space-between;gap:var(--s2);flex-wrap:wrap;margin:0 0 10px}
+.map-controls .tabs{flex:1 1 220px;margin-bottom:0}
+.map-view-switch .chip{min-height:44px;padding-inline:12px}
+.map-list-panel{margin-top:8px}
+.map-list-summary{margin:0 0 8px;color:var(--text-3);font-size:.88em}
+.cluster-list{margin:8px 0 0;padding-left:18px}
+.cluster-list li+li{margin-top:4px}
+.cluster-list a{color:var(--pine-ink);text-decoration:none}
+.cluster-list a:hover{text-decoration:underline}
 .map-legend{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap;margin:10px 0 0;font-size:.86em;color:var(--text-3)}
 .map-legend .sub{margin-left:auto;font-size:.94em}
 /* 잠금·요금제·비교 */

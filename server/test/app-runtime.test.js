@@ -190,6 +190,9 @@ function loadApp(opts = {}) {
   const L = {
     map: () => ({
       setView() { return this; },
+      getZoom() { return 7; },
+      latLngToLayerPoint() { return { x: 0, y: 0 }; },
+      on() { return this; },
       locate() { return this; },
       once() { return this; },
       invalidateSize() {},
@@ -198,7 +201,9 @@ function loadApp(opts = {}) {
     }),
     tileLayer: () => ({ addTo() {} }),
     layerGroup: () => ({ addTo() { return this; }, clearLayers() {} }),
-    circleMarker: () => ({ bindPopup() { return this; }, addTo() { return this; } })
+    circleMarker: () => ({ bindPopup() { return this; }, addTo() { return this; } }),
+    marker: () => ({ bindPopup() { return this; }, addTo() { return this; } }),
+    divIcon: opts => opts
   };
 
   const sandbox = {
@@ -237,7 +242,8 @@ function loadApp(opts = {}) {
     'js/data-stories.js',
     'js/data-traditional.js',
     'js/data-fengshui.js',
-    'js/app/planner.js'
+    'js/app/planner.js',
+    'js/app/map.js'
   ];
   const files = opts.eagerData === false ? EAGER.slice() : EAGER.slice(0, 2).concat(LAZY, EAGER.slice(2));
   for (const file of files) {
@@ -314,11 +320,56 @@ test('요금제 카드는 월간·연간 키를 문자 한 글자로 잘리지 �
   assert.equal(html.includes('data-plan="m"'), false);
 });
 
-test('샘플 방문 기록이 있어도 순례 리포트 거리가 계산된다', () => {
+test('첫 실행에서는 예시 방문·수첩 기록을 실제 기록처럼 자동 삽입하지 않는다', () => {
+  const app = loadApp({ store: {} });
+  const home = app.go('#/home');
+  const state = JSON.parse(app.window.localStorage.getItem('maeumjeongwon.v1') || '{}');
+  assert.deepEqual(state.visits || [], []);
+  assert.deepEqual(state.journal || [], []);
+  assert.match(home, /오늘의 마음 처방전/);
+  assert.ok(home.indexOf('오늘의 마음 처방전') < home.indexOf('취향에 맞춰 추천받기'), '첫 추천을 본 뒤 선택 온보딩을 노출');
+
+  const missions = app.go('#/missions');
+  assert.match(missions, /아직 남긴 걸음이 없어요/);
+  assert.doesNotMatch(missions, /예시 \d+건 포함/);
+});
+
+test('방문 상세는 실용정보와 도착 행동을 이야기보다 먼저 보여 준다', () => {
   const { go } = loadApp();
-  const html = go('#/report');
-  assert.match(html, /순례 리포트/);
-  assert.match(html, /km|발자취|방문/);
+  const html = go('#/temple/haeinsa');
+  assert.ok(html.indexOf('id="visit-info"') < html.indexOf('기원·역사'), '방문 요약이 이야기보다 먼저');
+  assert.ok(html.indexOf('개방시간') < html.indexOf('기원·역사'), '운영 정보를 빠르게 찾을 수 있음');
+  assert.ok(html.indexOf('class="actionbar') < html.indexOf('기원·역사'), '길찾기·현장 인증 행동이 상단에 있음');
+  assert.match(html, /도착 후 방문 인증/);
+  assert.match(html, /현장 GPS 반경/);
+  assert.match(html, /정보 변경 가능/);
+  assert.match(html, /방문 도구/);
+});
+
+test('지도에는 지도·목록 전환과 필터링된 목록을 함께 제공한다', () => {
+  const { go } = loadApp();
+  const html = go('#/map');
+  assert.match(html, /data-map-view="map"/);
+  assert.match(html, /data-map-view="list"/);
+  assert.match(html, /id="mapListResults"/);
+  assert.match(html, /aria-label="사찰 분류"/);
+});
+
+test('순례 화면에는 방문과 수첩 기록을 잇는 여정 타임라인과 빈 상태가 있다', () => {
+  const fresh = loadApp({ store: { 'maeumjeongwon.v1': JSON.stringify({ visits: [], journal: [] }) } });
+  assert.match(fresh.go('#/missions'), /걸어온 여정/);
+  assert.match(fresh.view.innerHTML, /사찰을 둘러보고, 다녀온 날의 생각/);
+
+  const demo = loadApp({ store: { 'maeumjeongwon.v1': JSON.stringify({
+    visits: [{ tid: 'haeinsa', date: '2026-10-10', method: 'gps', sample: true }],
+    journal: [{ id: 'sample-note', tid: 'haeinsa', date: '2026-10-10', note: '예시 기록', sample: true }]
+  }) } });
+  const timeline = demo.go('#/missions');
+  assert.match(timeline, /class="journey-event sample"/);
+  assert.match(timeline, /예시/);
+  assert.match(timeline, /예시 기록/);
+  assert.match(timeline, /도감 0곳 \/ 100곳/, '예시 방문은 실제 순례 진척도에 포함하지 않는다');
+  assert.match(timeline, /0알 모았어요/, '예시 방문은 실제 염주 수에 포함하지 않는다');
 });
 
 test('지연 로딩: 홈은 스토리만 받고, 지도·전통사찰·풍수·기도 화면은 들어갈 때 받는다', async () => {
@@ -338,6 +389,7 @@ test('지연 로딩: 홈은 스토리만 받고, 지도·전통사찰·풍수·�
   assert.match(await app.goAsync('#/map'), /사찰 지도/);
   assert.ok(app.loadedScripts().some(f => /leaflet\.js$/.test(f)), '지도 화면 → leaflet 스크립트');
   assert.ok(app.loadedStyles().some(f => /leaflet\.css$/.test(f)), '지도 화면 → leaflet 스타일');
+  assert.ok(app.loadedScripts().includes('js/app/map.js'), '지도 화면 → 지도 UI 모듈');
 
   // ③ 전통사찰 991곳 화면
   assert.match(await app.goAsync('#/explore/all'), /전통사찰/);
@@ -445,11 +497,11 @@ test('탐색 검색 입력이 결과만 다시 그리고, 주소는 replaceState
   assert.match(view.innerHTML, /통도사/, '결과가 다시 그려져야 함');
 });
 
-test('홈 순서는 "내가 남긴 기록" 3건을 기준으로 바뀐다 — 데모 표본 기록은 세지 않는다', () => {
-  // 처음 열었을 때 자동으로 채워지는 표본 14건은 '내 기록'이 아니다 → 처방전이 먼저
+test('홈 순서는 "내가 남긴 기록" 3건을 기준으로 바뀌고, 예시 기록은 세지 않는다', () => {
+  // 첫 실행에는 기록을 자동으로 넣지 않는다 → 처음 온 사용자에게 처방전이 먼저
   const fresh = loadApp({ store: {} });
   const freshHtml = fresh.go('#/home');
-  assert.ok(freshHtml.indexOf('마음 처방전') < freshHtml.indexOf('내 순례'),
+  assert.ok(freshHtml.indexOf('오늘의 마음 처방전') < freshHtml.indexOf('내 순례'),
     '처음 온 사용자에게는 마음 처방전이 먼저여야 함');
   assert.match(freshHtml, /data-home-order="new"/);
 

@@ -66,13 +66,14 @@ test('3. Service Worker sw.js 오프라인 캐시 및 인덱스 HTML 연동 검�
      실제로는 지연 자산이 캐시되지 않는다. 세 곳(index.html · sw.js · loader.js)이
      같은 태그를 가리키는지 여기서 묶어 둔다. */
   const versioned = src => [...src.matchAll(/["'](\/(?:js|css)\/[^"']+\.js\?v=[^"']+)["']/g)].map(m => m[1]);
-  const swUrls = versioned(swContent).filter(u => !/\/js\/(?:data-prayer|data-stories|data-traditional|data-fengshui|app\/planner)\.js/.test(u));
+  const isLazyAsset = u => /\/js\/(?:data-prayer|data-stories|data-traditional|data-fengshui|app\/(?:planner|map))\.js/.test(u);
+  const swUrls = versioned(swContent).filter(u => !isLazyAsset(u));
   for (const url of swUrls) {
     // index.html 은 상대경로(js/…), sw.js 는 절대경로(/js/…)로 적는다 — 경로 앞 '/'만 맞춰 비교
     assert.ok(html.includes(url.replace(/^\//, '')),
       `sw.js 가 미리 받는 ${url} 이 index.html 에 없다 (버전 태그 불일치)`);
   }
-  const lazy = versioned(swContent).filter(u => /\/js\/(?:data-prayer|data-stories|data-traditional|data-fengshui|app\/planner)\.js/.test(u));
+  const lazy = versioned(swContent).filter(isLazyAsset);
   assert.ok(lazy.length >= 5, '지연 자산 목록이 있어야 함');
   const loaderSrc = fs.readFileSync(path.join(ROOT, 'js', 'lib', 'loader.js'), 'utf-8');
   const loaderVersion = (/var VERSION = '([^']+)'/.exec(loaderSrc) || [])[1];
