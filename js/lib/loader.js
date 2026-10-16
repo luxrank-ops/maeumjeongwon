@@ -1,4 +1,4 @@
-/* 마음정원 자산 로더 — 화면에 필요한 데이터·지도를 '그때' 받아온다.
+/* 절로가 자산 로더 — 화면에 필요한 데이터·지도를 '그때' 받아온다.
  *
  * 왜 필요한가: 예전에는 첫 화면에서도 지도(leaflet 162KB)·전통사찰 991곳(110KB)·스토리·기도·풍수
  * 데이터를 모두 내려받아야 첫 화면이 떴다. 실제로 홈에서 쓰는 건 스토리 카드 하나뿐이었다.
@@ -8,7 +8,7 @@
   'use strict';
 
   // 캐시 무효화용 버전. 파일 내용이 바뀌면 sw.js의 CACHE_NAME과 함께 올린다.
-  var VERSION = '20261017';
+  var VERSION = '20261016journey';
 
   var doc = root.document;
 
@@ -44,6 +44,10 @@
     planner: {
       js: ['js/app/planner.js'],
       ready: function () { return typeof root.MJ_PLANNER_FACTORY === 'function'; }
+    },
+    mapUi: {
+      js: ['js/app/map.js'],
+      ready: function () { return !!(root.MJ_MAP_UI && root.MJ_MAP_UI.init); }
     }
   };
 
@@ -52,8 +56,8 @@
     home: ['stories'],
     story: ['stories'],
     temple: ['stories'],
-    map: ['leaflet', 'stories'],
-    missions: ['leaflet', 'stories'],
+    map: ['leaflet', 'mapUi', 'stories'],
+    missions: ['leaflet', 'mapUi', 'stories'],
     planner: ['planner'],
     'planner/view': ['planner', 'leaflet'],
     'planner/new': ['planner'],

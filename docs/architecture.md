@@ -1,6 +1,6 @@
 # 앱 구조와 배치 — 분석과 정리 (2026-10)
 
-사찰 순례·힐링 앱 「마음정원사 : 절로가」의 **코드 구조**와 **화면 배치**를 효율화한 작업 기록.
+사찰 순례 앱 「절로가 — 마음 따라 걷는 사찰 순례」의 **코드 구조**와 **화면 배치**를 효율화한 작업 기록.
 목표는 두 가지였다. ① 처음 열었을 때 실제로 쓰지 않는 코드까지 받지 않게 한다. ② 2,700줄짜리 단일 파일과
 쌓여 있는 카드 목록을, 다음 사람이 손댈 수 있는 경계로 나눈다.
 
@@ -12,9 +12,9 @@
 
 | | 이전 | 이후 |
 | --- | --- | --- |
-| 첫 화면이 내려받는 양 | 699KB (gzip 208KB) | **364KB (gzip 118KB)** — 43% 감소 (`npm run budget`) |
-| 앱 셸 한 파일 | `js/app.js` 2,768줄 · 196KB | `js/app.js` 1,869줄 · 143KB + `js/app/planner.js` 989줄(계획 화면에서만) |
-| 지연 로딩 | 없음 (모든 화면이 전부 로드) | 화면별 자산 표(`js/lib/loader.js` NEEDS) — leaflet·전통사찰 991곳·기도·풍수·스토리·계획 모듈 |
+| 첫 화면이 내려받는 양 | 699KB (gzip 208KB) | **442.9KB (gzip 139.7KB)** — 각각 36.6%·32.8% 감소 (`npm run budget -- --check`) |
+| 앱 셸 한 파일 | `js/app.js` 2,768줄 · 196KB | `js/app.js` 2,213줄 · 166KB + `js/app/planner.js` 989줄 + 지도 UI 74줄(각 화면에서 지연 로드) |
+| 지연 로딩 | 없음 (모든 화면이 전부 로드) | 화면별 자산 표(`js/lib/loader.js` NEEDS) — leaflet·지도 UI·전통사찰 991곳·기도·풍수·스토리·계획 모듈 |
 | 압축 | 없음 | gzip 전 자산 (JS 196→60KB 등), 약 1/3 |
 | 캐시 | 조건부 요청만 | `?v=` 자산 1년 immutable / 그 밖 7일 / HTML·SW는 no-cache |
 | 화면 배치 | 홈 카드 15장이 순서 없이 누적 | "오늘 → 지금 → 계획 → 도구 → 읽을거리 → 상업" 위계 + 중복 카드 제거 |
@@ -31,7 +31,8 @@ index.html ──▶ css/style.css ──▶ js/lib/loader.js ──▶ [핵심]
    (셸)            (한지 톤)        (지연 자산 표)      (데이터·기능)    (상태·화면·라우터)
                                                           │
                        라우트에 들어갈 때 loader.ensure() ─┘
-                       ├─ 지도 화면      → vendor/leaflet.{css,js}      144KB
+                       ├─ 지도·순례     → vendor/leaflet.{css,js}      159KB
+                       │                  js/app/map.js                 4KB
                        ├─ 전통사찰 991   → js/data-traditional.js       107KB
                        ├─ 계획 화면      → js/app/planner.js             58KB
                        ├─ 스토리(홈·상세) → js/data-stories.js            33KB
@@ -43,9 +44,10 @@ index.html ──▶ css/style.css ──▶ js/lib/loader.js ──▶ [핵심]
 | --- | --- | --- |
 | `index.html` | 앱 셸(상단바·본문·탭바·모달 자리), 첫 화면 스크립트 7개 | 처음 |
 | `css/style.css` | 디자인 토큰·셸 그리드·5단계 브레이크포인트 | 처음 |
-| `js/lib/loader.js` | **지연 자산 표**(`ASSETS`·`NEEDS`·`SOFT`)와 로딩 실행기 | 처음 (5.7KB) |
+| `js/lib/loader.js` | **지연 자산 표**(`ASSETS`·`NEEDS`·`SOFT`)와 로딩 실행기 | 처음 (5.8KB) |
 | `js/app.js` | 앱 상태(localStorage)·화면 16개·라우터·이벤트 위임 | 처음 |
 | `js/app/planner.js` | 사찰 여행 계획 + 조건별 추천 코스 | 계획 화면에서 |
+| `js/app/map.js` | 사찰 목록·클러스터 지도 UI | 지도·순례 화면에서 (4.1KB) |
 | `js/features.js` | 9대 기능 모듈(PWA·날씨·내비·완주증·템플스테이·합성음·명상·i18n·도슨트·AI 상담) | 처음 |
 | `js/planner-reco.js` | 추천 계획 엔진(순수 계산, DOM 없음) | 처음 |
 | `js/data-temples.js` | 상세 사찰 65곳(+`THEMES`·`LIST_LABELS`) | 처음 |
@@ -59,7 +61,7 @@ index.html ──▶ css/style.css ──▶ js/lib/loader.js ──▶ [핵심]
 var NEEDS = {
   home: ['stories'],                      // 홈의 '이번 주 심화 스토리' 카드
   story: ['stories'], temple: ['stories'],
-  map: ['leaflet', 'stories'], missions: ['leaflet', 'stories'],
+  map: ['leaflet', 'mapUi', 'stories'], missions: ['leaflet', 'mapUi', 'stories'],
   planner: ['planner'], 'planner/view': ['planner', 'leaflet'],
   'planner/new': ['planner'], 'planner/theme': ['planner'],
   'journal/new': ['traditional'],         // 수첩 쓰기 = 사찰 선택 목록
@@ -74,15 +76,14 @@ var NEEDS = {
 
 ## 2. 첫 화면 로딩 예산
 
-gzip(level 6) 기준 실제 전송 크기 — `npm run budget` 이 `index.html` 과 `js/lib/loader.js` 표를 읽어 그대로 계산한다
-(숫자를 손으로 적지 않는다. `npm run verify` 에 `--check` 로 들어 있어 140KB 를 넘으면 실패한다).
+gzip(level 6) 기준 실제 전송 크기 — `npm run budget` 은 `index.html` 에서 직접 참조하는 자산과 `js/lib/loader.js` 의 지연 자산을 읽어 계산한다. HTML 본문 자체는 예산 합계에서 제외하며, `npm run verify` 는 연결된 첫 화면 자산이 140KB 를 넘으면 실패한다.
 
 | 파일 | 크기 | gzip | 이전 첫 화면 | 지금 첫 화면 |
 | --- | --- | --- | --- | --- |
-| index.html | 4.1KB | 1.7KB | ✅ | ✅ (splash 자리 포함) |
-| css/style.css | 31.4KB | 9.8KB | ✅ | ✅ |
-| js/lib/loader.js | 5.7KB | 2.4KB | — | ✅ (신규) |
-| js/app.js | 142.5KB | 45.3KB | ✅ (196KB) | ✅ |
+| index.html | 12.1KB | 4.3KB | — | 자산 목록의 원본(HTML은 합계 제외) |
+| css/style.css | 87.2KB | 23.5KB | ✅ | ✅ |
+| js/lib/loader.js | 5.8KB | 2.5KB | — | ✅ (신규) |
+| js/app.js | 165.9KB | 52.9KB | ✅ (196KB) | ✅ |
 | js/data-temples.js | 106.5KB | 30.7KB | ✅ | ✅ |
 | js/features.js | 48.7KB | 14.4KB | ✅ | ✅ |
 | js/planner-reco.js | 12.9KB | 5.2KB | ✅ | ✅ |
@@ -93,9 +94,10 @@ gzip(level 6) 기준 실제 전송 크기 — `npm run budget` 이 `index.html` 
 | js/data-prayer.js | 31.5KB | 11.6KB | ✅ → **지연** | 기도 테마·가이드에서 |
 | js/data-fengshui.js | 15.1KB | 6.3KB | ✅ → **지연** | 풍수 화면에서 |
 | js/data-stories.js | 32.7KB | 11.5KB | ✅ | 홈은 **먼저 그리고** 도착하면 채움(SOFT) |
-| apple-touch-icon.png + manifest | 8.1KB | 7.6KB | ✅ | ✅ |
+| apple-touch-icon.png + manifest | 8.0KB | 7.5KB | ✅ | ✅ |
 | js/app/planner.js | 58.3KB | 17.7KB | (셸에 포함) | 계획 화면에서 |
-| **합계** | | | **699KB / gzip 208KB** | **364KB / gzip 118KB** |
+| js/app/map.js | 4.1KB | 1.9KB | (셸에 포함) | 지도·순례 화면에서 |
+| **합계** | | | **699KB / gzip 208KB** | **442.9KB / gzip 139.7KB** |
 
 두 가지 장치가 체감 속도를 만든다.
 

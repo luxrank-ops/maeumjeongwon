@@ -69,7 +69,7 @@ const shots = process.argv[3] !== 'noshot';
   await p.goto(U + '#/temple/dosunsa'); await p.click('[data-act=demo]'); await p.click('[data-act=demo-ok]'); await p.waitForSelector('.stampbig');
   ok(true, 'free check-in works at new temple 도선사'); await p.click('button[data-act=close]');
   await p.goto(U + '#/map'); await p.waitForTimeout(1500);
-  ok(await p.locator('.leaflet-interactive').count() >= 61, 'map markers incl. new temples');
+  ok(await p.locator('.temple-cluster').count() >= 1 && await p.locator('.leaflet-interactive').count() >= 10, 'national map clusters dense areas while keeping individual temple markers');
   console.log('ERRORS:', errs.length ? errs : 'none');
   if (errs.length) process.exitCode = 1;
   await b.close();

@@ -175,7 +175,7 @@ function syncEnvFiles(root, resolvedMap) {
 
       if (needsWrite) {
         const lines = [
-          '# 마음정원사 : 절로가 — 자동 관리 환경변수 (server/env.js에 의해 자동 동기화됨)'
+          '# 절로가 — 자동 관리 환경변수 (server/env.js에 의해 자동 동기화됨)'
         ];
         for (const [k, v] of Object.entries(merged)) {
           lines.push(`${k}=${v == null ? '' : String(v)}`);
