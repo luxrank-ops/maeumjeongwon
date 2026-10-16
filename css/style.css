@@ -1,5 +1,5 @@
 /* ============================================================================
-   마음정원사 : 절로가 — 화면 최적화 스타일 (모바일 ↔ 태블릿 ↔ 웹 데스크톱)
+   마음정사  : 절로가자~춘학아~ — 화면 최적화 스타일 (모바일 ↔ 태블릿 ↔ 웹 데스크톱)
    전략: 모바일 우선(mobile-first) + 유동 스케일(clamp) + 컨테이너 쿼리식 auto-fill 그리드
    브레이크포인트  560 큰폰/좁은 창 · 760 태블릿 세로 · 1120 태블릿 가로/노트북(사이드 내비)
                    1440 와이드 데스크톱(카드 2열 배치) · 1760 울트라와이드
@@ -286,7 +286,7 @@ table.cmp td:nth-child(2),table.cmp td:nth-child(3),table.cmp th:nth-child(2),ta
   .tabbar a.rail-only::after{content:"";flex:1}
   .tabbar a span{display:inline-block;font-size:1.3em}
   .tabbar a.on{background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--border-1)}
-  .tabbar::after{display:block;content:"🪷 마음정원사 : 절로가 — 데모 프로토타입";margin-top:auto;padding:14px 12px 2px;font-size:.72em;line-height:1.5;color:var(--text-3);border-top:1px dashed var(--border-1)}
+  .tabbar::after{display:block;content:"🪷 마음정사  : 절로가자~춘학아~ — 데모 프로토타입";margin-top:auto;padding:14px 12px 2px;font-size:.72em;line-height:1.5;color:var(--text-3);border-top:1px dashed var(--border-1)}
   #toast{bottom:26px}
   .hero:after{font-size:120px;right:8px;bottom:-22px}
   #map{height:66vh;height:clamp(480px,66svh,820px)}

@@ -1,4 +1,4 @@
-/* 마음정원 MVP — vanilla JS SPA (hash router + localStorage) */
+/* 마음정사 MVP — vanilla JS SPA (hash router + localStorage) */
 (function () {
   'use strict';
   const TEMPLES = window.TEMPLES, THEMES = window.THEMES, LL = window.LIST_LABELS;
@@ -351,7 +351,7 @@
       <div class="onboard-opts">${step.opts.map(o => `<button class="onboard-opt ${chosen === o.k ? 'on' : ''}" data-act="onboard-pick" data-key="${o.k}" data-step="${onboardingStep}">${esc(o.label)}</button>`).join('')}</div>
       <div class="onboard-nav">
         ${onboardingStep > 0 ? '<button class="btn ghost" data-act="onboard-back">이전</button>' : ''}
-        ${isLast ? '<button class="btn" data-act="onboard-done" disabled>마음정원 시작 🪷</button>' : '<button class="btn" data-act="onboard-next" disabled>다음</button>'}
+        ${isLast ? '<button class="btn" data-act="onboard-done" disabled>마음정사 시작 🪷</button>' : '<button class="btn" data-act="onboard-next" disabled>다음</button>'}
       </div>
     </div>`;
   }
@@ -363,7 +363,7 @@
       <h2>${interest ? interest.label.split(' ').slice(1).join(' ') : ''}에 어울리는 사찰 3곳</h2>
       <p class="sub">오늘 가기 좋은 곳을 골라 봤어요. 이야기를 읽고 직접 순례해 보세요.</p>
       <div class="tlist">${picks.map(t => templeItem(t)).join('')}</div>
-      <button class="btn block" data-act="onboard-enter" style="margin-top:12px">마음정원 시작 🪷</button>
+      <button class="btn block" data-act="onboard-enter" style="margin-top:12px">마음정사 시작 🪷</button>
       <p class="sub" style="text-align:center;margin-top:8px;font-size:.82em">나중에 언제든 설정을 바꿀 수 있어요</p>
     </div>`;
   }
@@ -484,7 +484,7 @@
   }
 
 
-  // ---------- 마음정원 플러스 (유료화 프런트엔드 데모 · 실제 결제 없음) ----------
+  // ---------- 마음정사 플러스 (유료화 프런트엔드 데모 · 실제 결제 없음) ----------
   const PLANS = {
     monthly: { name: '월간', price: '월 4,900원', sub: '언제든 해지 가능' },
     yearly: { name: '연간', price: '연 39,000원', sub: '월 3,250원꼴 · 월간 대비 34% 절약', best: '추천' },
@@ -528,7 +528,7 @@
     course: { t: '순례 코스 플래너', d: '동선 순서·구간별 직선거리·함께 채워지는 미션을 한눈에 봐요. 코스팩 단품으로도 열 수 있어요.' },
     season: { t: '계절 한정 스탬프', d: '계절마다 그때만 받을 수 있는 디지털 스탬프를 모아요.' },
     report: { t: '나의 순례 리포트', d: '내 방문·수첩 기록으로 만든 순례 통계와 연말 결산을 봐요. (이 기기 데이터로만 계산)' },
-    general: { t: '마음정원사 : 절로가 플러스', d: '심화 스토리·오디오·코스 플래너·오프라인·순례 리포트를 모두 이용해요.' }
+    general: { t: '마음정사 플러스', d: '심화 스토리·오디오·코스 플래너·오프라인·순례 리포트를 모두 이용해요.' }
   };
   function plusState() {
     const p = S.plus; if (!p) return { on: false };
@@ -581,7 +581,7 @@
     const status = ps.on ? (ps.trial ? `<div class="statusbar trial">🧪 데모 무료 체험 중 · <b>${ps.left}일</b> 남음 (${PLANS[ps.plan || 'yearly'].price} 선택). 체험이 끝나도 자동 결제되지 않아요.</div>` : `<div class="statusbar">🧪 데모 플러스 이용 중 (${PLANS[ps.plan || 'yearly'].price})</div>`)
       : (ps.expired ? '<div class="statusbar trial">체험이 끝났어요. 동의 없이 결제되지 않았어요.</div>' : '');
     const cell = v => v === true ? `<span class="yes">${ic('check')}<span class="sr">포함</span></span>` : v === false ? `<span class="no">—</span>` : `<span class="sub">${esc(v)}</span>`;
-    return `<div class="screen-head"><h1>마음정원사 : 절로가 플러스 <span class="demo-ribbon">데모 · 실제 결제 없음</span></h1><p class="sub">순례·지도·스탬프·기도 안내는 언제나 무료예요. 플러스는 이 앱이 직접 만드는 이야기와 여행 도구에 씁니다.</p></div>
+    return `<div class="screen-head"><h1>마음정사 플러스 <span class="demo-ribbon">데모 · 실제 결제 없음</span></h1><p class="sub">순례·지도·스탬프·기도 안내는 언제나 무료예요. 플러스는 이 앱이 직접 만드는 이야기와 여행 도구에 씁니다.</p></div>
     ${status}
     <section class="card hero" style="border-left:4px solid var(--gold)">
       <div class="row between">
@@ -607,7 +607,7 @@
     <section class="card"><h2>무료 vs 플러스</h2><table class="cmp"><tr><th>기능</th><th>무료</th><th>플러스</th></tr>
       ${PLUS_BENEFITS.map(b => `<tr><td>${b[0]}</td><td>${cell(b[1])}</td><td>${cell(b[2])}</td></tr>`).join('')}</table></section>
     <section class="card"><h2>구독이 부담스럽다면</h2><p>필요한 콘텐츠만 1회 결제로 살 수 있어요. 자동 갱신은 없어요.</p><a class="btn ghost block" style="text-align:center;text-decoration:none" href="#/store">🛍 콘텐츠 상점 보기</a></section>
-    <p class="notice">🙏 마음정원사 : 절로가는 신앙을 판매하지 않아요. 기도 안내·예절·출처는 언제나 무료이고, 소원 성취나 효험을 약속하는 상품(부적·기도 대행·소원권 등)은 만들지 않아요. 판매하는 것은 이 앱이 직접 만든 정보·이야기·도구뿐이에요.</p>`;
+    <p class="notice">🙏 마음정사  : 절로가자~춘학아~ 앱은 신앙을 판매하지 않아요. 기도 안내·예절·출처는 언제나 무료이고, 소원 성취나 효험을 약속하는 상품(부적·기도 대행·소원권 등)은 만들지 않아요. 판매하는 것은 이 앱이 직접 만든 정보·이야기·도구뿐이에요.</p>`;
   }
 
   // ---------- 콘텐츠 상점 (데모 · 실제 결제 없음) ----------
@@ -753,7 +753,7 @@
       ${t.prayer.how && t.prayer.how.length ? `<p class="sub" style="margin:0 0 4px">찾아가는 법</p><ul>${t.prayer.how.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
       <div class="src">출처: ${t.prayer.src.map(x => esc(x.t)).join(' · ')}</div></article>`;
     return `<div class="noprint"><a href="#/store" class="sub" style="text-decoration:none">← 상점</a></div>
-      <h1>전국 기도처 가이드북 <span class="demo-ribbon">데모</span></h1><p class="sub">마음정원사 : 절로가 편집 · ${list.length}곳 · ${today().replace(/-/g, '.')} 판</p>
+      <h1>전국 기도처 가이드북 <span class="demo-ribbon">데모</span></h1><p class="sub">마음정사  : 절로가자~춘학아~ 편집 · ${list.length}곳 · ${today().replace(/-/g, '.')} 판</p>
       <section class="card prayer"><h2 style="margin-top:0">기도처 예절</h2><ul>${E.items.map(x => `<li>${esc(x)}</li>`).join('')}</ul><p class="notice">${esc(E.note)}</p></section>
       ${own ? `<div class="noprint" style="margin:8px 0"><button class="btn block" data-act="print">🖨 PDF로 저장 / 인쇄</button></div>${list.map(entry).join('')}` : list.slice(0, 2).map(entry).join('') + `<div class="locked"><div class="preview">${list.slice(2, 5).map(t => esc(t.name)).join(' · ')} 외 ${list.length - 2}곳</div><div class="lockbar"><span>🔒 나머지 ${list.length - 2}곳은 가이드북 구매 후 볼 수 있어요</span><button class="btn small" data-act="buy" data-id="guide-prayer">5,900원 (데모)</button></div></div>`}
       <p class="notice">기도처에 전해지는 이야기를 정리한 안내서예요. 소원 성취나 효험을 보장하지 않아요. 기도 안내 기본 정보는 각 사찰 상세에서 언제나 무료로 볼 수 있어요.</p>`;
@@ -1416,7 +1416,7 @@
 
   function storyCards(id) {
     const st = STORIES.filter(x => x.tid === id), soon = STORY_SOON.filter(x => x.tid === id); if (!st.length && !soon.length) return '';
-    return `<section class="card legend"><span class="lbl">${ic('book')} 마음정원사 : 절로가 심화 스토리</span>${st.map(x => `<h3 style="margin:8px 0 4px">${esc(x.series)} ${x.ep}편 · ${esc(x.title)}</h3><p class="sub" style="margin:0">${esc(x.hook)}</p><a class="btn small" href="#/story/${x.id}" style="display:inline-block;text-decoration:none;margin-top:6px">${storyOpen(x) ? '읽기' : '첫 장 무료로 읽기'} →</a>`).join('')}${soon.map(x => `<p class="sub" style="margin:8px 0 0">${x.ep}편 「${esc(x.title)}」 제작 예정</p>`).join('')}</section>`;
+    return `<section class="card legend"><span class="lbl">${ic('book')} 마음정사  : 절로가자~춘학아~ 심화 스토리</span>${st.map(x => `<h3 style="margin:8px 0 4px">${esc(x.series)} ${x.ep}편 · ${esc(x.title)}</h3><p class="sub" style="margin:0">${esc(x.hook)}</p><a class="btn small" href="#/story/${x.id}" style="display:inline-block;text-decoration:none;margin-top:6px">${storyOpen(x) ? '읽기' : '첫 장 무료로 읽기'} →</a>`).join('')}${soon.map(x => `<p class="sub" style="margin:8px 0 0">${x.ep}편 「${esc(x.title)}」 제작 예정</p>`).join('')}</section>`;
   }
   function legendsHtml(t) {
     const all = [t.legend].concat(t.legends || []).filter(Boolean);
@@ -1814,11 +1814,11 @@
     }
     else if (act === 'onboard-enter') {
       S.onboarded = true; S.onboardPrefs = { interest: onboardingChoices[0], region: onboardingChoices[1], companion: onboardingChoices[2] }; save();
-      closeModal(); render(); toast('마음정원에 오신 것을 환영해요 🪷');
+      closeModal(); render(); toast('마음정사에 오신 것을 환영해요 🪷');
     }
     else if (act === 'paywall') openPaywall(el.dataset.feat);
     else if (act === 'gift-open') {
-      openModal(`<div class="sheet"><h2>🎁 선물하기</h2><p>마음정원 플러스를 소중한 분에게 선물해 보세요.</p>
+      openModal(`<div class="sheet"><h2>🎁 선물하기</h2><p>마음정사 플러스를 소중한 분에게 선물해 보세요.</p>
         <div class="grid2" style="margin:12px 0">
           <button class="plan on" data-act="gift-pick" data-plan="yearly"><div class="sub">연간 구독</div><div class="price">연 39,000원</div><div class="sub" style="font-size:.78em">14일 무료 체험 포함</div></button>
           <button class="plan" data-act="gift-pick" data-plan="lifetime"><div class="sub">평생 이용권</div><div class="price">89,000원</div><div class="sub" style="font-size:.78em">한 번만 · 영구</div></button>
@@ -2034,7 +2034,7 @@
       const t = resolveTemple(el.dataset.id);
       if (t && window.MJ_FEATURES && window.MJ_FEATURES.Docent) {
         const text = [
-          `안녕하세요. 마음정원 오디오 도슨트입니다. 지금부터 ${t.name}을 안내해 드리겠습니다.`,
+          `안녕하세요. 마음정사 오디오 도슨트입니다. 지금부터 ${t.name}을 안내해 드리겠습니다.`,
           `${t.name}은 ${t.sido} ${t.sgg} ${t.mountain}에 자리 잡고 있으며, ${t.founded}로 전해집니다.`,
           t.treasures && t.treasures.length ? `대표적인 문화재로는 ${t.treasures.join(', ')} 등이 있습니다.` : '',
           t.legend ? `이곳에 전해지는 옛 이야기로는 '${t.legend.title}'이 있습니다. ${t.legend.text}` : '',
