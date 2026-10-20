@@ -9,3 +9,9 @@ node_modules/
 bun.lock
 seo/
 seo-out/
+
+# 회원·게시판 데이터 (SQLite). 개인정보가 들어 있으므로 절대 커밋하지 않는다.
+data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm

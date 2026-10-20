@@ -430,7 +430,7 @@ test('지연 자산 표(NEEDS)는 라우터의 화면과 짝을 이룬다 — �
   }
 
   const routes = ['home', 'explore', 'fengshui', 'temple', 'map', 'missions', 'dex', 'journal',
-    'plus', 'store', 'story', 'report', 'guide', 'season-report', 'mind', 'planner'];
+    'plus', 'store', 'story', 'report', 'guide', 'season-report', 'mind', 'planner', 'board', 'account'];
   for (const key of Object.keys(loader.NEEDS)) {
     assert.ok(routes.includes(key.split('/')[0]), `NEEDS 키 '${key}' 의 화면이 라우터에 없다`);
   }

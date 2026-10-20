@@ -393,7 +393,7 @@
     }));
     let res = await send();
     if (res.status === 401 && SESS) {          // 토큰 무효 → 새 세션으로 한 번 재시도
-      SESS = null;
+      SESS = null; ME.member = null;
       localStorage.removeItem(SESS_KEY); localStorage.removeItem(ENT_KEY);
       await ensureSession();
       res = await send();
@@ -402,18 +402,51 @@
     return { ok: res.ok, status: res.status, body };
   }
 
+  // 상단 '로그인' 칩: 회원이면 닉네임, 아니면 로그인 화면으로 보낸다
+  function updateMemberChip() {
+    const c = document.getElementById('memberChip');
+    if (!c) return;
+    const m = ME.member;
+    c.innerHTML = ic('user') + `<span>${m ? esc(m.nickname) : '로그인'}</span>`;
+    c.setAttribute('href', m ? '#/account' : '#/account/login');
+    c.setAttribute('aria-label', m ? `${m.nickname} 님 · 내 정보` : '로그인하거나 회원가입');
+    c.classList.toggle('on', !!m);
+  }
+  // 로그인·가입·로그아웃 결과를 세션에 반영한다. next 가 null 이면 익명 세션으로 돌아간다.
+  async function applySession(next) {
+    if (next) { SESS = { uid: next.uid, token: next.token }; ME.member = next.member || null; }
+    else { SESS = null; ME.member = null; localStorage.removeItem(SESS_KEY); }
+    try { if (SESS) localStorage.setItem(SESS_KEY, JSON.stringify(SESS)); } catch (e) {}
+    if (!next) await ensureSession();
+    updateMemberChip();
+    await syncMe();
+  }
+  // 같은 화면을 다시 그린다 — 스크롤을 건드리지 않아 댓글을 달아도 화면이 튀지 않는다
+  function refreshView() {
+    const parts = (location.hash || '#/home').slice(2).split('/').map(decodeURIComponent);
+    if (parts[0] !== 'board' && parts[0] !== 'account') return;
+    const m = communityMod();
+    if (m) $view.innerHTML = m.view(parts[0], parts[1], parts[2]);
+  }
+  // 해시를 바꾸고, 해시가 이미 같으면 직접 다시 그린다 (hashchange 는 같은 값이면 울리지 않는다)
+  function goHash(h) {
+    if (location.hash === h) navigate(); else location.hash = h;
+  }
+
   function syncMe() {
     return api('/api/me').then(r => {
       if (!r.ok || !r.body) return;
       if (r.body.mode) Object.assign(MODE, r.body.mode);
       if (r.body.plus) ME.plus = r.body.plus;
+      if (r.body.member !== undefined) ME.member = r.body.member;
+      updateMemberChip();
       if (Array.isArray(r.body.packs)) {
         ME.packs = r.body.packs.slice();
         (S.packs || []).forEach(p => { if (!ME.packs.includes(p)) ME.packs.push(p); });
       }
       if (r.body.adUnlocks) ME.adUnlocks = r.body.adUnlocks;
       if (r.body.adToday) ME.adToday = r.body.adToday;
-      try { localStorage.setItem(ENT_KEY, JSON.stringify({ plus: ME.plus, packs: ME.packs, adUnlocks: ME.adUnlocks, adToday: ME.adToday })); } catch (e) {}
+      try { localStorage.setItem(ENT_KEY, JSON.stringify({ plus: ME.plus, packs: ME.packs, adUnlocks: ME.adUnlocks, adToday: ME.adToday, member: ME.member })); } catch (e) {}
     });
   }
   syncMe();
@@ -1018,6 +1051,7 @@
       <div class="section-heading"><div><span class="section-kicker">${ic('file')} 읽을거리 · 내려받기</span><h2>${story ? '이번 주 심화 스토리' : '이번 주 발자취'}</h2></div><a class="text-link" href="#/store">상점${ic('chevron')}</a></div>
       <ul class="tool-list">
         ${story ? `<li><a href="#/story/${story.id}">${ic('book')}<span><b>${esc(story.title)}</b><span class="sub">${esc(byId[story.tid] ? byId[story.tid].name : '')} · 약 ${story.minutes}분</span></span><span class="tail">${isPlus() ? '읽기' : '첫 장 무료'}${ic('chevron')}</span></a></li>` : ''}
+        <li><a href="#/board">${ic('chat')}<span><b>회원 게시판</b><span class="sub">순례 후기·질문을 나눠요 · 가입 후 쓰기</span></span><span class="tail">${ic('chevron')}</span></a></li>
         <li><a href="#/store">${ic('bag')}<span><b>콘텐츠 상점</b><span class="sub">구독 없이 필요한 것만 · 1회 결제 (데모)</span></span><span class="tail">${ic('chevron')}</span></a></li>
         ${isPlus() ? `<li><a href="#/report">${ic('stamp')}<span><b>나의 순례 리포트</b><span class="sub">이 기기 기록으로만 계산해요</span></span><span class="tail">${ic('chevron')}</span></a></li>`
           : `<li><a href="#/plus">${ic('sparkle')}<span><b>플러스 · 심화 스토리·오디오·코스</b><span class="sub">7일 무료 체험 (데모 · 자동 결제 없음)</span></span><span class="tail">${ic('chevron')}</span></a></li>`}
@@ -1672,6 +1706,7 @@
   /* 계획·추천 코스 화면(945줄)은 js/app/planner.js 로 옮겼다. 무거운 화면이라 계획 라우트에 들어갈 때만
    * 로더가 내려준다. 여기서는 셸의 상태·유틸을 넘겨 모듈을 만들고, 라우터가 쓰던 이름만 이어 준다. */
   let planner = null;
+  let community = null;                            // 회원·게시판 화면 모듈 (js/app/community.js)
   function plannerMod() {
     if (!planner && window.MJ_PLANNER_FACTORY) {
       planner = window.MJ_PLANNER_FACTORY({
@@ -1697,6 +1732,22 @@
     const m = plannerMod();
     if (!m) return '<h1>사찰 여행 계획</h1><p class="notice">계획 화면을 불러오는 중이에요. 잠시만 기다려 주세요.</p>';
     return m.viewPlanner(a, b);
+  }
+
+  function communityMod() {
+    if (!community && window.MJ_COMMUNITY_FACTORY) {
+      community = window.MJ_COMMUNITY_FACTORY({
+        api, esc, toast, repaint: refreshView, goto: goHash, ic,
+        getMember: () => ME.member || null,
+        applySession, refreshMember: syncMe
+      });
+    }
+    return community;
+  }
+  function viewCommunity(r, a, b) {
+    const m = communityMod();
+    if (!m) return '<h1>회원 게시판</h1><p class="notice">화면을 불러오는 중이에요. 잠시만 기다려 주세요.</p>';
+    return m.view(r, a, b);
   }
 
   // ---------- 모달 (화면 크기별: 모바일 하단 시트 · 데스크톱 중앙 대화상자) ----------
@@ -1749,6 +1800,11 @@
       case 'season-report': html = viewSeasonReport(); tab = 'plus'; break;
       case 'mind': html = viewMind(); tab = 'home'; break;
       case 'planner': html = viewPlanner(a, b); tab = 'journal'; break;
+      case 'board':
+      case 'account':
+        // 데이터는 화면에 들어온 순간 받는다 (같은 화면을 다시 그릴 때는 재요청하지 않는다)
+        if (communityMod()) communityMod().enter(r, a, b);
+        html = viewCommunity(r, a, b); tab = 'board'; break;
       default: html = viewHome(); tab = 'home';
     }
     $view.innerHTML = html;
@@ -1768,6 +1824,7 @@
       x.setAttribute('aria-current', on ? 'page' : 'false');
     });
     updatePlusChip();
+    updateMemberChip();
     if (window.MJ_FEATURES && window.MJ_FEATURES.I18N) window.MJ_FEATURES.I18N.apply();
     MJAnalytics.track('page_view', { page: r || 'home' });
     if (r === 'story') MJAnalytics.track('story_open', { page: 'story', item: a });
