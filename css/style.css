@@ -286,7 +286,7 @@ table.cmp td:nth-child(2),table.cmp td:nth-child(3),table.cmp th:nth-child(2),ta
   .tabbar a.rail-only::after{content:"";flex:1}
   .tabbar a span{display:inline-block;font-size:1.3em}
   .tabbar a.on{background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--border-1)}
-  .tabbar::after{display:block;content:"🪷 절로가 — 마음 따라 걷는 사찰 순례";margin-top:auto;padding:14px 12px 2px;font-size:.72em;line-height:1.5;color:var(--text-3);border-top:1px dashed var(--border-1)}
+  .tabbar::after{display:block;content:"🪷 마음정원사 절로가 : 춘학아~ 절에 가자~^^";margin-top:auto;padding:14px 12px 2px;font-size:.72em;line-height:1.5;color:var(--text-3);border-top:1px dashed var(--border-1)}
   #toast{bottom:26px}
   .hero:after{font-size:120px;right:8px;bottom:-22px}
   #map{height:66vh;height:clamp(480px,66svh,820px)}
@@ -582,14 +582,14 @@ body{
 }
 @supports not (background:color-mix(in srgb,red 50%,transparent)){.topbar{background:rgba(var(--paper-rgb),.94)}}
 body.scrolled .topbar{border-bottom-color:var(--border-1);box-shadow:0 8px 20px -18px rgba(var(--shade),.5)}
-.logo{gap:9px;min-width:0}
+.logo{gap:9px;min-width:0;flex:1 1 auto}
 .brand-mark{
   position:relative;display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;
   border-radius:10px;background:var(--pine-2);color:var(--on-deep);font-family:var(--font-display);font-size:14px;line-height:1
 }
 .brand-mark i{display:none}
 .brand-mark b{position:relative;z-index:1}
-.brand-copy{display:flex;flex-direction:column;gap:1px;line-height:1.15;min-width:0;text-align:left}
+.brand-copy{display:flex;flex-direction:column;gap:1px;line-height:1.15;min-width:0;flex:1;text-align:left}
 .brand-copy>b{font-family:var(--font-display);font-size:1.06em;font-weight:700;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .brand-copy small{font-size:.68em;font-weight:600;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .topright{gap:6px}
@@ -993,7 +993,7 @@ input[type=search]::-webkit-search-cancel-button,input[type=search]::-webkit-sea
 @media (min-width:1440px){
   /* 홈: 마음 카드는 크게, 나머지는 2열 — 1440 재배치 규칙은 새 클래스 기준으로 다시 잡는다 */
   /* 홈의 '한 번에 하나' 카드(마음 처방전)·계절 레일·동의·면책은 두 열로 쪼개지 않는다 */
-  #view[data-route=home] .today,#view[data-route=home] .card.hero,#view[data-route=home] .mood-card,#view[data-route=home] .rail-card,#view[data-route=home] .onboard-hint,#view[data-route=home]>.notice,#view[data-route=home] #consentCard{grid-column:1/-1}
+  #view[data-route=home] .today,#view[data-route=home] .main-title-hero,#view[data-route=home] .card.hero,#view[data-route=home] .mood-card,#view[data-route=home] .rail-card,#view[data-route=home] .onboard-hint,#view[data-route=home]>.notice,#view[data-route=home] #consentCard{grid-column:1/-1}
   #view[data-route=home] .mood-card .moods{grid-template-columns:repeat(6,minmax(0,1fr))}
 }
 @media (max-width:559px){
@@ -1206,4 +1206,99 @@ table.cmp td{border-bottom-color:var(--border-2)}
   .stamp-list{padding:11px 12px}
   .grade-rail li{font-size:.72em;padding:7px 1px}
   .grade-rail li .sub{display:none}
+}
+
+/* ---------- 메인 타이틀 히어로 — “마음정원사 절로가 : 춘학아~ 절에 가자~^^” ----------
+   · 첫 화면에서 가장 먼저 읽히는 문장이라 가독성이 전부다.
+   · 종이(배경) 위 먹(글자) +左侧 소나무 선(신뢰) + 따뜻한 점토 포인트(친근한 부름)로
+     브랜드·초대 말을 시각적으로 나눈다. 이모티콘(^^)까지 포함해 정확히 한 문장으로 읽힌다.
+   · 낮·저조도·큰글씨·고대비 모두에서 명도 대비 4.5:1 이상을 유지한다.
+   ---------------------------------------------------------------------------- */
+.main-title-hero{
+  position:relative;
+  overflow:hidden;
+  background:linear-gradient(168deg,var(--tint-warm-1) 0%,var(--surface-2) 72%);
+  border:1px solid var(--border-1);
+  border-left:4px solid var(--pine);
+  border-radius:var(--r);
+  padding:18px 16px 16px;
+  margin:0 0 var(--s3);
+  box-shadow:var(--elev-1);
+}
+.main-title-hero::after{
+  content:"";
+  position:absolute;
+  right:-22px;top:-22px;
+  width:120px;height:120px;
+  border-radius:50%;
+  background:radial-gradient(circle at 36% 42%,rgba(var(--pine-rgb),.09),rgba(var(--pine-rgb),0) 68%);
+  pointer-events:none;
+}
+.main-title-kicker{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:.76em;font-weight:800;letter-spacing:.08em;
+  color:var(--pine);text-transform:uppercase;
+}
+.main-title-kicker .ic{width:1.05em;height:1.05em;color:var(--pine)}
+.main-title{
+  margin:8px 0 8px;
+  font-family:var(--font-display);
+  font-size:clamp(1.45rem,1.05rem + 1.6vw,2.15rem);
+  line-height:1.28;
+  letter-spacing:-.025em;
+  color:var(--text-1);
+  word-break:keep-all;
+  overflow-wrap:anywhere;
+  position:relative;z-index:1;
+}
+.main-title__brand{font-weight:800;white-space:nowrap}
+.main-title__sep{
+  display:inline-block;
+  margin:0 .14em 0 .08em;
+  color:var(--text-3);
+  font-weight:300;
+}
+.main-title__call{
+  color:var(--clay);
+  font-weight:800;
+  white-space:nowrap;
+}
+.main-title__call i{
+  display:inline-block;
+  margin-left:3px;
+  font-style:normal;
+  font-weight:700;
+  letter-spacing:.04em;
+  color:var(--clay);
+  transform:translateY(-.04em);
+}
+.main-title__desc{
+  margin:0;
+  font-size:.92em;
+  color:var(--text-2);
+  line-height:1.62;
+  position:relative;z-index:1;
+  word-break:keep-all;
+}
+.main-title__desc b{color:var(--text-1);font-weight:700}
+@media (max-width:419px){
+  .main-title{font-size:clamp(1.32rem,1rem + 1.4vw,1.7rem)}
+  .main-title__call{display:block;margin-top:2px}
+  .main-title__sep{display:none}
+}
+@media (min-width:760px){
+  .main-title-hero{padding:22px 24px 20px}
+  .main-title{font-size:clamp(1.7rem,1.2rem + 1.1vw,2.25rem)}
+  .main-title__desc{font-size:.96em}
+}
+@media (min-width:1120px){
+  .main-title-hero{padding:26px 28px 22px}
+}
+/* 큰 글씨 모드에서도 줄간격과 대비를 유지한다 */
+body.big .main-title{line-height:1.32}
+body.big .main-title__desc{font-size:1em}
+/* 고대비 요청 시 테두리와 포인트 색을 한 단계 더 진하게 */
+@media (prefers-contrast:more){
+  .main-title-hero{border-width:2px;border-left-width:4px}
+  .main-title__call,.main-title__call i{color:var(--clay-2)}
 }

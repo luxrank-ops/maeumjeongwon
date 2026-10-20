@@ -892,6 +892,12 @@
     const ownRecords = (S.visits || []).filter(x => !x.sample).length + (S.journal || []).filter(x => !x.sample).length;
     const returning = ownRecords >= 3;
 
+    const mainTitleHero = `<section class="card main-title-hero" aria-labelledby="mainTitle">
+      <div class="main-title-kicker">${ic('lotus')} 마음정원사 &middot; 마음 따라 걷는 사찰 순례</div>
+      <h1 id="mainTitle" class="main-title"><span class="main-title__brand">마음정원사 절로가</span><span class="main-title__sep">:</span><span class="main-title__call">춘학아~ 절에 가자~<i>^^</i></span></h1>
+      <p class="main-title__desc">기분을 고르고 사찰 이야기를 읽으며 <b>나만의 순례 기록</b>을 이어가는 마음정원입니다.</p>
+    </section>`;
+
     const todayHead = `<header class="today" data-home-order="${returning ? 'returning' : 'new'}">
       <div class="today-date"><span>${today().replace(/-/g, '.')} · ${greetPart()}</span><span class="state ${done ? 'ok' : ''}"><i class="dot"></i>${done ? '오늘 리추얼 완료' : '오늘 남긴 한 가지'}</span></div>
       <h1>오늘, 마음은<br class="mobile-only"> 어디에 놓을까요</h1>
@@ -1019,6 +1025,7 @@
     </section>`;
 
     return `
+    ${mainTitleHero}
     ${todayHead}
     ${returning ? pilgrimCard + moodCard : moodCard}
     ${onboard}
