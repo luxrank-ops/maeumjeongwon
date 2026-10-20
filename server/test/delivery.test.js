@@ -62,7 +62,7 @@ test('1. 텍스트 자산은 gzip으로 내려보낸다 (앱 셸 JS 약 1/3 크�
 test('2. 캐시 정책 — 버전 붙은 자산은 1년 immutable, 화면·서비스워커는 항상 재검증', async () => {
   const s = await startServer();
   try {
-    const versioned = await s.get('/js/app.js?v=20261020community');
+    const versioned = await s.get('/js/app.js?v=20261020firstscreen');
     assert.match(versioned.headers.get('cache-control'), /max-age=31536000/, '?v= 자산은 1년');
     assert.match(versioned.headers.get('cache-control'), /immutable/);
 
@@ -104,7 +104,7 @@ test('5. 첫 화면이 받는 스크립트는 지연 자산(leaflet·전통사�
   try {
     const res = await s.get('/index.html');
     const tags = [...res.text.matchAll(/<script src="([^"]+)"/g)].map(m => m[1].split('?')[0]);
-    for (const lazy of ['vendor/leaflet.js', 'js/data-traditional.js', 'js/data-fengshui.js', 'js/data-prayer.js', 'js/app/planner.js']) {
+    for (const lazy of ['vendor/leaflet.js', 'js/data-traditional.js', 'js/data-fengshui.js', 'js/data-prayer.js', 'js/app/planner.js', 'js/features.js']) {
       assert.equal(tags.includes(lazy), false, `첫 화면 스크립트에 ${lazy} 가 있으면 안 됨`);
     }
     const lazyBytes = ['vendor/leaflet.js', 'js/data-traditional.js', 'js/data-fengshui.js', 'js/data-prayer.js', 'js/app/planner.js']

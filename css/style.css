@@ -286,7 +286,7 @@ table.cmp td:nth-child(2),table.cmp td:nth-child(3),table.cmp th:nth-child(2),ta
   .tabbar a.rail-only::after{content:"";flex:1}
   .tabbar a span{display:inline-block;font-size:1.3em}
   .tabbar a.on{background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--border-1)}
-  .tabbar::after{display:block;content:"🪷 마음정원사 절로가 : 춘학아~ 절에 가자~^^";margin-top:auto;padding:14px 12px 2px;font-size:.72em;line-height:1.5;color:var(--text-3);border-top:1px dashed var(--border-1)}
+  .tabbar::after{display:block;content:"🪷 절로가 — 마음 따라 걷는 사찰 순례";margin-top:auto;padding:14px 12px 2px;font-size:.72em;line-height:1.5;color:var(--text-3);border-top:1px dashed var(--border-1)}
   #toast{bottom:26px}
   .hero:after{font-size:120px;right:8px;bottom:-22px}
   #map{height:66vh;height:clamp(480px,66svh,820px)}
@@ -1208,10 +1208,9 @@ table.cmp td{border-bottom-color:var(--border-2)}
   .grade-rail li .sub{display:none}
 }
 
-/* ---------- 메인 타이틀 히어로 — “마음정원사 절로가 : 춘학아~ 절에 가자~^^” ----------
-   · 첫 화면에서 가장 먼저 읽히는 문장이라 가독성이 전부다.
-   · 종이(배경) 위 먹(글자) +左侧 소나무 선(신뢰) + 따뜻한 점토 포인트(친근한 부름)로
-     브랜드·초대 말을 시각적으로 나눈다. 이모티콘(^^)까지 포함해 정확히 한 문장으로 읽힌다.
+/* ---------- 메인 타이틀 히어로 — “절로가 — 마음 따라 걷는 사찰 순례” ----------
+   · 첫 화면에서 가장 먼저 읽히는 브랜드와 서비스 설명을 한 문장으로 읽게 한다.
+   · 종이(배경) 위 먹(글자) + 소나무 선(신뢰) + 따뜻한 점토 포인트(브랜드 구분)로 구성한다.
    · 낮·저조도·큰글씨·고대비 모두에서 명도 대비 4.5:1 이상을 유지한다.
    ---------------------------------------------------------------------------- */
 .main-title-hero{
@@ -1261,7 +1260,7 @@ table.cmp td{border-bottom-color:var(--border-2)}
 .main-title__call{
   color:var(--clay);
   font-weight:800;
-  white-space:nowrap;
+  white-space:normal;
 }
 .main-title__call i{
   display:inline-block;

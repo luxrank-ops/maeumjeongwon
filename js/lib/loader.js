@@ -1,4 +1,4 @@
-/* 절로가 자산 로더 — 화면에 필요한 데이터·지도를 '그때' 받아온다.
+/* 절로가 자산 로더 — 화면에 필요한 데이터·지도·부가 기능을 '그때' 받아온다.
  *
  * 왜 필요한가: 예전에는 첫 화면에서도 지도(leaflet 162KB)·전통사찰 991곳(110KB)·스토리·기도·풍수
  * 데이터를 모두 내려받아야 첫 화면이 떴다. 실제로 홈에서 쓰는 건 스토리 카드 하나뿐이었다.
@@ -8,7 +8,7 @@
   'use strict';
 
   // 캐시 무효화용 버전. 파일 내용이 바뀌면 sw.js의 CACHE_NAME과 함께 올린다.
-  var VERSION = '20261020community';
+  var VERSION = '20261020firstscreen';
 
   var doc = root.document;
 
@@ -53,6 +53,11 @@
     community: {
       js: ['js/app/community.js'],
       ready: function () { return typeof root.MJ_COMMUNITY_FACTORY === 'function'; }
+    },
+    // 비필수 UI 기능은 첫 페인트 뒤 한 번에 받는다 — 홈 렌더와 상호작용은 이 자산을 기다리지 않는다.
+    features: {
+      js: ['js/features.js'],
+      ready: function () { return !!root.MJ_FEATURES; }
     }
   };
 
@@ -80,8 +85,9 @@
   };
 
   // 첫 화면을 막지 않는 자산 — 없으면 먼저 그리고, 도착하면 이어서 다시 그린다.
-  // (홈의 '이번 주 심화 스토리' 카드는 화면 아래쪽이라 기다리게 할 이유가 없다)
+  // 기능 묶음은 모든 라우트에서 부가 요소이므로 기본 지연, 홈의 심화 스토리는 홈에서만 덧붙인다.
   var SOFT = {
+    '*': ['features'],
     home: ['stories']
   };
 
@@ -102,10 +108,14 @@
 
   function softFor(hash) {
     var keys = routeKeys(hash);
+    var out = (SOFT['*'] || []).slice();
     for (var i = 0; i < keys.length; i++) {
-      if (SOFT[keys[i]]) return SOFT[keys[i]].slice();
+      if (keys[i] !== '*' && SOFT[keys[i]]) {
+        out = out.concat(SOFT[keys[i]]);
+        break;
+      }
     }
-    return [];
+    return out.filter(function (key, i) { return out.indexOf(key) === i; });
   }
 
   function isReady(key) {

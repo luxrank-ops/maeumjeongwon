@@ -12,9 +12,9 @@
 
 | | 이전 | 이후 |
 | --- | --- | --- |
-| 첫 화면이 내려받는 양 | 699KB (gzip 208KB) | **442.9KB (gzip 139.7KB)** — 각각 36.6%·32.8% 감소 (`npm run budget -- --check`) |
-| 앱 셸 한 파일 | `js/app.js` 2,768줄 · 196KB | `js/app.js` 2,213줄 · 166KB + `js/app/planner.js` 989줄 + 지도 UI 74줄(각 화면에서 지연 로드) |
-| 지연 로딩 | 없음 (모든 화면이 전부 로드) | 화면별 자산 표(`js/lib/loader.js` NEEDS) — leaflet·지도 UI·전통사찰 991곳·기도·풍수·스토리·계획 모듈 |
+| 첫 화면이 내려받는 양 | 699KB (gzip 208KB) | **407.2KB (gzip 128.9KB)** — 각각 41.7%·38.0% 감소, 140KB 예산에 11.1KB 여유 (`npm run budget -- --check`) |
+| 앱 셸 한 파일 | `js/app.js` 2,768줄 · 196KB | `js/app.js` 2,315줄 · 171.1KB + `js/app/planner.js` 989줄 + 지도 UI 74줄(각 화면에서 지연 로드) |
+| 지연 로딩 | 없음 (모든 화면이 전부 로드) | 화면별 자산 표(`js/lib/loader.js` NEEDS·SOFT) — features 묶음은 첫 렌더 뒤, 지도·전통사찰 991곳·기도·풍수·스토리·계획 모듈은 필요한 화면에서 로드 |
 | 압축 | 없음 | gzip 전 자산 (JS 196→60KB 등), 약 1/3 |
 | 캐시 | 조건부 요청만 | `?v=` 자산 1년 immutable / 그 밖 7일 / HTML·SW는 no-cache |
 | 화면 배치 | 홈 카드 15장이 순서 없이 누적 | "오늘 → 지금 → 계획 → 도구 → 읽을거리 → 상업" 위계 + 중복 카드 제거 |
@@ -37,18 +37,19 @@ index.html ──▶ css/style.css ──▶ js/lib/loader.js ──▶ [핵심]
                        ├─ 계획 화면      → js/app/planner.js             58KB
                        ├─ 스토리(홈·상세) → js/data-stories.js            33KB
                        ├─ 기도 테마·가이드 → js/data-prayer.js             32KB
-                       └─ 풍수 대백과    → js/data-fengshui.js           15KB
+                       ├─ 풍수 대백과    → js/data-fengshui.js           15KB
+                       └─ 부가 기능       → js/features.js (첫 렌더 뒤)    49KB
 ```
 
 | 파일 | 역할 | 언제 받는가 |
 | --- | --- | --- |
-| `index.html` | 앱 셸(상단바·본문·탭바·모달 자리), 첫 화면 스크립트 7개 | 처음 |
+| `index.html` | 앱 셸(상단바·본문·탭바·모달 자리), 첫 화면 스크립트 6개 | 처음 |
 | `css/style.css` | 디자인 토큰·셸 그리드·5단계 브레이크포인트 | 처음 |
-| `js/lib/loader.js` | **지연 자산 표**(`ASSETS`·`NEEDS`·`SOFT`)와 로딩 실행기 | 처음 (5.8KB) |
+| `js/lib/loader.js` | **지연 자산 표**(`ASSETS`·`NEEDS`·`SOFT`)와 로딩 실행기 | 처음 (6.6KB 원본 · gzip 2.8KB) |
 | `js/app.js` | 앱 상태(localStorage)·화면 16개·라우터·이벤트 위임 | 처음 |
 | `js/app/planner.js` | 사찰 여행 계획 + 조건별 추천 코스 | 계획 화면에서 |
 | `js/app/map.js` | 사찰 목록·클러스터 지도 UI | 지도·순례 화면에서 (4.1KB) |
-| `js/features.js` | 9대 기능 모듈(PWA·날씨·내비·완주증·템플스테이·합성음·명상·i18n·도슨트·AI 상담) | 처음 |
+| `js/features.js` | 9대 기능 모듈(PWA·날씨·내비·완주증·템플스테이·합성음·명상·i18n·도슨트·AI 상담) | 모든 라우트에서 첫 렌더 뒤(SOFT) |
 | `js/planner-reco.js` | 추천 계획 엔진(순수 계산, DOM 없음) | 처음 |
 | `js/data-temples.js` | 상세 사찰 65곳(+`THEMES`·`LIST_LABELS`) | 처음 |
 | `js/data-stories.js` 등 나머지 `data-*` | 스토리·기도·전통사찰 991곳·풍수 대백과 | 그 화면에서 |
@@ -76,33 +77,33 @@ var NEEDS = {
 
 ## 2. 첫 화면 로딩 예산
 
-gzip(level 6) 기준 실제 전송 크기 — `npm run budget` 은 `index.html` 에서 직접 참조하는 자산과 `js/lib/loader.js` 의 지연 자산을 읽어 계산한다. HTML 본문 자체는 예산 합계에서 제외하며, `npm run verify` 는 연결된 첫 화면 자산이 140KB 를 넘으면 실패한다.
+gzip(level 6) 기준 실제 전송 크기 — `npm run budget` 은 `index.html` 에서 직접 참조하는 자산과 `js/lib/loader.js` 의 지연 자산(`ASSETS`·`NEEDS`·`SOFT`)을 읽어 계산한다. HTML 본문 자체는 예산 합계에서 제외하며, `npm run verify` 는 첫 화면 직접 자산이 140KB 를 넘으면 실패한다.
 
 | 파일 | 크기 | gzip | 이전 첫 화면 | 지금 첫 화면 |
 | --- | --- | --- | --- | --- |
-| index.html | 12.1KB | 4.3KB | — | 자산 목록의 원본(HTML은 합계 제외) |
-| css/style.css | 87.2KB | 23.5KB | ✅ | ✅ |
-| js/lib/loader.js | 5.8KB | 2.5KB | — | ✅ (신규) |
-| js/app.js | 165.9KB | 52.9KB | ✅ (196KB) | ✅ |
+| index.html | 12.5KB | 4.5KB | — | 자산 목록의 원본(HTML은 합계 제외) |
+| css/style.css | 94.1KB | 25.1KB | ✅ | ✅ |
+| js/lib/loader.js | 6.6KB | 2.8KB | — | ✅ |
+| js/app.js | 171.1KB | 54.6KB | ✅ (196KB) | ✅ |
 | js/data-temples.js | 106.5KB | 30.7KB | ✅ | ✅ |
-| js/features.js | 48.7KB | 14.4KB | ✅ | ✅ |
+| js/features.js | 49.0KB | 14.6KB | ✅ | 첫 렌더 뒤 모든 라우트에서 SOFT |
 | js/planner-reco.js | 12.9KB | 5.2KB | ✅ | ✅ |
 | js/analytics.js + config.js | 7.9KB | 3.1KB | ✅ | ✅ |
 | vendor/leaflet.js | 144.1KB | 41.7KB | ✅ → **지연** | 지도 화면에서 |
 | vendor/leaflet.css | 14.5KB | 3.4KB | ✅ → **지연** | 지도 화면에서 |
 | js/data-traditional.js | 107.3KB | 23.1KB | ✅ → **지연** | 전통사찰 화면에서 |
-| js/data-prayer.js | 31.5KB | 11.6KB | ✅ → **지연** | 기도 테마·가이드에서 |
+| js/data-prayer.js | 31.4KB | 11.6KB | ✅ → **지연** | 기도 테마·가이드에서 |
 | js/data-fengshui.js | 15.1KB | 6.3KB | ✅ → **지연** | 풍수 화면에서 |
 | js/data-stories.js | 32.7KB | 11.5KB | ✅ | 홈은 **먼저 그리고** 도착하면 채움(SOFT) |
 | apple-touch-icon.png + manifest | 8.0KB | 7.5KB | ✅ | ✅ |
 | js/app/planner.js | 58.3KB | 17.7KB | (셸에 포함) | 계획 화면에서 |
 | js/app/map.js | 4.1KB | 1.9KB | (셸에 포함) | 지도·순례 화면에서 |
-| **합계** | | | **699KB / gzip 208KB** | **442.9KB / gzip 139.7KB** |
+| **합계** | | | **699KB / gzip 208KB** | **407.2KB / gzip 128.9KB** |
 
 두 가지 장치가 체감 속도를 만든다.
 
-* **SOFT 자산** — 홈의 스토리 카드는 화면 아래쪽이라 기다리게 할 이유가 없다. `loader.SOFT = { home: ['stories'] }`.
-  없으면 먼저 그리고, 도착하면 다시 그린다(시퀀스 번호로 늦게 온 응답이 되돌리지 못하게 막는다).
+* **SOFT 자산** — `loader.SOFT['*'] = ['features']`는 모든 화면에서 날씨·PWA·언어·오디오 등 부가 기능을 첫 렌더 뒤에 받는다. 홈의 심화 스토리도 아래쪽 카드라 `home: ['stories']`로 같은 방식으로 늦춘다.
+  둘 다 없으면 화면을 먼저 그리고, 도착하면 다시 그린다(시퀀스 번호로 늦게 온 응답이 이전 화면을 되돌리지 못하게 막는다). 사용자가 먼저 눌러도 `withFeatures()`가 모듈 도착 뒤 행동을 이어 간다.
 * **동기 경로** — 이미 받아 둔 자산뿐이면 `ensure()`를 거치지 않고 즉시 그린다(뒤로가기·탭 이동이 밀리지 않는다).
 
 ---
@@ -174,8 +175,7 @@ function viewPlanner(a, b) { const m = plannerMod(); return m ? m.viewPlanner(a,
 
 * **화면 단위로 더 쪼개지 않았다.** 홈·탐색·상세 같은 화면은 셸의 상태를 20~70개씩 참조한다. 쪼개면 `ctx`가
   화면보다 커져서 경계가 오히려 흐려진다. 계획 모듈은 예외적으로 결합도가 낮아(16개) 떼어 낼 값어치가 있었다.
-* **`js/features.js`(1,269줄)는 그대로 뒀다.** 내부가 이미 9개 모듈 객체로 나뉘어 있고 서로 참조하지 않는다.
-  파일만 늘리면 첫 화면에서 요청 9개가 더 생긴다. 통째로 하나(48.7KB·gzip 14.4KB)가 낫다.
+* **`js/features.js`는 쪼개지 않고 한 파일(49.0KB·gzip 14.6KB)로 유지한다.** PWA·날씨·언어·완주증·오디오 등 첫 페인트에 필요 없는 묶음이라 모든 라우트에서 `SOFT`로 늦춰 초기 전송에서 14.6KB를 뺐다. 기능별 파일 9개로 나누지 않아 사용 시 추가 요청도 늘리지 않는다.
 * **`js/data-*.js` 경로도 옮기지 않았다.** 서버(`server/content/*`)가 같은 파일을 `vm`으로 읽고, 서비스워커·문서·
   가드 테스트가 경로를 참조한다. 이름 변경은 이득 없이 위험만 늘린다.
 
@@ -282,6 +282,6 @@ app.use(express.static(staticRoot, { etag: true, lastModified: true, maxAge: 0 }
 
 * **라우트 프리페치** — 유휴 시간에 다음 후보 자산을 미리 받기(`requestIdleCallback`). 지금은 정확히 필요할 때만 받는다.
 * **웹폰트 자체 호스팅·이미지 포맷** — 한지 톤 폰트를 시스템 폰트로 두고 있고, 아이콘은 PNG. webp/avif·아이콘 스프라이트는 별도 작업.
-* **`js/features.js` 분할** — 위 4절의 이유로 보류. 도슨트·합성음만 지연 로딩하는 방법은 남아 있다.
+* **`js/features.js` 기능별 분할** — 묶음 전체는 이미 첫 렌더 뒤 SOFT 로드한다. 도슨트·합성음 등 라우트별로 더 잘게 나누는 일은 실제 전송 지표가 필요하다고 말할 때만 검토한다.
 * **상태 관리 분리** — `S`(localStorage 스키마)와 화면이 아직 같은 스코프에 있다. 저장 키 버전(`v1`)을 올릴 때 함께 정리하는 편이 안전하다.
 * **다크 모드** — 한지 톤 재설계가 필요해 `docs/responsive-layout.md`에도 별개 작업으로 적어 두었다.

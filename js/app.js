@@ -1,6 +1,11 @@
 /* 절로가 MVP — vanilla JS SPA (hash router + localStorage) */
 (function () {
   'use strict';
+  // 설치 프롬프트는 기능 묶음이 지연 로드되기 전에 올 수 있으므로 우선 저장해 둔다.
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    window.MJ_INSTALL_PROMPT = e;
+  });
   const TEMPLES = window.TEMPLES, THEMES = window.THEMES, LL = window.LIST_LABELS;
   const FENGSHUI_ATLAS = { regions: [], entries: [] };
   const FENGSHUI_MATRIX = [], FENGSHUI_VISIT_TIPS = [];
@@ -926,8 +931,8 @@
     const returning = ownRecords >= 3;
 
     const mainTitleHero = `<section class="card main-title-hero" aria-labelledby="mainTitle">
-      <div class="main-title-kicker">${ic('lotus')} 마음정원사 &middot; 마음 따라 걷는 사찰 순례</div>
-      <h1 id="mainTitle" class="main-title"><span class="main-title__brand">마음정원사 절로가</span><span class="main-title__sep">:</span><span class="main-title__call">춘학아~ 절에 가자~<i>^^</i></span></h1>
+      <div class="main-title-kicker">${ic('lotus')} 오늘의 마음을 따라 사찰로</div>
+      <h1 id="mainTitle" class="main-title"><span class="main-title__brand">절로가</span><span class="main-title__sep">—</span><span class="main-title__call">마음 따라 걷는 사찰 순례</span></h1>
       <p class="main-title__desc">기분을 고르고 사찰 이야기를 읽으며 <b>나만의 순례 기록</b>을 이어가는 마음정원입니다.</p>
     </section>`;
 
@@ -1853,6 +1858,20 @@
     window.scrollTo(0, 0);
   }
 
+  // 부가 기능은 첫 페인트 뒤에 받는다. 사용자가 그 전에 눌러도 로딩을 기다렸다가 행동을 이어 간다.
+  function withFeatures(run) {
+    if (window.MJ_FEATURES) { run(window.MJ_FEATURES); return; }
+    const loader = window.MJ_LOADER;
+    if (!loader || typeof loader.ensureOne !== 'function') {
+      toast('이 기능을 불러올 수 없어요. 잠시 후 다시 시도해 주세요.');
+      return;
+    }
+    loader.ensureOne('features').then(() => {
+      if (window.MJ_FEATURES) run(window.MJ_FEATURES);
+      else toast('이 기능을 불러올 수 없어요. 잠시 후 다시 시도해 주세요.');
+    }).catch(() => toast('연결을 확인한 뒤 다시 시도해 주세요.'));
+  }
+
   /* 화면 이동 한 곳 — 화면에 필요한 데이터·지도를 먼저 확보한 뒤 그린다.
    * 이미 받아 둔 자산뿐이면 동기 경로로 바로 그려서 첫 화면이 늦어지지 않게 한다.
    */
@@ -1861,24 +1880,54 @@
     const loader = window.MJ_LOADER;
     if (!loader) { hydrateLazyData(); render(); return Promise.resolve(); }   // 로더 없는 환경(정적 SEO·테스트)
     const hash = location.hash || '#/home';
-    const missing = loader.missing(loader.needsFor(hash));
     const soft = loader.softFor(hash);
+    const requested = [...new Set(loader.needsFor(hash).concat(soft))];
+    const missing = loader.missing(requested);
     const blocking = missing.filter(k => soft.indexOf(k) === -1);
     const seq = navSeq + 1; navSeq = seq;
 
     if (!blocking.length) {
       // 기다리지 않고 먼저 그린다 — 첫 화면 체감 속도가 가장 중요하다
       hydrateLazyData(); render();
-      if (!missing.length) return Promise.resolve();
+      if (!missing.length) { pendingNav = null; return Promise.resolve(); }
+      pendingNav = loader.ensure(missing)
+        .catch(err => { console.warn('[MJ] 자산을 불러오지 못했어요:', err && err.message); })
+        .then(() => {
+          hydrateLazyData();
+          if (seq === navSeq) { render(); pendingNav = null; }
+        });
+      return pendingNav;
     }
-    pendingNav = loader.ensure(missing)
+
+    // 화면을 그리는 자산만 기다린다. SOFT 자산은 별도로 받아 도착이 늦어도 화면 전환을 막지 않는다.
+    let rendered = false;
+    pendingNav = loader.ensure(blocking)
       .catch(err => { console.warn('[MJ] 자산을 불러오지 못했어요:', err && err.message); })
-      .then(() => { hydrateLazyData(); if (seq === navSeq) render(); pendingNav = null; });
+      .then(() => {
+        hydrateLazyData();
+        if (seq === navSeq) { rendered = true; render(); pendingNav = null; }
+      });
+    const softMissing = missing.filter(k => soft.indexOf(k) !== -1);
+    if (softMissing.length) {
+      loader.ensure(softMissing)
+        .then(() => {
+          hydrateLazyData();
+          if (seq === navSeq && rendered) render();
+        })
+        .catch(err => { console.warn('[MJ] 부가 자산을 불러오지 못했어요:', err && err.message); });
+    }
     return pendingNav;
   }
 
   document.addEventListener('click', e => {
-    const el = e.target.closest('[data-act],[data-mood],[data-f],[data-go],[data-map-view]'); if (!el) return;
+    const el = e.target.closest('#langToggle,[data-act],[data-mood],[data-f],[data-go],[data-map-view]'); if (!el) return;
+    if (el.id === 'langToggle') {
+      withFeatures(features => {
+        features.I18N.toggleLang();
+        toast(features.I18N.getLang() === 'en' ? 'Switched to English' : '한국어로 전환되었습니다');
+      });
+      return;
+    }
     if (el.dataset.go) { location.hash = el.dataset.go; return; }
     if (el.dataset.mood != null) { S.moodIdx = +el.dataset.mood; S.shift = 0; S.moodLog = (S.moodLog || []).filter(x => x.date !== today()).concat([{ date: today(), mood: S.moodIdx }]).slice(-60); save(); render(); return; }
     if (el.dataset.mapView != null) {
@@ -2132,9 +2181,7 @@
     }
     else if (act === 'nav-hub') {
       const t = resolveTemple(el.dataset.id);
-      if (t && window.MJ_FEATURES && window.MJ_FEATURES.Nav) {
-        window.MJ_FEATURES.Nav.openModal(t);
-      }
+      if (t) withFeatures(features => features.Nav.openModal(t));
     }
     else if (act === 'copy-addr') {
       const addr = el.dataset.addr;
@@ -2144,25 +2191,19 @@
     }
     else if (act === 'templestay-hub') {
       const t = resolveTemple(el.dataset.id);
-      if (t && window.MJ_FEATURES && window.MJ_FEATURES.Templestay) {
-        window.MJ_FEATURES.Templestay.openModal(t);
-      }
+      if (t) withFeatures(features => features.Templestay.openModal(t));
     }
     else if (act === 'meditation-open') {
-      if (window.MJ_FEATURES && window.MJ_FEATURES.Meditation) {
-        window.MJ_FEATURES.Meditation.openModal();
-      }
+      withFeatures(features => features.Meditation.openModal());
     }
     else if (act === 'cert-open') {
       const v = visited();
       const mTitles = MISSIONS.filter(m => m.ids && missionProgress(m).done >= missionProgress(m).total).map(m => m.name);
-      if (window.MJ_FEATURES && window.MJ_FEATURES.Certificate) {
-        window.MJ_FEATURES.Certificate.openModal('마음여행자', v.size, beads(), mTitles);
-      }
+      withFeatures(features => features.Certificate.openModal('마음여행자', v.size, beads(), mTitles));
     }
     else if (act === 'docent-temple') {
       const t = resolveTemple(el.dataset.id);
-      if (t && window.MJ_FEATURES && window.MJ_FEATURES.Docent) {
+      if (t) {
         const text = [
           `안녕하세요. 절로가 오디오 도슨트입니다. 지금부터 ${t.name}을 안내해 드리겠습니다.`,
           `${t.name}은 ${t.sido} ${t.sgg} ${t.mountain}에 자리 잡고 있으며, ${t.founded}로 전해집니다.`,
@@ -2171,26 +2212,24 @@
           t.tip ? `관람 시 참고하실 점입니다. ${t.tip}` : '',
           '사찰 경내에서는 합장으로 인사하며 고요히 마음을 맑혀보세요.'
         ].filter(Boolean).join(' ');
-        window.MJ_FEATURES.Docent.play(t.name, text);
+        withFeatures(features => features.Docent.play(t.name, text));
       }
     }
     else if (act === 'docent-story') {
       const st = RAW_STORIES.find(x => x.id === el.dataset.id);
-      if (st && window.MJ_FEATURES && window.MJ_FEATURES.Docent) {
+      if (st) {
         const text = [
           `${st.series} ${st.ep}편, ${st.title}.`,
           st.hook,
           ...(st.chapters || []).map(c => `${c.h}. ${(c.body || []).join(' ')}`)
         ].join(' ');
-        window.MJ_FEATURES.Docent.play(st.title, text);
+        withFeatures(features => features.Docent.play(st.title, text));
       }
     }
     else if (act === 'ai-counsel') {
       const t = el.dataset.id ? resolveTemple(el.dataset.id) : null;
       const m = MOODS[S.moodIdx || 0];
-      if (window.MJ_FEATURES && window.MJ_FEATURES.AICounsel) {
-        window.MJ_FEATURES.AICounsel.openModal({ temple: t, mood: m ? m.label : '' });
-      }
+      withFeatures(features => features.AICounsel.openModal({ temple: t, mood: m ? m.label : '' }));
     }
   });
   document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
