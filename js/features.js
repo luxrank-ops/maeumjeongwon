@@ -5,15 +5,15 @@
   // ==========================================
   // 1. PWA & 오프라인 관리
   // ==========================================
-  let deferredInstallPrompt = null;
+  let deferredInstallPrompt = root.MJ_INSTALL_PROMPT || null;
   const PWA = {
     init: function () {
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(err => {
-            console.warn('[PWA] SW register skipped:', err);
-          });
+        const registerServiceWorker = () => navigator.serviceWorker.register('/sw.js').catch(err => {
+          console.warn('[PWA] SW register skipped:', err);
         });
+        if (document.readyState === 'complete') registerServiceWorker();
+        else window.addEventListener('load', registerServiceWorker, { once: true });
       }
 
       const installBtn = document.getElementById('installBtn');
@@ -36,14 +36,17 @@
         return;
       }
 
+      if (deferredInstallPrompt && installBtn) installBtn.classList.remove('hidden');
       window.addEventListener('beforeinstallprompt', e => {
         e.preventDefault();
         deferredInstallPrompt = e;
+        root.MJ_INSTALL_PROMPT = e;
         if (installBtn) installBtn.classList.remove('hidden');
       });
 
       window.addEventListener('appinstalled', () => {
         deferredInstallPrompt = null;
+        root.MJ_INSTALL_PROMPT = null;
         if (installBtn) installBtn.classList.add('hidden');
         if (root.MJ_TOAST) root.MJ_TOAST(I18N.t('pwa_installed'));
       });
@@ -61,6 +64,7 @@
             deferredInstallPrompt.userChoice.then(choice => {
               if (choice.outcome === 'accepted') {
                 deferredInstallPrompt = null;
+                root.MJ_INSTALL_PROMPT = null;
                 installBtn.classList.add('hidden');
               }
             });
@@ -1251,18 +1255,18 @@
     AICounsel
   };
 
-  // 초기화 리스너
-  document.addEventListener('DOMContentLoaded', () => {
+  // 지연 로딩된 경우 DOMContentLoaded가 이미 지났을 수 있으므로 두 경로를 모두 처리한다.
+  let initialized = false;
+  function initFeatures() {
+    if (initialized) return;
+    initialized = true;
     PWA.init();
     I18N.apply();
-
-    const langBtn = document.getElementById('langToggle');
-    if (langBtn) {
-      langBtn.addEventListener('click', () => {
-        I18N.toggleLang();
-        if (root.MJ_TOAST) root.MJ_TOAST(curLang === 'en' ? 'Switched to English' : '한국어로 전환되었습니다');
-      });
-    }
-  });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initFeatures, { once: true });
+  } else {
+    initFeatures();
+  }
 
 })(window);

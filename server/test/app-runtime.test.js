@@ -227,14 +227,14 @@ function loadApp(opts = {}) {
   if (opts.eagerData !== false) windowObj.L = L;
   vm.createContext(sandbox);
 
-  // index.html과 같은 순서: loader → 핵심 데이터 → (지연 데이터) → config → analytics → features → app
+  // index.html과 같은 순서: loader → 핵심 데이터 → config → analytics → app.
+  // 기능 묶음과 화면별 데이터는 앱 셸이 그려진 뒤 로더가 받는다.
   const EAGER = [
     'js/lib/loader.js',
     'js/data-temples.js',
     'js/planner-reco.js',
     'js/config.js',
     'js/analytics.js',
-    'js/features.js',
     'js/app.js'
   ];
   const LAZY = [
@@ -261,6 +261,12 @@ function loadApp(opts = {}) {
     return view.innerHTML || '';
   }
 
+  function clickLang() {
+    const button = new El('button', 'langToggle');
+    const target = { closest: selector => selector.split(',').map(s => s.trim()).includes('#langToggle') ? button : null };
+    for (const fn of documentListeners.click || []) fn({ target });
+  }
+
   // 지연 로딩이 있는 화면은 자산을 받은 뒤 다시 그려진다 → 준비 완료를 기다린 뒤 본문을 돌려준다.
   async function goAsync(hash) {
     fireNav(hash);
@@ -273,6 +279,7 @@ function loadApp(opts = {}) {
     view,
     go,
     goAsync,
+    clickLang,
     loadedScripts: () => loadedScripts.slice(),
     loadedStyles: () => loadedStyles.slice()
   };
@@ -372,14 +379,15 @@ test('순례 화면에는 방문과 수첩 기록을 잇는 여정 타임라인�
   assert.match(timeline, /0알 모았어요/, '예시 방문은 실제 염주 수에 포함하지 않는다');
 });
 
-test('지연 로딩: 홈은 스토리만 받고, 지도·전통사찰·풍수·기도 화면은 들어갈 때 받는다', async () => {
+test('지연 로딩: 홈은 스토리·기능을 소프트 로드하고, 지도·전통사찰·풍수·기도 화면은 들어갈 때 받는다', async () => {
   const app = loadApp({ eagerData: false });
 
-  // ① 첫 화면(홈) — 스토리 데이터만 필요하다
+  // ① 첫 화면(홈) — 스토리와 기능 묶음은 첫 렌더 뒤에 받는다
   const home = await app.goAsync('#/home');
   assert.match(home, /마음 처방전|순례/);
   let got = app.loadedScripts();
-  assert.ok(got.includes('js/data-stories.js'), '홈 → 스토리 데이터');
+  assert.ok(got.includes('js/data-stories.js'), '홈 → 지연 스토리 데이터');
+  assert.ok(got.includes('js/features.js'), '기능 묶음은 첫 화면을 그린 뒤 소프트 로드');
   assert.equal(got.some(f => /leaflet/.test(f)), false, '홈에서는 지도(leaflet)를 받지 않는다');
   assert.equal(got.includes('js/data-traditional.js'), false, '홈에서는 전통사찰 991곳을 받지 않는다');
   assert.equal(got.includes('js/data-prayer.js'), false, '홈에서는 기도 데이터를 받지 않는다');
@@ -424,7 +432,7 @@ test('지연 자산 표(NEEDS)는 라우터의 화면과 짝을 이룬다 — �
   const loader = loadApp({ eagerData: false }).window.MJ_LOADER;
   assert.ok(loader, 'index.html과 같은 순서로 loader.js가 먼저 실행된다');
 
-  const used = new Set(Object.values(loader.NEEDS).reduce((a, b) => a.concat(b), []));
+  const used = new Set(Object.values(loader.NEEDS).concat(Object.values(loader.SOFT)).reduce((a, b) => a.concat(b), []));
   for (const key of Object.keys(loader.ASSETS)) {
     assert.ok(used.has(key), `${key} 자산을 필요로 하는 화면이 표에 없다 (죽은 자산)`);
   }
@@ -446,12 +454,22 @@ test('지연 자산 표(NEEDS)는 라우터의 화면과 짝을 이룬다 — �
 
 test('홈은 스토리 데이터를 기다리지 않고 먼저 그린다 — 도착하면 이어서 채운다', async () => {
   const app = loadApp({ eagerData: false });
-  const first = app.go('#/home');                 // 동기 렌더: 스토리 없이도 화면이 선다
+  const first = app.go('#/home');                 // 동기 렌더: 지연 자산이 없어도 화면이 선다
   assert.match(first, /마음 처방전/);
   assert.equal(first.includes('이번 주 심화 스토리'), false, '아직 스토리는 없다');
+  assert.equal(app.loadedScripts().includes('js/features.js'), false, '첫 화면이 그려질 때는 부가 기능 모듈을 받지 않는다');
   await app.goAsync('#/home');                    // 도착 후 다시 그린 화면
   assert.match(app.view.innerHTML, /이번 주 심화 스토리/);
   assert.ok(app.loadedScripts().includes('js/data-stories.js'));
+});
+
+test('부가 기능이 아직 로드되지 않았을 때 누른 언어 토글도 모듈 도착 뒤 실행한다', async () => {
+  const app = loadApp({ eagerData: false });
+  assert.equal(app.window.MJ_FEATURES, undefined);
+  app.clickLang();
+  await app.window.MJ_NAV_READY();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(app.window.MJ_FEATURES.I18N.getLang(), 'en');
 });
 
 /* ---------------------------------------------------------------------------

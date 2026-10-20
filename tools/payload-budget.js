@@ -65,11 +65,15 @@ function lazyAssets() {
     });
   }
   // 어떤 라우트가 어떤 자산을 받는가 (필요한 것만 받는지 눈으로 확인)
-  const routes = Object.entries(loader.NEEDS).map(([route, keys]) => ({
-    route: '#' + '/' + route,
-    keys,
-    gzip: keys.reduce((n, k) => n + (assets.find(a => a.key === k)?.gzip || 0), 0)
-  }));
+  const routes = Object.keys(loader.NEEDS).map(route => {
+    const hash = '#/' + route;
+    const keys = [...new Set(loader.needsFor(hash).concat(loader.softFor(hash)))];
+    return {
+      route: hash,
+      keys,
+      gzip: keys.reduce((n, k) => n + (assets.find(a => a.key === k)?.gzip || 0), 0)
+    };
+  });
   return { assets, routes, version: loader.VERSION };
 }
 
