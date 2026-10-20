@@ -8,7 +8,7 @@
   'use strict';
 
   // 캐시 무효화용 버전. 파일 내용이 바뀌면 sw.js의 CACHE_NAME과 함께 올린다.
-  var VERSION = '20261016journey';
+  var VERSION = '20261020community';
 
   var doc = root.document;
 
@@ -48,6 +48,11 @@
     mapUi: {
       js: ['js/app/map.js'],
       ready: function () { return !!(root.MJ_MAP_UI && root.MJ_MAP_UI.init); }
+    },
+    // 회원 가입·로그인·게시판 화면 모듈 — #/account, #/board 에 들어갈 때만 받는다
+    community: {
+      js: ['js/app/community.js'],
+      ready: function () { return typeof root.MJ_COMMUNITY_FACTORY === 'function'; }
     }
   };
 
@@ -69,7 +74,9 @@
     'explore/theme/energy': ['prayer'],
     'explore/theme/fengshui': ['fengshui'],
     fengshui: ['fengshui'],
-    guide: ['prayer']
+    guide: ['prayer'],
+    board: ['community'],
+    account: ['community']
   };
 
   // 첫 화면을 막지 않는 자산 — 없으면 먼저 그리고, 도착하면 이어서 다시 그린다.

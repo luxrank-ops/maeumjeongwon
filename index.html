@@ -21,9 +21,9 @@
 <meta name="apple-mobile-web-app-title" content="마음정원사 절로가" />
 <!-- 첫 화면에 반드시 필요한 것만 여기서 받는다. 지도(leaflet)·전통사찰·기도·풍수·스토리 데이터는
      js/lib/loader.js 가 해당 화면에 들어갈 때 내려받는다 (라우트 → 자산 표는 loader.js 의 NEEDS). -->
-<link rel="preload" as="script" href="js/data-temples.js?v=20261016journey" />
-<link rel="preload" as="script" href="js/app.js?v=20261016journey" />
-<link rel="stylesheet" href="css/style.css?v=20261016journey" />
+<link rel="preload" as="script" href="js/data-temples.js?v=20261020community" />
+<link rel="preload" as="script" href="js/app.js?v=20261020community" />
+<link rel="stylesheet" href="css/style.css?v=20261020community" />
 <script>
 /* 저조도(다크) 모드를 '첫 페인트' 전에 확정한다.
    CSS 는 <html data-theme> 하나만 본다. 여기서 정해 두지 않으면 흰 화면이 한 번 번쩍인 뒤
@@ -83,6 +83,8 @@
 <symbol id="i-file" viewBox="0 0 24 24"><path d="M6.4 3.8h7L18.6 9v11.2H6.4zM13.2 3.8V9h5.4M9 13h6M9 16.4h5.4"/></symbol>
 <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 3.4v2.2M12 18.4v2.2M3.4 12h2.2M18.4 12h2.2M5.9 5.9l1.6 1.6M16.5 16.5l1.6 1.6M18.1 5.9l-1.6 1.6M7.5 16.5l-1.6 1.6"/></symbol>
 <symbol id="i-moon" viewBox="0 0 24 24"><path d="M19.4 14.6A8 8 0 0 1 9.4 4.6a8.4 8.4 0 1 0 10 10z"/></symbol>
+<symbol id="i-chat" viewBox="0 0 24 24"><path d="M5.2 5.6h13.6a1.6 1.6 0 0 1 1.6 1.6v8.6a1.6 1.6 0 0 1-1.6 1.6h-7.4l-4.6 3.4v-3.4H5.2a1.6 1.6 0 0 1-1.6-1.6V7.2a1.6 1.6 0 0 1 1.6-1.6z"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.6" r="3.9"/><path d="M4.6 20.2c.9-3.7 3.9-5.8 7.4-5.8s6.5 2.1 7.4 5.8"/></symbol>
 </defs></svg>
 <div id="app">
   <div id="offlineBanner" class="offline-banner hidden"><svg class="ic sm" aria-hidden="true"><use href="#i-alert"/></svg> 오프라인 모드 — 저장해 둔 사찰 정보를 먼저 보여 드려요.</div>
@@ -94,6 +96,7 @@
     <div class="topright">
       <button id="installBtn" class="chip pwa-btn hidden" title="앱 설치"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg><span>설치</span></button>
       <button id="langToggle" class="chip lang-btn" title="언어 전환 (KO / EN)">EN</button>
+      <a class="chip memberchip" id="memberChip" href="#/account/login"><svg class="ic" aria-hidden="true"><use href="#i-user"/></svg><span>로그인</span></a>
       <a class="chip pluschip" href="#/plus" id="plusChip">플러스</a>
       <button id="bigToggle" class="chip" aria-pressed="false" title="큰 글씨·간편 모드" aria-label="큰 글씨·간편 모드"><svg class="ic" aria-hidden="true"><use href="#i-textsize"/></svg><span>큰 글씨</span></button>
       <button id="themeToggle" class="chip icon-only" aria-pressed="false" title="저조도(어두운 화면)로 보기"><svg class="ic" aria-hidden="true"><use href="#i-moon"/></svg><span class="sr">저조도 모드로 보기</span></button>
@@ -114,16 +117,17 @@
     <a href="#/journal" data-tab="journal"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg><span class="tab-label">수첩</span></a>
     <a href="#/planner" data-tab="journal" class="rail-only"><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg><span class="tab-label">계획</span></a>
     <a href="#/store" data-tab="plus" class="rail-only"><svg class="ic" aria-hidden="true"><use href="#i-bag"/></svg><span class="tab-label">상점</span></a>
+    <a href="#/board" data-tab="board" class="rail-only"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg><span class="tab-label">게시판</span></a>
   </nav>
   <div id="toast" role="status" aria-live="polite"></div>
   <div id="modal" class="modal hidden" role="dialog" aria-modal="true"></div>
 </div>
-<script src="js/lib/loader.js?v=20261016journey"></script>
-<script src="js/data-temples.js?v=20261016journey"></script>
+<script src="js/lib/loader.js?v=20261020community"></script>
+<script src="js/data-temples.js?v=20261020community"></script>
 <script src="js/planner-reco.js?v=20261012reco"></script>
 <script src="js/config.js?v=20261009analytics"></script>
 <script src="js/analytics.js?v=20261009analytics"></script>
-<script src="js/features.js?v=20261016journey"></script>
-<script src="js/app.js?v=20261016journey"></script>
+<script src="js/features.js?v=20261020community"></script>
+<script src="js/app.js?v=20261020community"></script>
 </body>
 </html>

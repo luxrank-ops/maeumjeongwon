@@ -13,6 +13,9 @@ const { listTraditional, findTraditionalByNo } = require('./content/traditional'
 const { publicStory, fullStory, templeExtras } = require('./content/project');
 const { createStore } = require('./store');
 const { generateCounsel, getAiConfig } = require('./ai');
+const { lazyDatabase } = require('./db');
+const { createAccounts } = require('./auth');
+const { createBoard, CATEGORIES } = require('./board');
 
 const AD_DAILY_LIMIT = 2;
 const AD_UNLOCK_HOURS = 24;
@@ -66,6 +69,18 @@ function kstDay(ms) {
   return d.toISOString().slice(0, 10);
 }
 
+// 토큰 없이도 열려 있어야 하는 경로 (잘못된 옛 토큰이 있어도 로그인·가입은 되어야 한다)
+const TOKEN_OPEN_PATHS = new Set(['/api/session', '/api/webhooks/revenuecat', '/api/ads/ssv', '/api/auth/login', '/api/auth/signup']);
+
+function str(v) {
+  return typeof v === 'string' ? v : '';
+}
+
+// 게시글·댓글 id 는 양의 정수만 받는다 (그 밖은 존재하지 않는 글로 취급)
+function parseId(v) {
+  return /^\d{1,12}$/.test(String(v)) ? Number(v) : 0;
+}
+
 function safeEqual(a, b) {
   const ba = Buffer.from(String(a || ''));
   const bb = Buffer.from(String(b || ''));
@@ -88,6 +103,10 @@ function createApp(opts = {}) {
   const webhookAuth = opts.webhookAuth !== undefined ? opts.webhookAuth : (process.env.REVENUECAT_WEBHOOK_AUTH || '');
   const adUnitIds = opts.adUnitIds || (process.env.ADMOB_AD_UNIT_IDS ? process.env.ADMOB_AD_UNIT_IDS.split(',').map(s => s.trim()).filter(Boolean) : []);
   const adKeys = opts.adKeys || (async () => null);
+  // 회원·게시판 DB는 처음 쓸 때 연다 (opts.dbPath 로 테스트에서 ':memory:' 지정)
+  const getDb = opts.getDb || lazyDatabase(opts.dbPath);
+  const accounts = createAccounts({ getDb, now });
+  const board = createBoard({ getDb, now });
 
   const app = express();
   app.disable('x-powered-by');
@@ -98,10 +117,16 @@ function createApp(opts = {}) {
   // 세션 토큰 추출 미들웨어 (Bearer 토큰 검증 또는 테스트/하위호환 X-MJ-UID)
   app.use((req, res, next) => {
     const auth = req.get('Authorization') || '';
+    req.memberUid = '';
     if (auth.startsWith('Bearer ')) {
       const tok = auth.slice(7).trim();
-      const uid = identity.verify(secret, tok);
-      if (!uid && req.path.startsWith('/api/') && req.path !== '/api/session' && req.path !== '/api/webhooks/revenuecat' && req.path !== '/api/ads/ssv' && !req.path.startsWith('/api/ai/')) {
+      let uid = identity.verify(secret, tok);
+      // 회원 세션(mm1.…): 가입·로그인 후 받은 토큰. 회원 uid 는 계정의 uid 를 그대로 쓴다.
+      if (!uid && tok.startsWith('mm1.')) {
+        req.memberUid = accounts.uidForToken(tok);
+        uid = req.memberUid;
+      }
+      if (!uid && req.path.startsWith('/api/') && !TOKEN_OPEN_PATHS.has(req.path) && !req.path.startsWith('/api/ai/')) {
         return res.status(401).json({ error: 'invalid_token' });
       }
       req.uid = uid || '';
@@ -179,6 +204,24 @@ function createApp(opts = {}) {
     res.json({ uid, token });
   });
 
+  // 회원 가입 · 로그인 · 로그아웃
+  // 가입하면 바로 로그인 상태(토큰)를 돌려준다. 토큰은 Authorization: Bearer 로 보낸다.
+  app.post('/api/auth/signup', async (req, res) => {
+    const r = await accounts.signup(req.body);
+    res.status(r.status).json(r.body);
+  });
+
+  app.post('/api/auth/login', async (req, res) => {
+    const r = await accounts.login(req.body);
+    if (r.retryAfter) res.set('Retry-After', String(r.retryAfter));
+    res.status(r.status).json(r.body);
+  });
+
+  app.post('/api/auth/logout', (req, res) => {
+    accounts.logout(req.memberUid ? (req.get('Authorization') || '').slice(7).trim() : '');
+    res.json({ ok: true });
+  });
+
   // 현재 사용자 상태 조회
   app.get('/api/me', (req, res) => {
     const uid = req.uid;
@@ -192,8 +235,10 @@ function createApp(opts = {}) {
       }
     }
     const p = u ? u.plus : null;
+    const profile = req.memberUid ? accounts.profile(req.memberUid) : null;
     res.json({
       uid: uid || null,
+      member: profile ? Object.assign(profile, board.counts(profile.uid)) : null,
       mode: { devAdReward, devEntitlement },
       plus: {
         active,
@@ -211,6 +256,72 @@ function createApp(opts = {}) {
       adUnlocks,
       ai: getAiConfig()
     });
+  });
+
+  // 회원 게시판 — 읽기는 누구나, 쓰기·수정·삭제는 회원(작성자)만
+  const send = (res, r) => res.status(r.status).json(r.body);
+  const needMember = (req, res) => {
+    if (req.memberUid) return true;
+    res.status(401).json({ error: 'login_required', message: '로그인하면 글을 쓸 수 있어요.' });
+    return false;
+  };
+
+  app.get('/api/board/posts', (req, res) => {
+    const q = req.query || {};
+    const r = board.list({
+      category: str(q.category),
+      q: str(q.q),
+      page: str(q.page),
+      mine: str(q.mine) === '1',
+      viewer: req.memberUid
+    });
+    if (r.status === 200) r.body.categories = CATEGORIES;
+    send(res, r);
+  });
+
+  app.post('/api/board/posts', (req, res) => {
+    if (!needMember(req, res)) return;
+    send(res, board.create(req.memberUid, req.body));
+  });
+
+  app.get('/api/board/posts/:id', (req, res) => {
+    const id = parseId(req.params.id);
+    if (!id) return res.status(404).json({ error: 'not_found' });
+    send(res, board.get(id, req.memberUid));
+  });
+
+  app.patch('/api/board/posts/:id', (req, res) => {
+    if (!needMember(req, res)) return;
+    const id = parseId(req.params.id);
+    if (!id) return res.status(404).json({ error: 'not_found' });
+    send(res, board.update(id, req.memberUid, req.body));
+  });
+
+  app.delete('/api/board/posts/:id', (req, res) => {
+    if (!needMember(req, res)) return;
+    const id = parseId(req.params.id);
+    if (!id) return res.status(404).json({ error: 'not_found' });
+    send(res, board.remove(id, req.memberUid));
+  });
+
+  app.get('/api/board/posts/:id/comments', (req, res) => {
+    const id = parseId(req.params.id);
+    if (!id) return res.status(404).json({ error: 'not_found' });
+    send(res, board.listComments(id, req.memberUid));
+  });
+
+  app.post('/api/board/posts/:id/comments', (req, res) => {
+    if (!needMember(req, res)) return;
+    const id = parseId(req.params.id);
+    if (!id) return res.status(404).json({ error: 'not_found' });
+    send(res, board.addComment(id, req.memberUid, req.body));
+  });
+
+  app.delete('/api/board/comments/:id', (req, res) => {
+    if (!needMember(req, res)) return;
+    const id = parseId(req.params.id);
+    if (!id) return res.status(404).json({ error: 'not_found' });
+    send(res, board.removeComment(id, req.memberUid));
   });
 
   // Google AI Pro 설정 및 상태 조회
