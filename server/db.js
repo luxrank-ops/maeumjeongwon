@@ -8,9 +8,11 @@
 // 운영에서는 이 파일이 있는 디스크를 영속 볼륨으로 잡아야 한다 (컨테이너 임시 디스크면 재배포 때 사라진다).
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 const DEFAULT_PATH = path.join(__dirname, '..', 'data', 'maeumjeongwon.sqlite');
+const TMP_FALLBACK_PATH = path.join(os.tmpdir(), 'maeumjeongwon', 'maeumjeongwon.sqlite');
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS users (
@@ -60,11 +62,28 @@ function loadSqlite() {
 }
 
 // file === ':memory:' 이면 테스트용 임시 DB. 그 밖에는 상위 폴더를 만들고 연다.
+// Vercel 등 읽기 전용 서버리스 파일시스템(EROFS/EACCES)에서는 os.tmpdir()(/tmp)로 자동 폴백한다.
 function openDatabase(file) {
-  const target = file || process.env.MJ_DB_PATH || DEFAULT_PATH;
+  const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+  let target = file || process.env.MJ_DB_PATH || (isServerless ? TMP_FALLBACK_PATH : DEFAULT_PATH);
   const DatabaseSync = loadSqlite();
-  if (target !== ':memory:') fs.mkdirSync(path.dirname(target), { recursive: true });
-  const db = new DatabaseSync(target);
+  let db;
+  if (target !== ':memory:') {
+    try {
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      db = new DatabaseSync(target);
+    } catch (err) {
+      if (!file && !process.env.MJ_DB_PATH && target !== TMP_FALLBACK_PATH) {
+        target = TMP_FALLBACK_PATH;
+        fs.mkdirSync(path.dirname(target), { recursive: true });
+        db = new DatabaseSync(target);
+      } else {
+        throw err;
+      }
+    }
+  } else {
+    db = new DatabaseSync(target);
+  }
   db.exec('PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 3000;');
   if (target !== ':memory:') db.exec('PRAGMA journal_mode = WAL;');
   db.exec(SCHEMA);

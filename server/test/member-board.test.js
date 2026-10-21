@@ -450,7 +450,7 @@ test('17. 비밀번호는 평문이 아니라 scrypt 해시로 저장되고, 계
     assert.match(row.password, /^scrypt\$16384\$8\$1\$[0-9a-f]{32}\$[0-9a-f]{128}$/);
     assert.ok(!row.password.includes('persist123'));
   } finally {
-    fs.rmSync(dir, { recursive: true, force: true });
+    try { fs.rmSync(dir, { recursive: true, force: true }); } catch {}
   }
 });
 
