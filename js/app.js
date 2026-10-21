@@ -932,7 +932,7 @@
 
     const mainTitleHero = `<section class="card main-title-hero" aria-labelledby="mainTitle">
       <div class="main-title-kicker">${ic('lotus')} 오늘의 마음을 따라 사찰로</div>
-      <h1 id="mainTitle" class="main-title"><span class="main-title__brand">절로가</span><span class="main-title__sep">—</span><span class="main-title__call">마음 따라 걷는 사찰 순례</span></h1>
+      <h1 id="mainTitle" class="main-title"><span class="main-title__brand">마음정원사, 철로가</span><span class="main-title__sep">:</span><span class="main-title__call">춘학아~ 절에 가자~^^♡</span></h1>
       <p class="main-title__desc">기분을 고르고 사찰 이야기를 읽으며 <b>나만의 순례 기록</b>을 이어가는 마음정원입니다.</p>
     </section>`;
 
