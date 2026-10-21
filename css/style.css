@@ -1250,7 +1250,7 @@ table.cmp td{border-bottom-color:var(--border-2)}
   overflow-wrap:anywhere;
   position:relative;z-index:1;
 }
-.main-title__brand{font-weight:800;white-space:nowrap}
+.main-title__brand{display:block;font-weight:800;white-space:nowrap}
 .main-title__sep{
   display:inline-block;
   margin:0 .14em 0 .08em;
@@ -1258,6 +1258,8 @@ table.cmp td{border-bottom-color:var(--border-2)}
   font-weight:300;
 }
 .main-title__call{
+  display:block;
+  margin-top:6px;
   color:var(--clay);
   font-weight:800;
   white-space:normal;
@@ -1280,6 +1282,33 @@ table.cmp td{border-bottom-color:var(--border-2)}
   word-break:keep-all;
 }
 .main-title__desc b{color:var(--text-1);font-weight:700}
+.main-title-auth-bar{
+  margin-top:12px;
+  padding-top:12px;
+  border-top:1px dashed var(--border-1);
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  position:relative;
+  z-index:1;
+}
+.main-title-auth-bar .sub{margin:0;flex:1 1 240px;line-height:1.55}
+.main-title-auth-bar .btn-group{margin:0;flex:0 0 auto}
+.auth-gate-banner{
+  border-left:4px solid var(--clay);
+  background:linear-gradient(168deg,var(--tint-warm-1) 0%,var(--surface-2) 80%);
+  margin-top:var(--s3);
+}
+.auth-sheet-head h2{margin:6px 0 6px;font-size:1.22em;line-height:1.35}
+.auth-sheet-head .sub{margin:0 0 10px;line-height:1.55}
+.auth-feat-badges{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.auth-modal-tabs{margin:8px 0 12px}
+.auth-modal-form{margin-top:4px}
+.auth-modal-form label{display:block;margin-top:10px;font-weight:600;color:var(--text-1);font-size:.92em}
+.auth-modal-form label.cm-agree{display:flex;font-weight:500;color:var(--text-2)}
+.auth-modal-form button[type=submit]{margin-top:14px}
 @media (max-width:419px){
   .main-title{font-size:clamp(1.32rem,1rem + 1.4vw,1.7rem)}
   .main-title__call{display:block;margin-top:2px}

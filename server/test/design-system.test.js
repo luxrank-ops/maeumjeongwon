@@ -161,9 +161,9 @@ test('10. 앱 셸과 PWA 표기는 같은 절로가 브랜드를 쓴다', () => 
   assert.match(shellHtml, new RegExp(`<title>${brand}</title>`));
   assert.match(shellHtml, new RegExp(`<meta property="og:title" content="${brand}"`));
   assert.match(shellHtml, /<meta name="apple-mobile-web-app-title" content="절로가"/);
-  assert.match(appSource, /main-title__brand">마음정원사, 철로가<\/span>/);
-  assert.match(appSource, /main-title__call">춘학아~ 절에 가자~\^\^♡<\/span>/);
+  assert.match(appSource, /main-title__brand">마음정원사 <span class="main-title__sep">:<\/span> 절로가<\/span>/);
+  assert.match(appSource, /main-title__call">춘학아~절에 가자~\^\^<\/span>/);
   assert.match(appSource, /main-title__sep">:<\/span>/);
-  assert.doesNotMatch(`${shellHtml} ${manifest.name} ${metadata.name} ${css}`, /마음정사|절로가자~/);
+  assert.doesNotMatch(`${shellHtml} ${manifest.name} ${metadata.name} ${css} ${appSource}`, /마음정사|절로가자~|철로가/);
   assert.match(css, /\.main-title__sep\s*\{[^}]*color:\s*var\(--text-3\)/);
 });

@@ -274,12 +274,33 @@ function loadApp(opts = {}) {
     return view.innerHTML || '';
   }
 
+  function clickEl(el) {
+    const target = {
+      closest: selector => {
+        const parts = selector.split(',').map(s => s.trim());
+        for (const p of parts) {
+          if (p === '#langToggle' && el.id === 'langToggle') return el;
+          if (p === '[data-act]' && el.dataset.act) return el;
+          if (p === '[data-mood]' && el.dataset.mood != null) return el;
+          if (p === '[data-f]' && el.dataset.f != null) return el;
+          if (p === '[data-go]' && el.dataset.go) return el;
+          if (p === '[data-map-view]' && el.dataset.mapView != null) return el;
+          if (p === 'a[href^="#/"]' && el.tagName === 'A' && String(el.getAttribute('href') || '').startsWith('#/')) return el;
+        }
+        return null;
+      }
+    };
+    for (const fn of documentListeners.click || []) fn({ target, preventDefault() {} });
+  }
+
   return {
     window: windowObj,
     view,
+    modal,
     go,
     goAsync,
     clickLang,
+    clickEl,
     loadedScripts: () => loadedScripts.slice(),
     loadedStyles: () => loadedStyles.slice()
   };
@@ -562,3 +583,63 @@ test('낮 / 저조도 토글은 <html data-theme> 하나만 바꾼다', () => {
   assert.equal(dark.window.document.documentElement.getAttribute('data-theme'), 'dark');
   assert.ok(view.innerHTML.length > 0);
 });
+
+test('메인 타이틀은 "마음정원사 : 절로가"와 "춘학아~절에 가자~^^"로 그려진다', () => {
+  const { go } = loadApp();
+  const home = go('#/home');
+  assert.match(home, /마음정원사 <span class="main-title__sep">:<\/span> 절로가/);
+  assert.match(home, /춘학아~절에 가자~\^\^/);
+  assert.doesNotMatch(home, /철로가/);
+});
+
+test('미끼 기능은 비회원에게 열려 있고 주요 기능을 쓰려 할 때는 회원가입·로그인 창이 열린다', () => {
+  const { go, modal, clickEl } = loadApp({ store: {} });
+  go('#/home');
+  assert.equal(modal.classList.contains('hidden'), true, '홈 첫 진입 시에는 모달이 닫혀 있어야 함');
+
+  // 미끼 기능 1: 오늘의 기분 고르기는 비회원도 바로 동작한다
+  const moodBtn = new El('button');
+  moodBtn.dataset.mood = '2';
+  clickEl(moodBtn);
+  assert.equal(modal.classList.contains('hidden'), true, '기분 체크인(미끼 기능)은 로그인 창을 띄우지 않는다');
+
+  // 미끼 기능 2: 3분 호흡 명상은 비회원도 바로 열 수 있다
+  const breathBtn = new El('button');
+  breathBtn.dataset.act = 'daily-breathing';
+  clickEl(breathBtn);
+  assert.equal(modal.classList.contains('hidden'), false);
+  assert.match(modal.innerHTML, /3분 호흡 명상/);
+  assert.doesNotMatch(modal.innerHTML, /data-auth-form/);
+
+  // 모달 닫기
+  const closeBtn = new El('button');
+  closeBtn.dataset.act = 'close';
+  clickEl(closeBtn);
+  assert.equal(modal.classList.contains('hidden'), true);
+
+  // 주요 기능 1: GPS 방문 인증을 누르면 회원가입 / 로그인 창이 뜬다
+  const gpsBtn = new El('button');
+  gpsBtn.dataset.act = 'gps';
+  gpsBtn.dataset.id = 'haeinsa';
+  clickEl(gpsBtn);
+  assert.equal(modal.classList.contains('hidden'), false, '비회원이 주요 기능을 누르면 로그인·회원가입 창이 열려야 함');
+  assert.match(modal.innerHTML, /GPS 사찰 방문 인증/);
+  assert.match(modal.innerHTML, /data-auth-form="login"/);
+
+  // 모달 안에서 회원가입 탭으로 전환하면 가입 폼이 나타난다
+  const signupTab = new El('button');
+  signupTab.dataset.act = 'auth-tab';
+  signupTab.dataset.tab = 'signup';
+  clickEl(signupTab);
+  assert.match(modal.innerHTML, /data-auth-form="signup"/);
+  assert.match(modal.innerHTML, /회원가입하고 바로 이용하기/);
+
+  // 주요 기능 2: 여행 계획 링크(#/planner/new)를 누르면 회원가입 / 로그인 창이 뜬다
+  clickEl(closeBtn);
+  const planLink = new El('a');
+  planLink.setAttribute('href', '#/planner/new');
+  clickEl(planLink);
+  assert.equal(modal.classList.contains('hidden'), false);
+  assert.match(modal.innerHTML, /사찰 여행 코스 플래너/);
+});
+

@@ -932,8 +932,15 @@
 
     const mainTitleHero = `<section class="card main-title-hero" aria-labelledby="mainTitle">
       <div class="main-title-kicker">${ic('lotus')} 오늘의 마음을 따라 사찰로</div>
-      <h1 id="mainTitle" class="main-title"><span class="main-title__brand">마음정원사, 철로가</span><span class="main-title__sep">:</span><span class="main-title__call">춘학아~ 절에 가자~^^♡</span></h1>
+      <h1 id="mainTitle" class="main-title"><span class="main-title__brand">마음정원사 <span class="main-title__sep">:</span> 절로가</span><br><span class="main-title__call">춘학아~절에 가자~^^</span></h1>
       <p class="main-title__desc">기분을 고르고 사찰 이야기를 읽으며 <b>나만의 순례 기록</b>을 이어가는 마음정원입니다.</p>
+      ${!isMember() ? `<div class="main-title-auth-bar">
+        <span class="sub">${ic('sparkle')} <b>맛보기 체험 중</b> · 기분 체크인·3분 호흡·마음 쉼터·사찰 기본 탐색은 바로 체험하고, <b>방문 인증·108 염주·수첩·여행 계획·AI 상담·도슨트</b> 등 주요 기능은 회원가입·로그인 후 이용하세요.</span>
+        <div class="btn-group">
+          <button type="button" class="btn small" data-act="open-auth" data-tab="login">로그인</button>
+          <button type="button" class="btn ghost small" data-act="open-auth" data-tab="signup">회원가입</button>
+        </div>
+      </div>` : ''}
     </section>`;
 
     const todayHead = `<header class="today" data-home-order="${returning ? 'returning' : 'new'}">
@@ -1777,6 +1784,171 @@
     document.body.classList.remove('modal-open');
   }
 
+  // ---------- 회원 전용 게이트 & 회원가입·로그인 모달 ----------
+  // 미끼(맛보기) 기능(홈 기분 체크인 1곳 맛보기 · 오늘의 한 구절 · 3분 호흡 · 마음 쉼터 명상음 · 기본 사찰 탐색/상세)은
+  // 비회원에게도 열어 두고, 주요 기능들은 회원가입 후 로그인해야 이용할 수 있게 안내 창을 띄운다.
+  const isMember = () => !!(ME && ME.member);
+  const AUTH_GATED_ACTIONS = {
+    'reshuffle': '다른 사찰 처방 받기',
+    'start-onboarding': '3문항 맞춤 사찰 추천',
+    'onboard-pick': '3문항 맞춤 사찰 추천',
+    'onboard-back': '3문항 맞춤 사찰 추천',
+    'onboard-next': '3문항 맞춤 사찰 추천',
+    'onboard-done': '3문항 맞춤 사찰 추천',
+    'onboard-enter': '3문항 맞춤 사찰 추천',
+    'daily-ritual': '108 염주·기도 리추얼 기록',
+    'gps': 'GPS 사찰 방문 인증',
+    'demo': '사찰 방문 인증',
+    'demo-ok': '사찰 방문 인증',
+    'nav-hub': '사찰 길찾기 내비게이션',
+    'templestay-hub': '템플스테이 프로그램 상세 안내',
+    'docent-temple': '오디오 도슨트 음성 안내',
+    'docent-story': '심화 스토리 오디오 듣기',
+    'ai-counsel': 'AI 맞춤 참배·마음 상담',
+    'cert-open': '디지털 순례 완주증 발급',
+    'plan-pick': '사찰 여행 계획 담기',
+    'plan-new-with': '새 사찰 여행 계획 만들기',
+    'plan-append': '여행 계획에 사찰 추가',
+    'tpl-adopt': '추천 순례 코스 담기',
+    'course-to-plan': '테마 순례 코스 담기',
+    'tpl-theme': '테마별 추천 코스',
+    'reco-run': '맞춤 사찰 코스 추천',
+    'reco-again': '다른 사찰 코스 추천',
+    'reco-apply': '추천 코스 일정 적용',
+    'reco-dismiss': '맞춤 사찰 코스 추천',
+    'draft-search': '사찰 여행 코스 플래너',
+    'draft-add': '사찰 여행 코스 플래너',
+    'draft-rm': '사찰 여행 코스 플래너',
+    'draft-up': '사찰 여행 코스 플래너',
+    'draft-down': '사찰 여행 코스 플래너',
+    'draft-optimize': '동선 최단거리 자동 정렬',
+    'draft-reset': '사찰 여행 코스 플래너',
+    'trip-del': '여행 계획 관리',
+    'trip-chk': '순례 준비물 체크리스트',
+    'jdel': '사찰 수첩 기록 관리',
+    'locate': '내 주변 사찰 찾기',
+    'offline': '산중 오프라인 사찰 저장',
+    'sample-populate': '순례 샘플 기록 체험',
+    'reset': '순례 기록 초기화',
+    'skin': '108 염주 스킨 꾸미기',
+    'paywall': '절로가 플러스 멤버십',
+    'trial-start': '절로가 플러스 무료 체험',
+    'plus-on': '절로가 플러스 시작',
+    'plus-off': '절로가 플러스 관리',
+    'buy': '콘텐츠 상점 구매',
+    'buy-ok': '콘텐츠 상점 구매',
+    'ad': '보상형 광고로 스토리 열기',
+    'ad-reward': '보상형 광고로 스토리 열기',
+    'gift-open': '절로가 플러스 선물하기',
+    'gift-send': '절로가 플러스 선물하기',
+    'print': '가이드북 PDF 저장·인쇄'
+  };
+
+  function routeGateLabel(r, a, b) {
+    if (r === 'missions') return '나의 순례 · 108 염주 · 미션';
+    if (r === 'dex') return '100대 사찰 도감';
+    if (r === 'journal') return a === 'new' ? '사찰 수첩 쓰기' : '사찰 수첩 기록';
+    if (r === 'planner') return '사찰 여행 코스 플래너';
+    if (r === 'mind') return '심화 마음 리포트';
+    if (r === 'report') return '나의 순례 리포트';
+    if (r === 'fengshui') return '전국 명당 사찰 풍수 대백과';
+    if (r === 'guide') return '전국 기도처 가이드북';
+    if (r === 'season-report') return '계절 단풍 사찰 리포트';
+    if (r === 'plus') return '절로가 플러스';
+    if (r === 'store') return '콘텐츠 상점';
+    if (r === 'explore' && a === 'all') return '전통사찰 991곳 전체 검색';
+    if (r === 'board' && (a === 'write' || b === 'edit')) return '회원 게시판 글쓰기';
+    return '';
+  }
+
+  function hashGateLabel(hash) {
+    const clean = String(hash || '').replace(/^#\/?/, '');
+    if (!clean) return '';
+    const [r, a, b] = clean.split('/').map(s => { try { return decodeURIComponent(s); } catch (e) { return s; } });
+    return routeGateLabel(r, a, b);
+  }
+
+  const authModalState = { mode: 'login', feature: '', nextHash: '', onSuccess: null };
+
+  function authGateBanner(label) {
+    return `<section class="card auth-gate-banner" aria-label="회원 전용 기능 안내">
+      <div class="row between wrap">
+        <div>
+          <span class="section-kicker">${ic('lock')} 회원 전용 주요 기능</span>
+          <p class="sub" style="margin:4px 0 0"><b>${esc(label)}</b> 기능은 회원가입 후 로그인하면 바로 이용할 수 있어요.</p>
+        </div>
+        <div class="btn-group" style="margin-top:0">
+          <button type="button" class="btn small" data-act="open-auth" data-tab="login" data-feature="${esc(label)}">로그인</button>
+          <button type="button" class="btn ghost small" data-act="open-auth" data-tab="signup" data-feature="${esc(label)}">회원가입</button>
+        </div>
+      </div>
+    </section>`;
+  }
+
+  function authModalHTML() {
+    const mode = authModalState.mode === 'signup' ? 'signup' : 'login';
+    const feat = authModalState.feature;
+    const title = feat ? `「${esc(feat)}」 기능은 로그인 후 이용할 수 있어요` : '회원가입 · 로그인 후 이용해 주세요';
+    const tabs = `<div class="seg auth-modal-tabs" role="tablist" aria-label="로그인 또는 회원가입">
+      <button type="button" class="${mode === 'login' ? 'on' : ''}" data-act="auth-tab" data-tab="login" aria-pressed="${mode === 'login' ? 'true' : 'false'}">로그인</button>
+      <button type="button" class="${mode === 'signup' ? 'on' : ''}" data-act="auth-tab" data-tab="signup" aria-pressed="${mode === 'signup' ? 'true' : 'false'}">회원가입</button>
+    </div>`;
+    const form = mode === 'signup'
+      ? `<form class="cm-form auth-modal-form" data-auth-form="signup" novalidate>
+          <label for="am-s-email">이메일</label>
+          <input id="am-s-email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" maxlength="254" placeholder="example@email.com" required>
+          <label for="am-s-nick">닉네임</label>
+          <input id="am-s-nick" name="nickname" autocomplete="nickname" maxlength="12" placeholder="한글·영문·숫자 2~12자" required>
+          <p class="sub cm-hint">한글·영문·숫자·밑줄(_)로 2~12자. 다른 회원과 겹칠 수 없어요.</p>
+          <label for="am-s-pw">비밀번호</label>
+          <input id="am-s-pw" name="password" type="password" autocomplete="new-password" maxlength="100" placeholder="8자 이상, 영문+숫자 조합" required>
+          <label for="am-s-pw2">비밀번호 확인</label>
+          <input id="am-s-pw2" name="password2" type="password" autocomplete="new-password" maxlength="100" placeholder="비밀번호 다시 입력" required>
+          <label class="cm-agree"><input type="checkbox" name="agree" checked> <span>회원 이용 규칙(서로 존중하기 · 개인정보 올리지 않기)에 동의해요</span></label>
+          <p class="cm-error" role="alert"></p>
+          <button class="btn block" type="submit">회원가입하고 바로 이용하기</button>
+        </form>
+        <p class="sub cm-center">이미 회원이신가요? <button type="button" class="btn text small" data-act="auth-tab" data-tab="login">로그인 하기 →</button></p>`
+      : `<form class="cm-form auth-modal-form" data-auth-form="login" novalidate>
+          <label for="am-l-email">이메일</label>
+          <input id="am-l-email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" maxlength="254" placeholder="가입한 이메일 주소" required>
+          <label for="am-l-pw">비밀번호</label>
+          <input id="am-l-pw" name="password" type="password" autocomplete="current-password" maxlength="100" placeholder="비밀번호 입력" required>
+          <p class="cm-error" role="alert"></p>
+          <button class="btn block" type="submit">로그인하고 바로 이용하기</button>
+        </form>
+        <p class="sub cm-center">아직 회원이 아니신가요? <button type="button" class="btn text small" data-act="auth-tab" data-tab="signup">회원가입 하기 →</button></p>`;
+
+    return `<div class="sheet auth-sheet">
+      <div class="auth-sheet-head">
+        <span class="section-kicker">${ic('lock')} 회원 전용 주요 기능</span>
+        <h2>${title}</h2>
+        <p class="sub">맛보기 기능(기분 체크인·3분 호흡·마음 쉼터·사찰 기본 탐색) 외의 주요 기능은 회원가입 후 로그인하면 모두 열려요.</p>
+        <div class="auth-feat-badges">
+          <span class="tag">${ic('target')} GPS 방문 인증·108 염주</span>
+          <span class="tag">${ic('calendar')} 여행 계획·추천 코스</span>
+          <span class="tag">${ic('pencil')} 사찰 수첩·완주증</span>
+          <span class="tag">${ic('sparkle')} AI 상담·오디오 도슨트</span>
+        </div>
+      </div>
+      ${tabs}
+      ${form}
+    </div>`;
+  }
+
+  function openAuthModal(opts = {}) {
+    const m = document.getElementById('modal');
+    if (opts.preserveIfOpen && m && !m.classList.contains('hidden') && String(m.innerHTML || '').includes('data-auth-form')) {
+      return;
+    }
+    if (opts.mode) authModalState.mode = opts.mode === 'signup' ? 'signup' : 'login';
+    if (opts.feature !== undefined) authModalState.feature = opts.feature || '';
+    if (opts.nextHash !== undefined) authModalState.nextHash = opts.nextHash || '';
+    if (opts.onSuccess !== undefined) authModalState.onSuccess = opts.onSuccess || null;
+    openModal(authModalHTML());
+  }
+  window.MJ_OPEN_AUTH = openAuthModal;
+
   // ---------- 라우터 ----------
   let prevRoute = null, enterT = null;
   function render() {
@@ -1812,7 +1984,10 @@
         html = viewCommunity(r, a, b); tab = 'board'; break;
       default: html = viewHome(); tab = 'home';
     }
+    const gateLabel = !isMember() ? routeGateLabel(r, a, b) : '';
+    if (gateLabel) html = html + authGateBanner(gateLabel);
     $view.innerHTML = html;
+    if (gateLabel) openAuthModal({ mode: 'login', feature: gateLabel, preserveIfOpen: true });
     // 진입 애니메이션은 '화면이 바뀌었을 때'만 켠다 — 같은 화면을 다시 그려도 카드가 다시 튀면 읽다가 피로해진다
     if ($view.dataset.route !== prevRoute) {
       prevRoute = $view.dataset.route;
@@ -1919,7 +2094,92 @@
     return pendingNav;
   }
 
+  document.addEventListener('submit', async e => {
+    const form = e.target;
+    const authKind = form && form.dataset ? form.dataset.authForm : '';
+    if (authKind) {
+      e.preventDefault();
+      const errBox = form.querySelector('.cm-error');
+      const setErr = msg => { if (errBox) errBox.textContent = msg || ''; };
+      const btns = form.querySelectorAll('button[type="submit"]');
+      const setBusy = on => btns.forEach(b => { b.disabled = on; });
+
+      if (authKind === 'login') {
+        const fd = new FormData(form);
+        const email = String(fd.get('email') || '').trim();
+        const password = String(fd.get('password') || '');
+        if (!email || !password) return setErr('이메일과 비밀번호를 입력해 주세요.');
+        setBusy(true);
+        const r = await api('/api/auth/login', { method: 'POST', body: { email, password } });
+        setBusy(false);
+        if (!r.ok) {
+          setErr((r.body && r.body.message) || '로그인하지 못했어요. 이메일과 비밀번호를 확인해 주세요.');
+          const pw = form.querySelector('[name="password"]');
+          if (pw && r.status === 401) pw.value = '';
+          return;
+        }
+        const nextHash = authModalState.nextHash;
+        const cb = authModalState.onSuccess;
+        authModalState.nextHash = '';
+        authModalState.onSuccess = null;
+        await applySession({ uid: r.body.uid, token: r.body.token, member: r.body.member });
+        closeModal();
+        toast(`${r.body.member.nickname}님, 어서 오세요 🙏 모든 주요 기능이 열렸어요!`);
+        if (nextHash && location.hash !== nextHash) location.hash = nextHash;
+        else render();
+        if (typeof cb === 'function') cb();
+      } else if (authKind === 'signup') {
+        const fd = new FormData(form);
+        const email = String(fd.get('email') || '').trim();
+        const nickname = String(fd.get('nickname') || '').trim();
+        const password = String(fd.get('password') || '');
+        const password2 = String(fd.get('password2') || '');
+        if (!fd.get('agree')) return setErr('회원 이용 규칙에 동의해 주세요.');
+        if (!email || !nickname || !password) return setErr('이메일·닉네임·비밀번호를 모두 입력해 주세요.');
+        if (password !== password2) return setErr('비밀번호 확인이 달라요. 다시 입력해 주세요.');
+        setBusy(true);
+        const r = await api('/api/auth/signup', { method: 'POST', body: { email, nickname, password } });
+        setBusy(false);
+        if (!r.ok) return setErr((r.body && r.body.message) || '가입하지 못했어요. 입력 내용을 확인해 주세요.');
+        const nextHash = authModalState.nextHash;
+        const cb = authModalState.onSuccess;
+        authModalState.nextHash = '';
+        authModalState.onSuccess = null;
+        await applySession({ uid: r.body.uid, token: r.body.token, member: r.body.member });
+        closeModal();
+        toast(`가입을 환영해요, ${r.body.member.nickname}님 🪷 모든 주요 기능이 열렸어요!`);
+        if (nextHash && location.hash !== nextHash) location.hash = nextHash;
+        else render();
+        if (typeof cb === 'function') cb();
+      }
+      return;
+    }
+    if (!isMember() && form && (form.id === 'jform' || form.id === 'planForm')) {
+      e.preventDefault();
+      if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+      openAuthModal({ mode: 'login', feature: form.id === 'planForm' ? '사찰 여행 계획 저장' : '사찰 수첩 기록 저장' });
+    }
+  }, true);
+
   document.addEventListener('click', e => {
+    // 비회원일 때 회원 전용 링크(#/missions · #/journal · #/planner 등)나 상단 로그인 칩을 누르면 즉시 회원가입/로그인 창을 띄운다
+    if (!isMember() && e.target && typeof e.target.closest === 'function') {
+      const link = e.target.closest('a[href^="#/"]');
+      if (link && !link.dataset.act) {
+        const href = link.getAttribute('href') || '';
+        if (link.id === 'memberChip') {
+          if (typeof e.preventDefault === 'function') e.preventDefault();
+          openAuthModal({ mode: 'login', feature: '' });
+          return;
+        }
+        const gate = hashGateLabel(href);
+        if (gate) {
+          if (typeof e.preventDefault === 'function') e.preventDefault();
+          openAuthModal({ mode: 'login', feature: gate, nextHash: href });
+          return;
+        }
+      }
+    }
     const el = e.target.closest('#langToggle,[data-act],[data-mood],[data-f],[data-go],[data-map-view]'); if (!el) return;
     if (el.id === 'langToggle') {
       withFeatures(features => {
@@ -1928,7 +2188,12 @@
       });
       return;
     }
-    if (el.dataset.go) { location.hash = el.dataset.go; return; }
+    if (el.dataset.go) {
+      const goGate = !isMember() ? hashGateLabel(el.dataset.go) : '';
+      if (goGate) { openAuthModal({ mode: 'login', feature: goGate, nextHash: el.dataset.go }); return; }
+      location.hash = el.dataset.go;
+      return;
+    }
     if (el.dataset.mood != null) { S.moodIdx = +el.dataset.mood; S.shift = 0; S.moodLog = (S.moodLog || []).filter(x => x.date !== today()).concat([{ date: today(), mood: S.moodIdx }]).slice(-60); save(); render(); return; }
     if (el.dataset.mapView != null) {
       mapMode = el.dataset.mapView === 'list' ? 'list' : 'map';
@@ -1941,6 +2206,10 @@
       return;
     }
     if (el.dataset.f != null) {
+      if (!isMember() && el.dataset.f === 'visited') {
+        openAuthModal({ mode: 'login', feature: '방문한 사찰 지도 필터' });
+        return;
+      }
       mapActiveFilter = el.dataset.f || '';
       document.querySelectorAll('#mapf .chip').forEach(c => { c.classList.toggle('on', c === el); c.setAttribute('aria-pressed', c === el ? 'true' : 'false'); });
       if (mapObj && mapObj._draw) mapObj._draw(mapActiveFilter);
@@ -1949,6 +2218,23 @@
       return;
     }
     const act = el.dataset.act;
+    if (act === 'auth-tab') {
+      authModalState.mode = el.dataset.tab === 'signup' ? 'signup' : 'login';
+      openModal(authModalHTML());
+      return;
+    }
+    if (act === 'open-auth') {
+      openAuthModal({
+        mode: el.dataset.tab === 'signup' ? 'signup' : 'login',
+        feature: el.dataset.feature || ''
+      });
+      return;
+    }
+    if (!isMember() && act && AUTH_GATED_ACTIONS[act]) {
+      if (typeof e.preventDefault === 'function') e.preventDefault();
+      openAuthModal({ mode: 'login', feature: AUTH_GATED_ACTIONS[act] });
+      return;
+    }
     if (act === 'reshuffle') { S.shift = (S.shift || 0) + 1; save(); render(); }
     else if (act === 'gps') gpsCheckin(el.dataset.id);
     else if (act === 'demo') demoCheckin(el.dataset.id);
