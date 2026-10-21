@@ -1283,7 +1283,6 @@ table.cmp td{border-bottom-color:var(--border-2)}
 @media (max-width:419px){
   .main-title{font-size:clamp(1.32rem,1rem + 1.4vw,1.7rem)}
   .main-title__call{display:block;margin-top:2px}
-  .main-title__sep{display:none}
 }
 @media (min-width:760px){
   .main-title-hero{padding:22px 24px 20px}
