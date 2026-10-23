@@ -11,7 +11,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const DEFAULT_PATH = path.join(__dirname, '..', 'data', 'maeumjeongwon.sqlite');
+const DEFAULT_PATH = process.env.VERCEL ? '/tmp/maeumjeongwon.sqlite' : path.join(__dirname, '..', 'data', 'maeumjeongwon.sqlite');
 const TMP_FALLBACK_PATH = path.join(os.tmpdir(), 'maeumjeongwon', 'maeumjeongwon.sqlite');
 
 const SCHEMA = `
@@ -100,3 +100,4 @@ function lazyDatabase(file) {
 }
 
 module.exports = { openDatabase, lazyDatabase, DEFAULT_PATH, SCHEMA };
+
