@@ -540,7 +540,7 @@ test('홈 순서는 "내가 남긴 기록" 3건을 기준으로 바뀌고, 예�
   // 첫 실행에는 기록을 자동으로 넣지 않는다 → 처음 온 사용자에게 처방전이 먼저
   const fresh = loadApp({ store: {} });
   const freshHtml = fresh.go('#/home');
-  assert.ok(freshHtml.indexOf('오늘의 마음 처방전') < freshHtml.indexOf('내 순례'),
+  assert.ok(freshHtml.indexOf('오늘의 마음 처방전') < freshHtml.indexOf('pilgrim-card'),
     '처음 온 사용자에게는 마음 처방전이 먼저여야 함');
   assert.match(freshHtml, /data-home-order="new"/);
 
@@ -554,8 +554,8 @@ test('홈 순서는 "내가 남긴 기록" 3건을 기준으로 바뀌고, 예�
   };
   const returning = loadApp({ store: { 'maeumjeongwon.v1': JSON.stringify(own) } });
   const html = returning.go('#/home');
-  assert.ok(html.indexOf('내 순례') < html.indexOf('마음 처방전'),
-    '기록이 쌓인 사용자에게는 내 순례가 먼저여야 함');
+  assert.ok(html.indexOf('pilgrim-card') < html.indexOf('마음 처방전'),
+    '기록이 쌓인 사용자에게는 내 순례(도감 카드)가 먼저여야 함');
   assert.match(html, /data-home-order="returning"/);
 });
 
