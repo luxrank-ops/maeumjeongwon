@@ -487,7 +487,7 @@
       if (!recoResult.ok) return `<p class="notice" style="margin-top:8px">${esc(recoResult.message || '추천 코스를 만들지 못했어요. 조건을 바꿔 다시 시도해 주세요.')}</p>`;
       const r = recoResult;
       const sum = calcRouteSummary(r.stops, currentTransport());
-      return `<div class="card reco-card" style="background:#f9f5ec;margin-top:10px">
+      return `<div class="card reco-card" style="background:#faf8f1;margin-top:10px">
         <div class="row between"><b>✨ 추천 코스</b><span class="tag ok">${sum.stops.length}곳 · 약 ${fmtMin(sum.totalMin)}</span></div>
         <h3 style="margin:6px 0 2px">${esc(r.title)}</h3>
         <div class="sub">조건: ${esc(recoConditionText(r))}</div>
@@ -729,7 +729,7 @@
             <div><label>동행 스타일</label><select name="companion">${selOpts(COMPANION_OPTS, draftValue('companion'))}</select></div>
           </div>
 
-          <section class="card reco-panel" style="background:#f9f5ec;margin-top:12px">
+          <section class="card reco-panel" style="background:#faf8f1;margin-top:12px">
             <div class="row between"><b>🔎 추천 계획 검색</b><span class="sub">지역·테마를 고르고 실행하세요</span></div>
             <p class="sub" style="margin:4px 0 0">기간·이동 수단·동행 스타일까지 함께 반영해 사찰과 동선을 골라 드려요.</p>
             <div class="grid2" style="margin-top:8px">
@@ -743,7 +743,7 @@
           <label style="margin-top:12px">📍 경유 사찰 구성 (${draftStops.length}곳 선택됨)</label>
           <div id="draftStopList">${draftStopsHtml(sum)}</div>
 
-          <div class="card" style="background:#f9f5ec;margin-top:8px">
+          <div class="card" style="background:#faf8f1;margin-top:8px">
             <div class="row between"><b>사찰 추가하기 (전통사찰 991곳 전체 지원)</b><button type="button" class="btn ghost small" data-act="draft-optimize">✨ 동선 순서 자동 정렬</button></div>
             <div class="row" style="margin-top:6px">
               <select id="addTempleFilter" style="max-width:105px">
@@ -838,10 +838,10 @@
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '&copy; OpenStreetMap' }).addTo(m);
       const latlngs = stops.map(t => [t.lat, t.lng]);
       if (latlngs.length > 1) {
-        L.polyline(latlngs, { color: '#7a8f5c', weight: 3, dashArray: '6, 6' }).addTo(m);
+        L.polyline(latlngs, { color: '#b03a25', weight: 3, dashArray: '6, 6' }).addTo(m);
       }
       stops.forEach((t, idx) => {
-        L.circleMarker([t.lat, t.lng], { radius: 9, color: '#b5643c', fillColor: '#c9a24a', fillOpacity: 0.95, weight: 2 })
+        L.circleMarker([t.lat, t.lng], { radius: 9, color: '#7c2817', fillColor: '#b03a25', fillOpacity: 0.95, weight: 2 })
           .bindPopup(`<b>${idx + 1}. ${esc(t.name)}</b><br>${esc(t.sido)} ${esc(t.sgg)}<br><a href="#/temple/${t.id}">상세 보기 →</a>`)
           .addTo(m);
       });

@@ -268,7 +268,7 @@
         : `<a class="btn small ghost" href="#/account/login" data-cm="login-next" data-next="#/board/write">로그인하고 쓰기</a>`;
       return `<section class="cm-page">
         <div class="section-heading">
-          <div><span class="section-kicker">${ic('chat')} 회원 게시판</span><h1>이야기 나누기</h1></div>
+          <div><h1>이야기 나누기</h1></div>
           ${action}
         </div>
         <p class="sub">${esc(RULES)}</p>
