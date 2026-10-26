@@ -29,7 +29,7 @@
     }
     function addTemple(t) {
       const got = v.has(t.id);
-      L.circleMarker([t.lat, t.lng], { radius: got ? 9 : 7, color: got ? '#7c2817' : '#8f8574', fillColor: got ? '#b03a25' : (options.onlyVisited ? '#ddd6c2' : '#cfc7b2'), fillOpacity: .9, weight: 2 })
+      L.circleMarker([t.lat, t.lng], { radius: got ? 9 : 7, color: got ? '#4f6a33' : '#8a6b3a', fillColor: got ? '#7a8f5c' : (options.onlyVisited ? '#d9d0bf' : '#e0a77e'), fillOpacity: .9, weight: 2 })
         .bindPopup(`<b>${options.esc(t.name)}</b><br>${options.esc(t.sido)} ${options.esc(t.sgg)}<br><a href="#/temple/${encodeURIComponent(t.id)}">상세 보기 →</a>`).addTo(layer);
     }
     function draw(filter) {

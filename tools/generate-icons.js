@@ -75,7 +75,7 @@ function templePixel(x, y, width, height, isMaskable) {
   const dy = (y - cy) / r;
   const dist = Math.sqrt(dx * dx + dy * dy);
 
-  // Background: 사경지 톤 (#f3f1ea to #e9e6d9 gradient)
+  // Background: warm sage/cream temple tone (#f6f1e7 to #e9dfcd gradient)
   let bgR = Math.round(246 - (y / height) * 15);
   let bgG = Math.round(241 - (y / height) * 18);
   let bgB = Math.round(231 - (y / height) * 20);
@@ -88,10 +88,10 @@ function templePixel(x, y, width, height, isMaskable) {
 
   // Outer decorative circle (temple seal)
   if (sdist < 0.95 && sdist > 0.88) {
-    return [176, 58, 37, 255]; // 주사(朱砂) vermilion (#b03a25)
+    return [181, 100, 60, 255]; // Terracotta / temple vermilion (#b5643c)
   }
   if (sdist < 0.88 && sdist > 0.82) {
-    return [138, 106, 34, 255]; // 금니 muted gold (#8a6a22)
+    return [201, 162, 74, 255]; // Gold (#c9a24a)
   }
 
   // Inner lotus flower petals pattern

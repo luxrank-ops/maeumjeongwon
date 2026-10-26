@@ -700,9 +700,10 @@
     const left = adOn ? Math.max(1, Math.round((adUntil - Date.now()) / 3600000)) : 0;
     return `<a href="javascript:history.back()" class="backlink">${ic('back')} 뒤로</a>
       <section class="card hero story-head">
+        <span class="section-kicker">${ic('book')} 심화 스토리 · ${esc(st.series)} ${st.ep}편</span>
         <h1>${esc(st.title)}</h1>
         <p class="lead">${esc(st.hook)}</p>
-        <div class="tagrow"><span class="tag">${ic('book')} 심화 스토리 · ${esc(st.series)} ${st.ep}편</span><span class="tag">${ic('clock')} 약 ${st.minutes}분</span>${t ? `<span class="tag">${esc(t.name)}</span>` : ''}${isPlus() ? `<span class="tag ok">${ic('check')} 전체 열람 중</span>` : `<span class="tag lock">${ic('lock')} 첫 장 무료</span>`}</div>
+        <div class="tagrow"><span class="tag">${ic('clock')} 약 ${st.minutes}분</span>${t ? `<span class="tag">${esc(t.name)}</span>` : ''}${isPlus() ? `<span class="tag ok">${ic('check')} 전체 열람 중</span>` : `<span class="tag lock">${ic('lock')} 첫 장 무료</span>`}</div>
         <div class="btn-group">
           <button class="btn ghost small" data-act="docent-story" data-id="${st.id}">${ic('headphones')} 이야기 듣기</button>
           ${t ? `<a class="btn ghost small" style="text-decoration:none" href="#/temple/${t.id}">${esc(t.name)} 상세${ic('chevron')}</a>` : ''}
@@ -882,7 +883,7 @@
     size = size || 220; const c = size / 2, R = size / 2 - 10, out = [];
     for (let i = 0; i < 108; i++) { const a = (i / 108) * Math.PI * 2 - Math.PI / 2; const x = c + R * Math.cos(a), y = c + R * Math.sin(a); out.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(size / 70).toFixed(1)}" fill="${i < n ? (S.skin === 'maple' ? ['#c2410c', '#d97706', '#b91c1c'][i % 3] : '#8a5a2b') : '#e3d8c4'}" stroke="${i < n ? (S.skin === 'maple' ? '#7c2d12' : '#5e3b19') : '#d4c7ae'}" stroke-width="0.8"/>`); }
     return `<svg class="beads" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="디지털 염주 ${n}/108">${out.join('')}
-      <text x="${c}" y="${c - 4}" text-anchor="middle" font-size="${size / 7}" font-family="${DISPLAY_FONT}" fill="#221e19">${n}</text>
+      <text x="${c}" y="${c - 4}" text-anchor="middle" font-size="${size / 7}" font-family="${DISPLAY_FONT}" fill="#1c2621">${n}</text>
       <text x="${c}" y="${c + size / 9}" text-anchor="middle" font-size="${size / 16}" fill="#5c6a63">/ 108 알</text></svg>`;
   }
 
@@ -930,6 +931,7 @@
     const returning = ownRecords >= 3;
 
     const mainTitleHero = `<section class="card main-title-hero" aria-labelledby="mainTitle">
+      <div class="main-title-kicker">${ic('lotus')} 오늘의 마음을 따라 사찰로</div>
       <h1 id="mainTitle" class="main-title"><span class="main-title__brand">마음정원사 <span class="main-title__sep">:</span> 절로가</span><br><span class="main-title__call">춘학아~절에 가자~^^</span></h1>
       <p class="main-title__desc">기분을 고르고 사찰 이야기를 읽으며 <b>나만의 순례 기록</b>을 이어가는 마음정원입니다.</p>
       ${!isMember() ? `<div class="main-title-auth-bar">
@@ -949,14 +951,14 @@
 
     const moodCard = `<section class="card mood-card">
       <div class="section-heading">
-        <div><h2>오늘의 마음 처방전</h2></div>
+        <div><span class="section-kicker">${ic('lotus')} 마음 체크인</span><h2>오늘의 마음 처방전</h2></div>
         <a class="text-link" href="#/mind">마음 리포트${ic('chevron')}</a>
       </div>
       <div class="moods" role="group" aria-label="오늘의 마음 고르기">
         ${MOODS.map((m, i) => `<button class="mood ${i === mi ? 'on' : ''}" data-mood="${i}" aria-pressed="${i === mi ? 'true' : 'false'}"><span aria-hidden="true">${m.icon}</span><b>${esc(m.label)}</b></button>`).join('')}
       </div>
       <div class="prescription">
-        <div class="rx-head"><span class="tag v">처방</span><button class="btn text small" data-act="reshuffle">${ic('refresh')} 다른 사찰</button></div>
+        <div class="rx-head"><span class="section-kicker">${ic('quote')} 오늘의 처방</span><button class="btn text small" data-act="reshuffle">${ic('refresh')} 다른 사찰</button></div>
         <p class="rx-copy">${esc(MOODS[mi].line)}</p>
         <a class="rx-place" href="#/temple/${t.id}">
           <span class="seal" aria-hidden="true">${sealChar(t)}</span>
@@ -973,14 +975,14 @@
     </section>`;
 
     const onboard = !S.onboarded ? `<section class="card onboard-hint">
-      <div class="section-heading"><div><h2>취향에 맞춰 추천받기</h2><span class="tag">선택 사항</span></div></div>
+      <div class="section-heading"><div><span class="section-kicker">${ic('sparkle')} 선택 사항</span><h2>취향에 맞춰 추천받기</h2></div></div>
       <p class="sub">관심 분야·지역·동행을 알려 주면 사찰을 더 잘 골라 드려요. 지금 추천은 마음 체크인만으로도 이용할 수 있어요.</p>
       <div class="btn-group"><button class="btn ghost" data-act="start-onboarding">3문항으로 맞춤 추천</button><a class="btn text" style="text-decoration:none" href="#/explore">전체 사찰 둘러보기</a></div>
     </section>` : '';
 
     const ritualCard = `<section class="card ritual-card">
       <div class="section-heading">
-        <div><h2>오늘의 한 구절</h2></div>
+        <div><span class="section-kicker">${ic('wind')} 매일의 리추얼</span><h2>오늘의 한 구절</h2></div>
         ${streak > 0 ? `<span class="tag ok">${ic('check')} ${streak}일째</span>` : '<span class="tag">이어도 되고, 멈춰도 돼요</span>'}
       </div>
       <blockquote class="verse">"${esc(verse.text)}"<span class="verse-src">— ${esc(verse.src)}</span></blockquote>
@@ -993,10 +995,10 @@
 
     const pilgrimCard = `<section class="card pilgrim-card">
       <div class="section-heading">
-        <div><h2>${g.cur ? esc(g.cur.name) : '첫 도장을 기다리는 중'}</h2></div>
+        <div><span class="section-kicker">${ic('stamp')} 내 순례</span><h2>${g.cur ? esc(g.cur.name) : '첫 도장을 기다리는 중'}</h2></div>
         <a class="text-link" href="#/missions">순례 현황${ic('chevron')}</a>
       </div>
-      <div class="sg-grid ${v.size >= 100 ? 'complete' : ''}" role="img" aria-label="도감 ${v.size}곳 / 100곳 — 방문할 때마다 반격 한 칸에 도장이 찍힙니다">${Array.from({ length: 100 }, (_, i) => `<i class="sg-cell${i < v.size ? ' full' : ''}${i === v.size ? ' next' : ''}"></i>`).join('')}</div>
+      <div class="progress ${v.size >= 100 ? 'done' : ''}" role="img" aria-label="도감 ${v.size}곳 / 100곳"><i style="width:${Math.min(100, v.size)}%"></i></div>
       <dl class="meters">
         <div class="meter"><dt>도감</dt><dd class="num">${v.size}<small>/100곳</small></dd></div>
         <div class="meter"><dt>염주</dt><dd class="num">${beads()}<small>/108알</small></dd></div>
@@ -1008,7 +1010,7 @@
 
     const railCard = `<section class="card rail-card">
       <div class="section-heading">
-        <div><h2>${esc(String(season.name).replace(/\s*\(.*\)$/, ''))}</h2></div>
+        <div><span class="section-kicker">${ic('leaf')} 지금 가기 좋은 곳</span><h2>${esc(String(season.name).replace(/\s*\(.*\)$/, ''))}</h2></div>
         <a class="text-link" href="#/explore">사찰 탐색${ic('chevron')}</a>
       </div>
       <p class="sub">${esc(season.advice)}</p>
@@ -1031,7 +1033,7 @@
 
     const plannerCard = `<section class="card planner-card">
       <div class="section-heading">
-        <div><h2>${tripN ? `내 계획 ${tripN}건` : '사찰 순례 코스 짜기'}</h2></div>
+        <div><span class="section-kicker">${ic('calendar')} 여행 계획</span><h2>${tripN ? `내 계획 ${tripN}건` : '사찰 순례 코스 짜기'}</h2></div>
         <a class="text-link" href="#/planner">전체 보기${ic('chevron')}</a>
       </div>
       <p class="sub">당일치기부터 1박 2일까지 — 경유 사찰·동선·직선거리·준비물을 한 장으로 정리해요.</p>
@@ -1058,7 +1060,7 @@
 
     const story = STORIES[0];
     const readCard = `<section class="card read-card">
-      <div class="section-heading"><div><h2>${story ? '이번 주 심화 스토리' : '이번 주 발자취'}</h2></div><a class="text-link" href="#/store">상점${ic('chevron')}</a></div>
+      <div class="section-heading"><div><span class="section-kicker">${ic('file')} 읽을거리 · 내려받기</span><h2>${story ? '이번 주 심화 스토리' : '이번 주 발자취'}</h2></div><a class="text-link" href="#/store">상점${ic('chevron')}</a></div>
       <ul class="tool-list">
         ${story ? `<li><a href="#/story/${story.id}">${ic('book')}<span><b>${esc(story.title)}</b><span class="sub">${esc(byId[story.tid] ? byId[story.tid].name : '')} · 약 ${story.minutes}분</span></span><span class="tail">${isPlus() ? '읽기' : '첫 장 무료'}${ic('chevron')}</span></a></li>` : ''}
         <li><a href="#/board">${ic('chat')}<span><b>회원 게시판</b><span class="sub">순례 후기·질문을 나눠요 · 가입 후 쓰기</span></span><span class="tail">${ic('chevron')}</span></a></li>
@@ -1130,7 +1132,7 @@
     if (tab === 'all') {
       const orders = [...new Set(TRAD.map(r => r.order))].sort();
       return `<section class="card hero data-note">
-        <div class="row between"><b>공식 데이터</b><span class="tag ok">${TRAD.length}곳 수록</span></div>
+        <div class="row between"><span class="section-kicker">${ic('file')} 공식 데이터</span><span class="tag ok">${TRAD.length}곳 수록</span></div>
         <p class="sub" style="margin:6px 0 0">「전통사찰 현황」(2026.6.1. 현재) 991곳 전체 목록이에요. 사찰을 누르면 상세 주소·종단을 보고, <b>여행 계획·수첩·방문 인증</b>에 바로 쓸 수 있어요.</p>
       </section>
       <div class="searchbar">
@@ -1230,7 +1232,7 @@
     const sourced = order.map(id => byId[id]).filter(t => t && t.themes.includes(cur));
     const rest = list.filter(t => !order.includes(t.id));
     const E = window.PRAYER_ETIQUETTE;
-    return `<section class="card prayer"><div class="section-heading"><div><h2>이 사찰에서 기도해 온 것</h2></div></div>
+    return `<section class="card prayer"><div class="section-heading"><div><span class="section-kicker">${ic('lotus')} 기도</span><h2>이 사찰에서 기도해 온 것</h2></div></div>
         <p class="sub" style="margin:0 0 6px">어느 기도처든 이것만 지키면 돼요.</p>
         <ul>${E.items.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
         <p class="notice" style="margin:6px 0 0">${esc(E.note)}</p>
@@ -1427,7 +1429,7 @@
     </section>
     <section class="card visit-card" id="visit-info" aria-labelledby="visitInfoTitle">
       <div class="section-heading">
-        <div><h2 id="visitInfoTitle">가기 전에 확인해요</h2></div>
+        <div><span class="section-kicker">${ic('pin')} 방문 준비</span><h2 id="visitInfoTitle">가기 전에 확인해요</h2></div>
         <span class="tag">정보 변경 가능</span>
       </div>
       <dl class="visit-facts">
@@ -1457,7 +1459,7 @@
     ${t.viewpoints && t.viewpoints.length ? `<section class="card"><h2>관람 포인트</h2><ul style="padding-left:18px;margin:0">${t.viewpoints.map(v => `<li style="margin-bottom:4px">${esc(v)}</li>`).join('')}</ul></section>` : ''}
     ${fengshuiHtml(t)}
     <section class="card"><h2>관람 가이드 · 예절</h2><p>💡 ${esc(t.tip)}</p><ul style="padding-left:18px;margin:6px 0">${ETIQUETTE.map(e => `<li>${e}</li>`).join('')}</ul></section>
-    <section class="card temple-tool-card"><div class="section-heading"><div><h2>방문 도구</h2></div></div>
+    <section class="card temple-tool-card"><div class="section-heading"><div><span class="section-kicker">${ic('list')} 더 둘러보기</span><h2>방문 도구</h2></div></div>
       <ul class="tool-list temple-tools">
         <li><button data-act="docent-temple" data-id="${t.id}">${ic('headphones')}<span><b>오디오 도슨트</b><span class="sub">걸으면서 이야기를 귀로</span></span><span class="tail">듣기${ic('chevron')}</span></button></li>
         <li><button data-act="ai-counsel" data-id="${t.id}">${ic('sparkle')}<span><b>AI 맞춤 참배 안내</b><span class="sub">예절·동선·궁금한 것을 물으면 자료로 답해요</span></span><span class="tail">${ic('chevron')}</span></button></li>
@@ -1496,7 +1498,7 @@
   }
   function prayerHtml(t) {
     const p = t.prayer; if (!p) return '';
-    return `<section class="card prayer"><div class="section-heading"><div><h2 style="margin-top:0">기도 안내</h2></div></div>
+    return `<section class="card prayer"><div class="section-heading"><div><span class="section-kicker">${ic('lotus')} 기도</span><h2 style="margin-top:0">기도 안내</h2></div></div>
       <p style="margin:0"><b>기도 대상</b> · ${esc(p.target)}</p>
       <h3>왜 기도처로 알려졌을까 <span class="sub">(전해지는 이야기)</span></h3><ul>${p.why.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
       ${p.how && p.how.length ? `<h3>찾아가는 법·기도 방법</h3><ul>${p.how.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
@@ -1619,7 +1621,7 @@
     return `<div class="screen-head"><h1>나의 순례</h1><p class="sub">방문 한 번에 도장 하나 · 염주 한 알${demoN ? ` · 데모 ${demoN}회 포함` : ''}${sampleN ? ` · 예시 ${sampleN}건 포함` : ''}. 이 기기에만 저장돼요.</p></div>
     <section class="card hero pilgrim-hero">
       <div class="section-heading">
-        <div><h2>${g.cur ? esc(g.cur.name) : '첫 도장을 기다리는 중'}</h2></div>
+        <div><span class="section-kicker">${ic('stamp')} 현재 등급</span><h2>${g.cur ? esc(g.cur.name) : '첫 도장을 기다리는 중'}</h2></div>
         <span class="tag ${v.size ? 'ok' : ''}">도감 ${v.size}/100</span>
       </div>
       <div class="progress ${v.size >= 100 ? 'done' : ''}" role="img" aria-label="도감 ${v.size}곳 / 100곳"><i style="width:${Math.min(100, v.size)}%"></i></div>
@@ -1631,15 +1633,15 @@
       </div>
     </section>
     <section class="card journey-card">
-      <div class="section-heading"><div><h2>걸어온 여정</h2></div><a class="text-link" href="#/journal">수첩 보기${ic('chevron')}</a></div>
+      <div class="section-heading"><div><span class="section-kicker">${ic('map')} 나의 발자취</span><h2>걸어온 여정</h2></div><a class="text-link" href="#/journal">수첩 보기${ic('chevron')}</a></div>
       ${journeyTimelineHTML(8)}
     </section>
     <section class="card bead-card">
-      <div class="section-heading"><div><h2>${beads()}알 모았어요</h2></div><span class="tag">${108 - beads()}알 남음</span></div>
+      <div class="section-heading"><div><span class="section-kicker">${ic('lotus')} 108 염주</span><h2>${beads()}알 모았어요</h2></div><span class="tag">${108 - beads()}알 남음</span></div>
       ${beadSVG(beads(), 210)}
       <p class="sub bead-note">사찰을 방문하거나 오늘의 리추얼을 마치면 한 알씩 쌓여요. 쉬고 싶은 날은 쉬어도 됩니다.</p>
     </section>
-    <section class="card"><div class="section-heading"><div><h2>순례 미션 · 배지</h2></div></div><div class="badges">${MISSIONS.map(m => { const p = missionProgress(m); const done = p.done >= p.total; return `<div class="badge ${done ? 'done' : ''}" title="${esc(m.note || '')}"><span class="badge-ic">${m.icon}</span><b>${m.name}</b><div class="sub">${p.done}/${p.total}</div><div class="progress"><i style="width:${p.done / p.total * 100}%"></i></div><div class="sub simple-hide" style="font-size:.85em">${m.reward}</div></div>`; }).join('')}</div>
+    <section class="card"><div class="section-heading"><div><span class="section-kicker">${ic('target')} 미션</span><h2>순례 미션 · 배지</h2></div></div><div class="badges">${MISSIONS.map(m => { const p = missionProgress(m); const done = p.done >= p.total; return `<div class="badge ${done ? 'done' : ''}" title="${esc(m.note || '')}"><span class="badge-ic">${m.icon}</span><b>${m.name}</b><div class="sub">${p.done}/${p.total}</div><div class="progress"><i style="width:${p.done / p.total * 100}%"></i></div><div class="sub simple-hide" style="font-size:.85em">${m.reward}</div></div>`; }).join('')}</div>
       <p class="notice" style="margin-top:10px">7대 총림 지정 현황과 100대 사찰 선정 기준은 확정 후 반영 예정이에요.</p></section>
     ${seasonCard()}
     <section class="card"><div class="row between"><h2>도감 ${v.size}/100</h2><a class="sub" href="#/dex">전체 보기 →</a></div>
@@ -1872,7 +1874,7 @@
     return `<section class="card auth-gate-banner" aria-label="회원 전용 기능 안내">
       <div class="row between wrap">
         <div>
-          <span class="tag v">${ic('lock')} 회원 전용</span>
+          <span class="section-kicker">${ic('lock')} 회원 전용 주요 기능</span>
           <p class="sub" style="margin:4px 0 0"><b>${esc(label)}</b> 기능은 회원가입 후 로그인하면 바로 이용할 수 있어요.</p>
         </div>
         <div class="btn-group" style="margin-top:0">
@@ -1919,7 +1921,7 @@
 
     return `<div class="sheet auth-sheet">
       <div class="auth-sheet-head">
-        <span class="tag v">${ic('lock')} 회원 전용</span>
+        <span class="section-kicker">${ic('lock')} 회원 전용 주요 기능</span>
         <h2>${title}</h2>
         <p class="sub">맛보기 기능(기분 체크인·3분 호흡·마음 쉼터·사찰 기본 탐색) 외의 주요 기능은 회원가입 후 로그인하면 모두 열려요.</p>
         <div class="auth-feat-badges">
@@ -2548,7 +2550,7 @@
    * 값은 앱 상태(S)와 섞지 않고 별도 키에 둔다 — 첫 페인트 전(<head> 의 인라인 스크립트)에도
    * 읽어야 하므로, 앱 상태 JSON 전체를 기다릴 수 없다. */
   const THEME_KEY = 'maeumjeongwon.theme.v1';
-  const THEME_BAR = { light: '#f3f1ea', dark: '#161310' };
+  const THEME_BAR = { light: '#f6f1e7', dark: '#121815' };
   let themePref = '';
   try { themePref = localStorage.getItem(THEME_KEY) || ''; } catch (e) { themePref = ''; }
   const systemDark = () => !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);

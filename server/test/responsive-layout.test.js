@@ -121,7 +121,7 @@ test('9. 정적 SEO 페이지도 유동 폭·노치 대응으로 빌드된다', 
     for (const f of files) {
       const html = fs.readFileSync(f, 'utf-8');
       assert.match(html, /<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/, f);
-      assert.match(html, /<meta name="theme-color" content="#f3f1ea"/, f);
+      assert.match(html, /<meta name="theme-color" content="#f6f1e7"/, f);
       assert.match(html, /width:min\(100% - 32px, 780px\)/, `본문 열이 유동이어야 함: ${f}`);
       assert.equal(html.includes('max-width:680px'), false, `고정 폭으로 되돌리면 안 됨: ${f}`);
     }
