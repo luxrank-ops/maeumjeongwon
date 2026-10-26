@@ -61,7 +61,7 @@ function page({ base, urlPath, title, desc, body, ld, ads = null, ga = null, tra
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#f3f1ea" />
+<meta name="theme-color" content="#f6f1e7" />
 <title>${esc(title)} — 절로가</title>
 <meta name="description" content="${esc(desc)}" />
 <link rel="canonical" href="${esc(url)}" />

@@ -76,7 +76,7 @@ test('3. 저조도(다크) 팔레트가 같은 토큰 목록을 채운다 — �
   const extra = dark.filter(t => !light.includes(t) && !['--elev-1', '--elev-2', '--ring'].includes(t));
   assert.deepEqual(extra, [], `낮 팔레트에는 없는 토큰이 저조도에만 있다: ${extra.join(', ')}`);
   // 강조색 위 글자는 '흰색 고정'이 아니라 토큰이어야 한다 — 저조도에서는 뒤집혀야 하므로
-  for (const t of ['--on-ju', '--on-clay', '--on-gold']) {
+  for (const t of ['--on-pine', '--on-clay', '--on-gold']) {
     assert.ok(dark.includes(t), `${t} 가 저조도에서 뒤집혀야 함`);
   }
   assert.match(DARK, /color-scheme:dark/, '저조도에서는 폼 컨트롤·스크롤바도 어두워져야 한다');

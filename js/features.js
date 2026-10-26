@@ -266,27 +266,27 @@
 
       // 배경 (은은한 전통 한지색)
       const grad = ctx.createLinearGradient(0, 0, 800, 1120);
-      grad.addColorStop(0, '#faf8f2');
-      grad.addColorStop(1, '#efece0');
+      grad.addColorStop(0, '#fbf8f1');
+      grad.addColorStop(1, '#f2e9d8');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, 800, 1120);
 
       // 외곽선 (전통 이중 테두리)
-      ctx.strokeStyle = '#8f3524';
+      ctx.strokeStyle = '#b5643c';
       ctx.lineWidth = 6;
       ctx.strokeRect(30, 30, 740, 1060);
 
-      ctx.strokeStyle = '#8a6a22';
+      ctx.strokeStyle = '#c9a24a';
       ctx.lineWidth = 2;
       ctx.strokeRect(42, 42, 716, 1036);
 
       // 모서리 장식
       function drawCorner(x, y) {
-        ctx.fillStyle = '#8f3524';
+        ctx.fillStyle = '#b5643c';
         ctx.beginPath();
         ctx.arc(x, y, 12, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = '#8a6a22';
+        ctx.fillStyle = '#c9a24a';
         ctx.beginPath();
         ctx.arc(x, y, 6, 0, Math.PI * 2);
         ctx.fill();
@@ -299,7 +299,7 @@
       // 은은한 중앙 연꽃 배경 문양 (워터마크)
       ctx.save();
       ctx.globalAlpha = 0.06;
-      ctx.fillStyle = '#8f3524';
+      ctx.fillStyle = '#b5643c';
       ctx.beginPath();
       ctx.arc(400, 560, 220, 0, Math.PI * 2);
       ctx.fill();
@@ -307,7 +307,7 @@
 
       // 상단 머리말
       ctx.textAlign = 'center';
-      ctx.fillStyle = '#6a6153';
+      ctx.fillStyle = '#7a6f62';
       ctx.font = 'bold 20px serif';
       ctx.fillText('마 음 정 사   ·   절 로 가 자 ~ 춘 학 아 ~', 400, 110);
 
@@ -315,21 +315,21 @@
       const year = new Date().getFullYear();
       const serial = `MJ-${year}-${String(templeCount).padStart(3, '0')}${String(beadsCount).padStart(3, '0')}`;
       ctx.font = '14px sans-serif';
-      ctx.fillStyle = '#8c8472';
+      ctx.fillStyle = '#9c8e7c';
       ctx.fillText(`제 ${serial} 호`, 400, 140);
 
       // 제목: 사찰 순례 완주증
-      ctx.fillStyle = '#221e19';
+      ctx.fillStyle = '#2f2a24';
       ctx.font = 'bold 46px "Noto Serif CJK KR", serif';
       ctx.fillText('사 찰 순 례 완 주 증', 400, 220);
 
       // 부제
-      ctx.fillStyle = '#8f3524';
+      ctx.fillStyle = '#b5643c';
       ctx.font = 'bold 18px sans-serif';
       ctx.fillText('PILGRIMAGE COMPLETION CERTIFICATE', 400, 260);
 
       // 가로 구분선
-      ctx.strokeStyle = '#d9d3c3';
+      ctx.strokeStyle = '#e6dccb';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(120, 290);
@@ -337,24 +337,24 @@
       ctx.stroke();
 
       // 순례자 성명
-      ctx.fillStyle = '#221e19';
+      ctx.fillStyle = '#2f2a24';
       ctx.font = 'bold 26px "Noto Serif CJK KR", serif';
       ctx.fillText(`순  례  자  :   ${pilgrimName || '마음여행자'}`, 400, 360);
 
       // 순례 성취 요약 박스
-      ctx.fillStyle = '#faf8f2';
-      ctx.strokeStyle = '#cfc5ad';
+      ctx.fillStyle = '#fffdfa';
+      ctx.strokeStyle = '#d9c9b0';
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.roundRect(140, 410, 520, 130, 12);
       ctx.fill();
       ctx.stroke();
 
-      ctx.fillStyle = '#221e19';
+      ctx.fillStyle = '#2f2a24';
       ctx.font = 'bold 22px serif';
       ctx.fillText(`순례 사찰 ${templeCount}곳  ·  108 염주 ${beadsCount}알 달성`, 400, 460);
 
-      ctx.fillStyle = '#6a6153';
+      ctx.fillStyle = '#7a6f62';
       ctx.font = '16px sans-serif';
       const mText = missionTitles && missionTitles.length
         ? `완주 미션 : ${missionTitles.slice(0, 3).join(', ')}${missionTitles.length > 3 ? ' 외' : ''}`
@@ -378,19 +378,19 @@
       const d = new Date();
       const dateStr = `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
       ctx.font = 'bold 20px serif';
-      ctx.fillStyle = '#221e19';
+      ctx.fillStyle = '#2f2a24';
       ctx.fillText(dateStr, 400, 830);
 
       // 발행처 명칭
       ctx.font = 'bold 17px "Noto Serif CJK KR", serif';
-      ctx.fillStyle = '#221e19';
+      ctx.fillStyle = '#2f2a24';
       ctx.fillText('절로가', 335, 910);
 
       // 직인 (전통 붉은 사각 도장)
       ctx.save();
       ctx.translate(500, 895);
       ctx.rotate(-0.06);
-      ctx.fillStyle = '#8f3524';
+      ctx.fillStyle = '#b5643c';
       ctx.fillRect(-38, -38, 76, 76);
       ctx.strokeStyle = '#fff';
       ctx.lineWidth = 3;
@@ -404,7 +404,7 @@
       ctx.restore();
 
       // 하단 각주
-      ctx.fillStyle = '#8c8472';
+      ctx.fillStyle = '#9c8e7c';
       ctx.font = '13px sans-serif';
       ctx.fillText('본 인증서는 기기 내 사찰 방문 인증 기록을 기반으로 발급되었습니다.', 400, 1020);
 
@@ -1179,7 +1179,7 @@
                   <button class="btn ghost small" id="aiCounselListenBtn">🎧 음성으로 듣기</button>
                 </div>
                 <p style="margin:10px 0;line-height:1.65">${data.empathy || ''}</p>
-                <div class="card legend" style="margin:8px 0 0;background:var(--paper)">
+                <div class="card legend" style="margin:8px 0 0;background:var(--bg)">
                   <span class="lbl">📖 오늘의 경전 구절 · ${verse.source || ''}</span>
                   <p style="margin:8px 0 2px;font-weight:600">"${verse.text || ''}"</p>
                 </div>
