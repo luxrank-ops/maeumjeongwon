@@ -62,7 +62,7 @@ test('1. 텍스트 자산은 gzip으로 내려보낸다 (앱 셸 JS 약 1/3 크�
 test('2. 캐시 정책 — 버전 붙은 자산은 1년 immutable, 화면·서비스워커는 항상 재검증', async () => {
   const s = await startServer();
   try {
-    const versioned = await s.get('/js/app.js?v=20261020firstscreen');
+    const versioned = await s.get('/js/app.js?v=20261026restore');
     assert.match(versioned.headers.get('cache-control'), /max-age=31536000/, '?v= 자산은 1년');
     assert.match(versioned.headers.get('cache-control'), /immutable/);
 

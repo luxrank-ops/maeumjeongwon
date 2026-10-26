@@ -1,17 +1,17 @@
 /* 절로가 PWA Service Worker — 오프라인 캐시 및 산사 통신 음영 지역 대응 */
-const CACHE_NAME = 'maeumjeongwon-v7';
+const CACHE_NAME = 'maeumjeongwon-v9';
 // 첫 설치에서 받는 것 = 첫 화면을 그리는 데 실제로 필요한 것만.
 const PRECACHE_URLS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
-  '/css/style.css?v=20261020firstscreen',
-  '/js/lib/loader.js?v=20261020firstscreen',
-  '/js/data-temples.js?v=20261020firstscreen',
+  '/css/style.css?v=20261026restore',
+  '/js/lib/loader.js?v=20261026restore',
+  '/js/data-temples.js?v=20261026restore',
   '/js/planner-reco.js?v=20261012reco',
   '/js/config.js?v=20261009analytics',
   '/js/analytics.js?v=20261009analytics',
-  '/js/app.js?v=20261020firstscreen',
+  '/js/app.js?v=20261026restore',
   '/pwa-192x192.png',
   '/pwa-512x512.png',
   '/apple-touch-icon.png'
@@ -22,14 +22,14 @@ const PRECACHE_URLS = [
 const LAZY_URLS = [
   '/vendor/leaflet.css',
   '/vendor/leaflet.js',
-  '/js/features.js?v=20261020firstscreen',
-  '/js/data-prayer.js?v=20261020firstscreen',
-  '/js/data-stories.js?v=20261020firstscreen',
-  '/js/data-traditional.js?v=20261020firstscreen',
-  '/js/data-fengshui.js?v=20261020firstscreen',
-  '/js/app/planner.js?v=20261020firstscreen',
-  '/js/app/map.js?v=20261020firstscreen',
-  '/js/app/community.js?v=20261020firstscreen'
+  '/js/features.js?v=20261026restore',
+  '/js/data-prayer.js?v=20261026restore',
+  '/js/data-stories.js?v=20261026restore',
+  '/js/data-traditional.js?v=20261026restore',
+  '/js/data-fengshui.js?v=20261026restore',
+  '/js/app/planner.js?v=20261026restore',
+  '/js/app/map.js?v=20261026restore',
+  '/js/app/community.js?v=20261026restore'
 ];
 
 function prefetchLazy() {
