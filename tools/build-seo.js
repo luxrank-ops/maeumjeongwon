@@ -9,7 +9,7 @@ const { publicStory } = require('../server/content/project');
 
 const DEFAULT_OUT = path.join(__dirname, '..', 'seo-out');
 // 정적 페이지가 부르는 자산의 캐시 버전 — index.html·js/lib/loader.js(VERSION)·sw.js(CACHE_NAME)와 함께 올린다.
-const ASSET_V = '20261020firstscreen';
+const ASSET_V = '20261026restore';
 
 const ADS_PUB_RE = /^pub-\d{16}$/;
 const ADS_SLOT_RE = /^\d{6,}$/;
