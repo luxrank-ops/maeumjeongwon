@@ -170,3 +170,62 @@ test('6. 첫 화면·정적 페이지가 부르는 자산에는 캐시 버전이
     fs.rmSync(out, { recursive: true, force: true });
   }
 });
+
+test('7. 없는 자산은 index.html 이 아니라 404 로 돌려준다 (HTML 을 CSS/JS 로 받으면 화면이 깨진다)', async () => {
+  const s = await startServer();
+  try {
+    for (const p of ['/css/nope.css', '/js/nope.js?v=20261028static', '/vendor/nope.js']) {
+      const res = await s.get(p);
+      assert.equal(res.status, 404, `${p} 는 404`);
+      assert.doesNotMatch(String(res.headers.get('content-type')), /text\/html/, `${p} 응답은 HTML 이 아니다`);
+      assert.equal(res.headers.get('cache-control'), 'no-cache', `${p} 실패 응답은 캐시하지 않는다`);
+    }
+    // 화면 경로는 그대로 SPA 되돌림 — 다만 HTML 이 1년 immutable 로 캐시되면 안 된다
+    const page = await s.get('/account/signup');
+    assert.equal(page.status, 200);
+    assert.match(String(page.headers.get('content-type')), /text\/html/);
+    assert.equal(page.headers.get('cache-control'), 'no-cache', '되돌림 HTML 은 항상 재검증');
+  } finally {
+    await s.close();
+  }
+});
+
+test('8. Vercel 함수 번들에 정적 자산이 들어간다 (includeFiles 없으면 CSS·SW·매니페스트가 404)', () => {
+  const file = path.join(ROOT, 'vercel.json');
+  assert.ok(fs.existsSync(file), 'vercel.json 이 있어야 한다');
+  const cfg = JSON.parse(fs.readFileSync(file, 'utf8'));
+  assert.equal(cfg.builds, undefined, 'builds 를 쓰면 zero-config Express 빌드가 꺼진다');
+  const fn = cfg.functions && cfg.functions['server.js'];
+  assert.ok(fn && typeof fn.includeFiles === 'string', 'functions["server.js"].includeFiles 는 문자열 글롭');
+  const src = fn.includeFiles;
+  assert.equal(/node_modules/.test(src), false, 'node_modules 를 끌어들이면 안 된다');
+  assert.equal(Array.isArray(src), false, 'Vercel API 는 배열을 거부한다 (문자열 하나)');
+
+  const expand = glob => {
+    const m = /\{([^{}]+)\}/.exec(glob);
+    if (!m) return [glob];
+    return m[1].split(',').flatMap(alt => expand(glob.slice(0, m.index) + alt + glob.slice(m.index + m[0].length)));
+  };
+  const toRe = glob => {
+    let out = '';
+    for (let i = 0; i < glob.length; i++) {
+      const c = glob[i];
+      if (c === '*') {
+        if (glob[i + 1] === '*') { out += '[\\s\\S]*'; i++; } else out += '[^/]*';
+      } else if ('\\^$.|?+()[]{}'.includes(c)) out += '\\' + c;
+      else out += c;
+    }
+    return new RegExp('^' + out + '$');
+  };
+  const matchers = expand(src).map(toRe);
+  const needed = [
+    'index.html', 'css/style.css', 'sw.js', 'manifest.webmanifest',
+    'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png',
+    'vendor/leaflet.js', 'vendor/leaflet.css', 'vendor/images/marker-icon.png',
+    'js/app.js', 'js/lib/loader.js', 'js/app/community.js'
+  ];
+  for (const f of needed) {
+    assert.ok(fs.existsSync(path.join(ROOT, f)), `${f} 파일이 실제로 있어야 한다`);
+    assert.ok(matchers.some(re => re.test(f)), `includeFiles 패턴이 ${f} 를 포함하지 않는다: ${src}`);
+  }
+});

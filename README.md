@@ -10,6 +10,10 @@ python3 -m http.server 8642      # 또는: npx serve -l 8642 .
 ```
 GPS 인증은 브라우저 보안상 `localhost` 또는 HTTPS에서만 동작합니다. 지도 타일(OpenStreetMap)은 인터넷 연결이 필요합니다.
 
+## 배포 (Vercel)
+
+Vercel 의 Express 빌드는 `server.js` 가 **실제로 참조하는 파일만** 함수 번들에 넣습니다. 그래서 `express.static()` 이 내려주는 `css/`·`vendor/`·`sw.js`·`manifest.webmanifest` 는 `vercel.json` 의 `functions["server.js"].includeFiles` 에 적어 주지 않으면 운영에서 404(정확히는 SPA 되돌림 HTML)가 됩니다 — 스타일이 사라지고 서비스워커·PWA 아이콘이 죽는 원인입니다. `includeFiles` 는 문자열 글롭 하나여야 하고, `builds` 는 쓰지 않습니다(zero-config 빌드가 꺼집니다). 없는 자산은 `index.html` 대신 404 + `no-cache` 로 응답합니다. 가드: `server/test/delivery.test.js` 7·8
+
 ## 검증·GitHub 동기화
 
 - GitHub Actions의 `.github/workflows/ci.yml`은 `main` 푸시와 `main` 대상 Pull Request에서 Node.js 22로 `npm ci`, `npm test`, 콘텐츠·사찰 데이터 검사, API 스모크 테스트, SEO 정적 페이지 빌드를 실행합니다. 이 워크플로우는 읽기 전용 권한만 사용하며 배포 자격 증명은 필요하지 않습니다.
