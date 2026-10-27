@@ -712,7 +712,7 @@ test('로더: 스크립트는 왔지만 모듈이 없으면 실패로 보고, �
 
 test('서비스 워커: 코드·스타일은 네트워크 우선, 잘못된 형식은 캐시하지 않는다', () => {
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
-  assert.match(sw, /maeumjeongwon-v11/, '캐시 이름을 올려 구 캐시를 지운다');
+  assert.match(sw, /maeumjeongwon-v12/, '캐시 이름을 올려 구 캐시를 지운다');
   assert.match(sw, /CODE_RE/, '코드·스타일 판별식이 있어야 함');
   assert.match(sw, /fetch\(req\)\s*\n?\s*\.then\(res => \{[\s\S]{0,200}?cacheable\(req, res\)/,
     '코드 요청은 네트워크 응답을 먼저 쓰고, 형식이 맞을 때만 캐시한다');

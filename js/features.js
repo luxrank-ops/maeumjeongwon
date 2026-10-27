@@ -9,9 +9,15 @@
   const PWA = {
     init: function () {
       if ('serviceWorker' in navigator) {
-        const registerServiceWorker = () => navigator.serviceWorker.register('/sw.js').catch(err => {
-          console.warn('[PWA] SW register skipped:', err);
-        });
+        // 버전을 붙여 등록한다 — CDN/브라우저가 예전 /sw.js 응답(HTML 등)을 물고 있어도
+        // 새 배포에서는 반드시 새 스크립트를 받아 오게 한다. updateViaCache:'none' 도 같은 이유.
+        const swVersion = (root.MJ_LOADER && root.MJ_LOADER.VERSION) || '';
+        const swUrl = '/sw.js' + (swVersion ? '?v=' + encodeURIComponent(swVersion) : '');
+        const registerServiceWorker = () => navigator.serviceWorker
+          .register(swUrl, { updateViaCache: 'none' })
+          .catch(err => {
+            console.warn('[PWA] SW register skipped:', err);
+          });
         if (document.readyState === 'complete') registerServiceWorker();
         else window.addEventListener('load', registerServiceWorker, { once: true });
       }
