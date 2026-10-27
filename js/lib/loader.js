@@ -8,7 +8,7 @@
   'use strict';
 
   // 캐시 무효화용 버전. 파일 내용이 바뀌면 sw.js의 CACHE_NAME과 함께 올린다.
-  var VERSION = '20261026restore';
+  var VERSION = '20261028signup';
 
   var doc = root.document;
 
@@ -26,7 +26,8 @@
     },
     traditional: {
       js: ['js/data-traditional.js'],
-      ready: function () { return Array.isArray(root.TRADITIONAL_TEMPLATES); }
+      // 데이터 파일은 TRADITIONAL_TEMPLES 로, 앱 셸의 옛 코드는 TRADITIONAL_TEMPLATES 로 읽는다 — 둘 다 인정한다
+      ready: function () { return Array.isArray(root.TRADITIONAL_TEMPLATES) || Array.isArray(root.TRADITIONAL_TEMPLES); }
     },
     prayer: {
       js: ['js/data-prayer.js'],
@@ -131,6 +132,8 @@
   function loadScript(src) {
     return new Promise(function (resolve, reject) {
       var el = doc.createElement('script');
+      // 재시도(bust)는 URL 자체를 바꾼다 — 브라우저 캐시와 Service Worker 캐시를 '모두' 건너뛴다.
+      // 회원 화면이 예전 캐시 때문에 열리지 않던 문제의 재발을 막는 안전장치다.
       el.src = src;
       el.async = false;          // 순서 보장: 표에 적은 순서대로 실행된다
       el.onload = function () { resolve(src); };
@@ -152,19 +155,36 @@
 
   var inflight = {};
 
-  function ensureOne(key) {
+  // 모듈이 '정말' 등록되었는지 확인한다.
+  // 스크립트 요청이 200 으로 끝나도 내용이 잘못된 경우(오류 페이지·잘린 캐시·HTML 폴백)가 있다.
+  // 그때 onload 만 믿으면 화면은 '불러오는 중'에서 영원히 멈춘다 — 회원가입 화면이 열리지 않던 증상.
+  function loadedButMissing(key) {
+    var err = new Error('스크립트는 왔지만 모듈이 등록되지 않았어요: ' + key);
+    err.code = 'NOT_REGISTERED';
+    return err;
+  }
+
+  // opts.retry: 캐시를 우회하는 URL(?bust=)로 한 번 더 받는다.
+  function ensureOne(key, opts) {
+    opts = opts || {};
     if (!ASSETS[key] || isReady(key)) return Promise.resolve(key);
     if (inflight[key]) return inflight[key];
     var asset = ASSETS[key];
-    inflight[key] = Promise.all((asset.css || []).map(function (h) { return loadStyle(withVersion(h)); }))
+    var suffix = opts.retry ? '&bust=' + Date.now() : '';
+    inflight[key] = Promise.all((asset.css || []).map(function (h) { return loadStyle(withVersion(h) + suffix); }))
       .then(function () {
         return (asset.js || []).reduce(function (p, src) {
-          return p.then(function () { return loadScript(withVersion(src)); });
+          return p.then(function () { return loadScript(withVersion(src) + suffix); });
         }, Promise.resolve());
       })
-      .then(function () { return key; })
+      .then(function () {
+        if (!isReady(key)) throw loadedButMissing(key);
+        return key;
+      })
       .catch(function (err) {
         inflight[key] = null;       // 실패는 캐시하지 않는다 — 다음 이동에서 다시 시도
+        // 첫 실패는 '캐시에 남은 잘못된 응답'일 수 있다. 한 번만, 캐시를 우회해 다시 받아 본다.
+        if (!opts.retry) return ensureOne(key, { retry: true });
         throw err;
       });
     return inflight[key];
