@@ -276,6 +276,20 @@ app.use(express.static(staticRoot, { etag: true, lastModified: true, maxAge: 0 }
 가입·로그인 폼을 직접 그린다(제출 처리는 원래부터 셸이 했다). 게시판 목록만 모듈이 필요하므로 그때는
 '다시 불러오기' 를 주고 4초 간격·최대 3회까지 조용히 재시도한다. 가드: `app-runtime.test.js`.
 
+### Vercel 번들에 정적 자산 넣기 (2026-10)
+
+Vercel 의 Express zero-config 빌드는 `server.js` 를 함수 하나로 묶으면서 **코드가 실제로 참조하는 파일만**
+(@vercel/nft 추적) 넣는다. `express.static()` 이 내려주는 `css/`·`vendor/`·`sw.js`·`manifest.webmanifest` 는
+추적 대상이 아니라서 운영 번들에서 빠졌고, 그 요청은 SPA 되돌림(`app.get('*')`)으로 흘러
+**HTML 이 CSS·JS 로 내려갔다**. 브라우저는 MIME 이 맞지 않아 파싱을 포기하니 화면은 스타일 없이 깨지고,
+서비스워커·매니페스트·지도 마커도 함께 죽는다(운영에서 `/css/style.css` 가 `text/html` 로 응답).
+
+→ `vercel.json` 의 `functions["server.js"].includeFiles` 로 정적 자산을 번들에 명시한다(Vercel API 는 배열을
+   거부하므로 **문자열 글롭 하나**). `builds` 는 쓰지 않는다 — 쓰는 순간 zero-config Express 빌드가 꺼진다.
+→ 없는 자산 요청은 index.html 대신 **404 + `no-cache`**. 되돌림 HTML 에 `immutable` 캐시가 붙으면
+   한 번 잘못된 응답이 그 URL 에 1년 동안 박힌다(버전 태그를 올려야만 풀린다).
+가드: `delivery.test.js` 7·8 (404 응답·`includeFiles` 글롭 확장 검사).
+
 ---
 
 ## 7. 가드 — 규칙이 다시 무너지지 않게
@@ -287,6 +301,7 @@ app.use(express.static(staticRoot, { etag: true, lastModified: true, maxAge: 0 }
 | 홈은 스토리를 기다리지 않고 먼저 그린다 | `app-runtime.test.js` (SOFT) |
 | 지연 자산 표에 죽은 항목·빠진 화면이 없다 + 지연 자산이 첫 화면에 직접 박히지 않는다 | `app-runtime.test.js` |
 | gzip·캐시 정책·서버 헤더 | `delivery.test.js` |
+| 없는 자산이 HTML 로 되돌아가지 않는다 + Vercel 번들에 정적 자산 포함 | `delivery.test.js` (7·8) |
 | 화면 크기 규격(브레이크포인트·safe-area·터치 44px…) | `responsive-layout.test.js` |
 | 앱 셸에 웹 광고 코드 없음 | `seo-ads.test.js`·`responsive-layout.test.js` |
 | 추천 엔진·풍수·기도·템플스테이 연결(셸+모듈 소스) | `planner-reco`·`fengshui-atlas`·`prayer-theme`·`features-v9` — `server/test/_sources.js`로 셸+`js/app/*.js`를 함께 본다 |

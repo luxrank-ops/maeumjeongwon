@@ -465,9 +465,19 @@ function createApp(opts = {}) {
   app.use(cachePolicy());
   app.use(express.static(staticRoot, { etag: true, lastModified: true, maxAge: 0 }));
 
+  // SPA 되돌림(fallback). 여기서 두 가지를 지킨다.
+  //  · 자산(.css/.js/.webmanifest…)이 없으면 index.html 이 아니라 404 — HTML 을 CSS/JS 로 받으면
+  //    브라우저가 파싱을 포기해 화면이 통째로 깨진다(2026-10 Vercel 배포에서 실제로 겪음).
+  //  · 되돌림 응답은 항상 no-cache — cachePolicy 가 붙인 '1년 immutable' 이 HTML 에 붙으면
+  //    한 번 잘못된 응답이 캐시되면 그 URL 은 1년 동안 고쳐지지 않는다.
   app.get('*', (req, res) => {
     if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'not_found' });
-    res.sendFile(path.join(staticRoot, 'index.html'));
+    const noStore = { headers: { 'Cache-Control': 'no-cache' } };
+    if (ASSET_EXT_RE.test(req.path)) {
+      res.setHeader('Cache-Control', 'no-cache');
+      return res.status(404).type('text/plain; charset=utf-8').send('not_found');
+    }
+    return res.sendFile(path.join(staticRoot, 'index.html'), noStore);
   });
 
   return app;
