@@ -229,3 +229,16 @@ test('8. Vercel 함수 번들에 정적 자산이 들어간다 (includeFiles 없
     assert.ok(matchers.some(re => re.test(f)), `includeFiles 패턴이 ${f} 를 포함하지 않는다: ${src}`);
   }
 });
+
+test('9. 서비스워커·매니페스트는 버전 붙은 URL 로 부른다 (CDN/브라우저가 옛 응답을 물고 있어도 갱신)', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const manifest = /<link rel="manifest" href="([^"]+)"/.exec(html);
+  assert.ok(manifest, '매니페스트 링크가 있어야 한다');
+  assert.match(manifest[1], /[?&]v=/, `매니페스트에 버전 태그가 없다: ${manifest[1]}`);
+
+  const features = fs.readFileSync(path.join(ROOT, 'js', 'features.js'), 'utf8');
+  assert.doesNotMatch(features, /register\('\/sw\.js'\)/, '버전 없는 /sw.js 등록은 옛 응답을 물고 온다');
+  assert.match(features, /\/sw\.js'?\s*\+\s*\(/, '등록 URL 에 버전을 붙인다');
+  assert.match(features, /updateViaCache:\s*'none'/, 'SW 스크립트는 캐시를 거치지 않고 확인한다');
+  assert.match(features, /MJ_LOADER[\s\S]{0,60}VERSION/, '버전은 loader 의 VERSION 을 따른다');
+});

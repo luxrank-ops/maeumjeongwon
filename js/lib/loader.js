@@ -8,7 +8,7 @@
   'use strict';
 
   // 캐시 무효화용 버전. 파일 내용이 바뀌면 sw.js의 CACHE_NAME과 함께 올린다.
-  var VERSION = '20261028static';
+  var VERSION = '20261028sw';
 
   var doc = root.document;
 

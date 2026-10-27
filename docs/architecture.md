@@ -288,7 +288,9 @@ Vercel 의 Express zero-config 빌드는 `server.js` 를 함수 하나로 묶으
    거부하므로 **문자열 글롭 하나**). `builds` 는 쓰지 않는다 — 쓰는 순간 zero-config Express 빌드가 꺼진다.
 → 없는 자산 요청은 index.html 대신 **404 + `no-cache`**. 되돌림 HTML 에 `immutable` 캐시가 붙으면
    한 번 잘못된 응답이 그 URL 에 1년 동안 박힌다(버전 태그를 올려야만 풀린다).
-가드: `delivery.test.js` 7·8 (404 응답·`includeFiles` 글롭 확장 검사).
+→ 서비스워커·매니페스트도 **버전 붙은 URL**(`/sw.js?v=…`, `/manifest.webmanifest?v=…`)로 부르고
+   `updateViaCache:'none'` 으로 등록한다. CDN 이 예전 응답(HTML)을 물고 있어도 새 배포에서 갱신된다.
+가드: `delivery.test.js` 7·8·9 (404 응답·`includeFiles` 글롭 확장·버전 URL 검사).
 
 ---
 
