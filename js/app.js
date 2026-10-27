@@ -46,12 +46,14 @@
     for (const row of rows) target.push(row);
   }
   function hydrateLazyData() {
-    const stamp = [!!window.TRADITIONAL_TEMPLATES, !!window.STORIES, !!window.PRAYER_CRITERIA, !!window.FENGSHUI_ATLAS].join('');
+    // js/data-traditional.js 는 TRADITIONAL_TEMPLES 로 내려온다 (옛 이름 TRADITIONAL_TEMPLATES 도 함께 받아 준다)
+    const TRAD_ROWS = window.TRADITIONAL_TEMPLATES || window.TRADITIONAL_TEMPLES;
+    const stamp = [!!TRAD_ROWS, !!window.STORIES, !!window.PRAYER_CRITERIA, !!window.FENGSHUI_ATLAS].join('');
     if (stamp === lazyDataStamp) return;               // 같은 조합이면 다시 만들지 않는다
     lazyDataStamp = stamp;
 
-    if (Array.isArray(window.TRADITIONAL_TEMPLATES)) {
-      replaceAll(TRAD, window.TRADITIONAL_TEMPLATES.map(r => ({ no: r[0], sido: r[1], sgg: r[2], addr: r[3], name: r[4], order: r[5], id: 'trad-' + r[0] })));
+    if (Array.isArray(TRAD_ROWS)) {
+      replaceAll(TRAD, TRAD_ROWS.map(r => ({ no: r[0], sido: r[1], sgg: r[2], addr: r[3], name: r[4], order: r[5], id: 'trad-' + r[0] })));
       tradByNo = Object.fromEntries(TRAD.map(x => [x.no, x]));
     }
     if (Array.isArray(window.PRAYER_CRITERIA)) PRAYER_CRITERIA = window.PRAYER_CRITERIA;
@@ -1756,10 +1758,117 @@
     }
     return community;
   }
+  /* 회원 화면을 아직 받지 못했을 때의 안전판.
+   * 회원 모듈(js/app/community.js)은 지연 로딩이지만, 가입·로그인 폼의 제출 처리는 셸(app.js)이 이미 하고 있다.
+   * 그래서 모듈이 늦거나 실패해도 가입·로그인 화면은 셸만으로 그려 준다 —
+   * '회원가입 화면이 열리지 않는다'로 막히지 않게 하는 마지막 방어선이다.
+   */
+  function authFallbackView(mode) {
+    const signup = mode === 'signup';
+    const tabs = `<nav class="seg cm-tabs" aria-label="회원 메뉴">
+      <a href="#/account/login" class="${signup ? '' : 'on'}" ${signup ? '' : 'aria-current="page"'}>로그인</a>
+      <a href="#/account/signup" class="${signup ? 'on' : ''}" ${signup ? 'aria-current="page"' : ''}>회원가입</a>
+    </nav>`;
+    const form = signup
+      ? `<form class="card cm-form" data-auth-form="signup" novalidate>
+          <label for="fb-s-email">이메일</label>
+          <input id="fb-s-email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" maxlength="254" placeholder="example@email.com" required>
+          <label for="fb-s-nick">닉네임</label>
+          <input id="fb-s-nick" name="nickname" autocomplete="nickname" maxlength="12" placeholder="한글·영문·숫자 2~12자" required>
+          <p class="sub cm-hint">한글·영문·숫자·밑줄(_)로 2~12자. 다른 회원과 겹칠 수 없어요.</p>
+          <label for="fb-s-pw">비밀번호</label>
+          <input id="fb-s-pw" name="password" type="password" autocomplete="new-password" maxlength="100" placeholder="8자 이상, 영문+숫자 조합" required>
+          <label for="fb-s-pw2">비밀번호 확인</label>
+          <input id="fb-s-pw2" name="password2" type="password" autocomplete="new-password" maxlength="100" placeholder="비밀번호 다시 입력" required>
+          <label class="cm-agree"><input type="checkbox" name="agree" checked> <span>회원 이용 규칙(서로 존중하기 · 개인정보 올리지 않기)에 동의해요</span></label>
+          <p class="cm-error" role="alert"></p>
+          <button class="btn block" type="submit">회원가입하고 바로 이용하기</button>
+        </form>
+        <p class="sub cm-center">이미 회원이신가요? <a href="#/account/login">로그인</a></p>`
+      : `<form class="card cm-form" data-auth-form="login" novalidate>
+          <label for="fb-l-email">이메일</label>
+          <input id="fb-l-email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" maxlength="254" placeholder="가입한 이메일 주소" required>
+          <label for="fb-l-pw">비밀번호</label>
+          <input id="fb-l-pw" name="password" type="password" autocomplete="current-password" maxlength="100" placeholder="비밀번호 입력" required>
+          <p class="cm-error" role="alert"></p>
+          <button class="btn block" type="submit">로그인하고 바로 이용하기</button>
+        </form>
+        <p class="sub cm-center">아직 회원이 아니신가요? <a href="#/account/signup">회원가입</a></p>`;
+    return `<section class="cm-page">
+      ${tabs}
+      <h1>${signup ? '회원가입' : '로그인'}</h1>
+      <p class="sub">${signup ? '이메일·닉네임·비밀번호만 있으면 돼요. 가입하면 바로 로그인돼요.' : '가입한 이메일과 비밀번호로 들어오세요.'}</p>
+      ${form}
+    </section>`;
+  }
+
+  // 게시판 목록은 회원 모듈이 있어야 그린다 — 실패하면 '다시 시도'를 준다 (영원한 '불러오는 중' 방지)
+  function communityRetryView() {
+    return `<section class="cm-page">
+      <h1>회원 게시판</h1>
+      <div class="empty" role="status">${ic('chat')}<b>게시판 화면을 불러오지 못했어요</b>
+        <p>연결이 잠깐 끊겼거나 예전 화면이 남아 있을 수 있어요. 회원가입·로그인은 그대로 이용할 수 있어요.</p>
+        <div class="btn-group">
+          <button type="button" class="btn" data-act="community-retry">다시 불러오기</button>
+          <a class="btn ghost" href="#/account/signup">회원가입</a>
+        </div>
+      </div>
+    </section>`;
+  }
+
+  // 모듈 없이도 '내 정보'와 로그아웃은 된다 (가입 직후 화면이 가입 폼으로 되돌아가 보이지 않게)
+  function profileFallbackView() {
+    const m = ME.member;
+    return `<section class="cm-page">
+      <h1>내 정보</h1>
+      <div class="card cm-profile">
+        <div class="row between"><b class="cm-nick">${esc(m.nickname)}</b><span class="tag ok">회원</span></div>
+        <p class="sub">${esc(m.email)}</p>
+      </div>
+      <div class="btn-group">
+        <a class="btn ghost" href="#/board">게시판으로</a>
+        <button class="btn ghost" type="button" data-act="logout">로그아웃</button>
+      </div>
+    </section>`;
+  }
+
   function viewCommunity(r, a, b) {
     const m = communityMod();
-    if (!m) return '<h1>회원 게시판</h1><p class="notice">화면을 불러오는 중이에요. 잠시만 기다려 주세요.</p>';
-    return m.view(r, a, b);
+    if (m) return m.view(r, a, b);
+    if (r === 'account') {
+      // 가입·로그인에 성공하면 같은 화면이 곧바로 '내 정보'로 바뀐다 (가입 폼이 다시 보이면 실패한 것처럼 느껴진다)
+      if (isMember()) return profileFallbackView();
+      return authFallbackView(a === 'signup' ? 'signup' : 'login');
+    }
+    return communityRetryView();
+  }
+
+  // 회원 화면을 그렸는데 모듈이 없을 때의 조용한 재시도 (4초에 한 번까지 — 같은 화면을 여러 번 그려도 요청은 한 번)
+  let communityRetryAt = 0;
+  let communityRetryLeft = 3;                        // 한 화면 세션에서 최대 3번까지만 (끝없는 재요청으로 배터리를 쓰지 않게)
+  function scheduleCommunityRetry() {
+    const t = Date.now();
+    if (communityRetryLeft <= 0 || t - communityRetryAt < 4000) return;
+    communityRetryAt = t;
+    communityRetryLeft--;
+    const loader = window.MJ_LOADER;
+    if (!loader || typeof loader.ensureOne !== 'function') return;
+    loader.ensureOne('community')
+      .then(() => { if (window.MJ_COMMUNITY_FACTORY && !community) render(); })
+      .catch(() => {});
+  }
+
+  // 회원 모듈을 (캐시를 우회해) 다시 받아 본다. 성공하면 지금 화면을 그대로 다시 그린다.
+  function retryCommunity(then) {
+    const loader = window.MJ_LOADER;
+    if (!loader || typeof loader.ensureOne !== 'function') return Promise.resolve(false);
+    return loader.ensureOne('community', { retry: true })
+      .then(() => {
+        if (!window.MJ_COMMUNITY_FACTORY) return false;
+        if (typeof then === 'function') then();
+        return true;
+      })
+      .catch(() => false);
   }
 
   // ---------- 모달 (화면 크기별: 모바일 하단 시트 · 데스크톱 중앙 대화상자) ----------
@@ -1951,6 +2060,18 @@
 
   // ---------- 라우터 ----------
   let prevRoute = null, enterT = null;
+  // 화면 그리기가 예외로 실패했을 때의 복구 화면 — 빈 화면·먹통 대신 다음 행동을 준다.
+  function viewRenderError(r) {
+    return `<section class="card" role="alert">
+      <h1>화면을 여는 중 문제가 생겼어요</h1>
+      <p class="sub">잠시 뒤 다시 시도해 주세요. 계속 그러면 새로고침해 주세요. (${esc(String(r || 'home'))} 화면)</p>
+      <div class="btn-group">
+        <button type="button" class="btn" data-act="reload">새로고침</button>
+        <a class="btn ghost" href="#/home">홈으로</a>
+      </div>
+    </section>`;
+  }
+
   function render() {
     const parts = (location.hash || '#/home').slice(2).split('/').map(decodeURIComponent);
     const [r, a, b, c] = parts;
@@ -1961,6 +2082,7 @@
     const WIDE_FLOW = ['home', 'missions', 'store', 'planner', 'journal', 'fengshui', 'explore', 'map', 'report', 'mind'];
     $view.dataset.route = route;
     $view.dataset.flow = WIDE_FLOW.includes(route) && a !== 'new' ? 'cards' : '';
+    try {
     switch (r) {
       case 'explore': html = viewExplore(a, b, c); break;
       case 'fengshui': html = viewFengshuiAtlas(); tab = 'explore'; break;
@@ -1984,10 +2106,18 @@
         html = viewCommunity(r, a, b); tab = 'board'; break;
       default: html = viewHome(); tab = 'home';
     }
+    } catch (err) {
+      // 한 화면을 그리다 실패해도 '이전 화면이 그대로 남아 아무 반응이 없는' 상태로 두지 않는다.
+      // (예전에는 여기서 예외가 나면 클릭이 먹통이 된 것처럼 보였다)
+      console.error('[MJ] 화면을 그리지 못했어요:', err);
+      html = viewRenderError(r); tab = r;
+    }
     const gateLabel = !isMember() ? routeGateLabel(r, a, b) : '';
     if (gateLabel) html = html + authGateBanner(gateLabel);
     $view.innerHTML = html;
     if (gateLabel) openAuthModal({ mode: 'login', feature: gateLabel, preserveIfOpen: true });
+    // 회원 화면인데 모듈이 아직/끝내 없다면 조용히 한 번 더 받아 본다 (사용자가 '다시 불러오기'를 누르지 않아도 되게)
+    if ((r === 'board' || r === 'account') && !community) scheduleCommunityRetry();
     // 진입 애니메이션은 '화면이 바뀌었을 때'만 켠다 — 같은 화면을 다시 그려도 카드가 다시 튀면 읽다가 피로해진다
     if ($view.dataset.route !== prevRoute) {
       prevRoute = $view.dataset.route;
@@ -2228,6 +2358,25 @@
         mode: el.dataset.tab === 'signup' ? 'signup' : 'login',
         feature: el.dataset.feature || ''
       });
+      return;
+    }
+    if (act === 'community-retry') {
+      toast('회원 화면을 다시 불러오고 있어요…');
+      retryCommunity(() => render()).then(ok => {
+        if (!ok) toast('회원 화면을 불러오지 못했어요. 새로고침 후 다시 시도해 주세요.');
+      });
+      return;
+    }
+    if (act === 'reload') {
+      location.reload();
+      return;
+    }
+    if (act === 'logout') {
+      // 회원 모듈을 못 받은 상태에서도 로그아웃은 된다 (community.js 의 data-cm="logout" 과 같은 동작)
+      api('/api/auth/logout', { method: 'POST' })
+        .then(() => applySession(null))
+        .then(() => { toast('로그아웃했어요'); goHash('#/board'); })
+        .catch(() => toast('로그아웃하지 못했어요. 잠시 후 다시 시도해 주세요.'));
       return;
     }
     if (!isMember() && act && AUTH_GATED_ACTIONS[act]) {

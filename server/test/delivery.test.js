@@ -62,7 +62,11 @@ test('1. 텍스트 자산은 gzip으로 내려보낸다 (앱 셸 JS 약 1/3 크�
 test('2. 캐시 정책 — 버전 붙은 자산은 1년 immutable, 화면·서비스워커는 항상 재검증', async () => {
   const s = await startServer();
   try {
-    const versioned = await s.get('/js/app.js?v=20261026restore');
+    // 버전 값은 loader.js 의 VERSION 을 따른다 (손으로 적어 두면 자산 버전을 올릴 때 같이 틀어진다)
+    const loaderSrc = fs.readFileSync(path.join(ROOT, 'js', 'lib', 'loader.js'), 'utf8');
+    const { VERSION } = { VERSION: (/var VERSION = '([^']+)'/.exec(loaderSrc) || [])[1] };
+    assert.ok(VERSION, 'loader.js 에 VERSION 이 있어야 함');
+    const versioned = await s.get(`/js/app.js?v=${VERSION}`);
     assert.match(versioned.headers.get('cache-control'), /max-age=31536000/, '?v= 자산은 1년');
     assert.match(versioned.headers.get('cache-control'), /immutable/);
 

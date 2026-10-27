@@ -115,6 +115,11 @@ function loadApp(opts = {}) {
     const tag = String(el.tagName || '').toUpperCase();
     if (tag === 'SCRIPT' && el.src) {
       const rel = String(el.src).replace(/^\/+/, '').split('?')[0];
+      // opts.failScripts: 특정 자산을 '받지 못한' 상황을 흉내 낸다 (lazy 로딩 실패 화면 검사용)
+      if ((opts.failScripts || []).some(re => re.test(String(el.src)))) {
+        if (typeof el.onerror === 'function') el.onerror(new Error('simulated load failure: ' + el.src));
+        return el;
+      }
       try {
         if (/^vendor\//.test(rel)) {
           // 실제 leaflet은 진짜 DOM이 필요하므로 검사용 스텁을 꽂는다 (지도 화면이 쓰는 API만)
@@ -643,3 +648,73 @@ test('미끼 기능은 비회원에게 열려 있고 주요 기능을 쓰려 할
   assert.match(modal.innerHTML, /사찰 여행 코스 플래너/);
 });
 
+
+test('회원 모듈을 받지 못해도 가입·로그인 화면은 열린다 (지연 자산 실패 안전판)', async () => {
+  // js/app/community.js 를 못 받은 상황 — 예전에는 '화면을 불러오는 중이에요'에서 영원히 멈췄다.
+  const app = loadApp({ failScripts: [/js\/app\/community\.js/] });
+
+  const signup = await app.goAsync('#/account/signup');
+  assert.match(signup, /data-auth-form="signup"/, '모듈 없이도 가입 폼을 그려야 함');
+  assert.match(signup, /회원가입하고 바로 이용하기/);
+  assert.match(signup, /이메일·닉네임·비밀번호만 있으면 돼요/);
+
+  const login = await app.goAsync('#/account/login');
+  assert.match(login, /data-auth-form="login"/, '모듈 없이도 로그인 폼을 그려야 함');
+
+  // 게시판 목록은 모듈이 필요하다 — '불러오는 중' 대신 이유와 다음 행동(다시 불러오기)을 준다
+  const board = await app.goAsync('#/board');
+  assert.match(board, /게시판 화면을 불러오지 못했어요/);
+  assert.match(board, /data-act="community-retry"/);
+  assert.doesNotMatch(board, /불러오는 중이에요/);
+});
+
+test('로더: 스크립트는 왔지만 모듈이 없으면 실패로 보고, 캐시를 우회해 한 번 더 받는다', async () => {
+  const requested = [];
+  const vm2 = require('node:vm');
+  const sandbox = { console, Promise, setTimeout, Date, URL };
+  const el = () => ({ setAttribute() {}, set src(v) { this._src = v; }, get src() { return this._src; } });
+  sandbox.document = {
+    head: {
+      appendChild(node) {
+        requested.push(node.src);
+        if (requested.length === 2) sandbox.MJ_COMMUNITY_FACTORY = function () {};   // 두 번째 시도에서야 등록된다
+        if (node.onload) node.onload();
+        return node;
+      }
+    },
+    createElement: el,
+    documentElement: { appendChild() {} }
+  };
+  sandbox.window = sandbox;
+  vm2.createContext(sandbox);
+  vm2.runInContext(fs.readFileSync(path.join(ROOT, 'js', 'lib', 'loader.js'), 'utf8'), sandbox, { filename: 'loader.js' });
+
+  const key = await sandbox.MJ_LOADER.ensureOne('community');
+  assert.equal(key, 'community');
+  assert.equal(requested.length, 2, '첫 응답에서 모듈이 없으면 한 번 재시도해야 함');
+  assert.match(requested[0], /community\.js\?v=/);
+  assert.match(requested[1], /community\.js\?v=.*&bust=/, '재시도는 캐시를 우회하는 URL 이어야 함');
+
+  // 끝내 등록되지 않으면 '불러오는 중'이 아니라 실패로 끝나야 한다 (화면이 복구 안내를 그릴 수 있게)
+  const requested2 = [];
+  const sandbox2 = { console, Promise, setTimeout, Date, URL };
+  sandbox2.document = {
+    head: { appendChild(node) { requested2.push(node.src); if (node.onload) node.onload(); return node; } },
+    createElement: el,
+    documentElement: { appendChild() {} }
+  };
+  sandbox2.window = sandbox2;
+  vm2.createContext(sandbox2);
+  vm2.runInContext(fs.readFileSync(path.join(ROOT, 'js', 'lib', 'loader.js'), 'utf8'), sandbox2, { filename: 'loader.js' });
+  await assert.rejects(() => sandbox2.MJ_LOADER.ensureOne('community'), /모듈이 등록되지 않았어요/);
+  assert.equal(requested2.length, 2, '재시도는 한 번만 (무한 반복 금지)');
+});
+
+test('서비스 워커: 코드·스타일은 네트워크 우선, 잘못된 형식은 캐시하지 않는다', () => {
+  const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
+  assert.match(sw, /maeumjeongwon-v10/, '캐시 이름을 올려 구 캐시를 지운다');
+  assert.match(sw, /CODE_RE/, '코드·스타일 판별식이 있어야 함');
+  assert.match(sw, /fetch\(req\)\s*\n?\s*\.then\(res => \{[\s\S]{0,200}?cacheable\(req, res\)/,
+    '코드 요청은 네트워크 응답을 먼저 쓰고, 형식이 맞을 때만 캐시한다');
+  assert.match(sw, /javascript|ecmascript/i, '스크립트 응답의 Content-Type 을 확인해야 함');
+});
