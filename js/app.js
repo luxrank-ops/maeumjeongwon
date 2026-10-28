@@ -405,7 +405,12 @@
       await ensureSession();
       res = await send();
     }
-    let body = {}; try { body = await res.json(); } catch (e) {}
+    let body = {};
+    try { body = await res.json(); } catch (e) {
+      // 응답이 JSON 이 아니다 = 우리 API 가 아닌 무언가(정적 호스팅의 404 HTML, 게이트웨이 오류 페이지)가 답했다.
+      // 예전에는 빈 body 로 두어 '입력 내용을 확인해 주세요' 같은 엉뚱한 안내가 나갔다.
+      body = { message: res.ok ? '' : '서버에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.' };
+    }
     return { ok: res.ok, status: res.status, body };
   }
 

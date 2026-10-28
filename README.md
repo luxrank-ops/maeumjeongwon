@@ -12,6 +12,8 @@ GPS 인증은 브라우저 보안상 `localhost` 또는 HTTPS에서만 동작합
 
 ## 배포 (Vercel)
 
+**GitHub Pages(`luxrank-ops.github.io/maeumjeongwon`)는 정적 미러입니다** — 서버가 없어서 회원가입·게시판·AI 상담이 동작하지 않습니다. 그래서 `index.html` 이 그 주소로 들어온 방문자를 서버가 있는 실제 배포로 즉시 보냅니다(해시 유지). 실사용 주소는 `https://maeumjeongwon.vercel.app` 입니다.
+
 Vercel 의 Express 빌드는 `server.js` 가 **실제로 참조하는 파일만** 함수 번들에 넣습니다. 그래서 `express.static()` 이 내려주는 `css/`·`vendor/`·`sw.js`·`manifest.webmanifest` 는 `vercel.json` 의 `functions["server.js"].includeFiles` 에 적어 주지 않으면 운영에서 404(정확히는 SPA 되돌림 HTML)가 됩니다 — 스타일이 사라지고 서비스워커·PWA 아이콘이 죽는 원인입니다. `includeFiles` 는 문자열 글롭 하나여야 하고, `builds` 는 쓰지 않습니다(zero-config 빌드가 꺼집니다). 없는 자산은 `index.html` 대신 404 + `no-cache` 로 응답합니다. 가드: `server/test/delivery.test.js` 7·8
 
 ## 검증·GitHub 동기화

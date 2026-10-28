@@ -14,6 +14,21 @@
 <title>절로가 — 마음 따라 걷는 사찰 순례</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E🪷%3C/text%3E%3C/svg%3E" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<script>
+/* 이 앱은 회원가입·게시판·AI 상담에 /api 서버가 필요하다.
+   GitHub Pages 같은 정적 호스팅은 index.html·css·js 만 올려 주고 서버는 없다 —
+   그 주소에서 '회원가입'을 누르면 /api/auth/signup 이 404(HTML)로 떨어져
+   '가입하지 못했어요'만 반복된다(2026-10 실제 신고).
+   그래서 정적 미러로 들어온 방문자는 서버가 있는 실제 배포로 바로 보낸다.
+   해시(#/account/signup 등)는 그대로 넘겨 원래 보려던 화면을 연다. */
+(function () {
+  var STATIC_HOSTS = /\.(?:github|gitlab)\.io$/i;
+  var CANONICAL = 'https://maeumjeongwon.vercel.app';
+  if (!STATIC_HOSTS.test(location.hostname || '')) return;
+  if (location.hostname === new URL(CANONICAL).hostname) return;
+  location.replace(CANONICAL + '/' + (location.hash || ''));
+})();
+</script>
 <link rel="manifest" href="/manifest.webmanifest?v=20261028sw" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
