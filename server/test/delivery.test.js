@@ -242,3 +242,16 @@ test('9. 서비스워커·매니페스트는 버전 붙은 URL 로 부른다 (CD
   assert.match(features, /updateViaCache:\s*'none'/, 'SW 스크립트는 캐시를 거치지 않고 확인한다');
   assert.match(features, /MJ_LOADER[\s\S]{0,60}VERSION/, '버전은 loader 의 VERSION 을 따른다');
 });
+
+test('10. 정적 호스팅(GitHub Pages)으로 들어오면 서버가 있는 실제 배포로 보낸다', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const redirect = /<script>([\s\S]*?location\.replace\([\s\S]*?)<\/script>/.exec(html);
+  assert.ok(redirect, 'index.html 이 정적 호스팅 감지 스크립트를 갖는다');
+  const src = redirect[1];
+  assert.match(src, /github/, 'GitHub Pages 호스트를 알아본다');
+  assert.match(src, /maeumjeongwon\.vercel\.app/, '서버가 있는 실제 배포로 보낸다');
+  assert.match(src, /location\.hash/, '해시(#/account/signup 등)를 잃지 않는다');
+  // 스크립트가 없으면 회원가입 요청이 정적 404(HTML)로 떨어진다
+  const app = fs.readFileSync(path.join(ROOT, 'js', 'app.js'), 'utf8');
+  assert.match(app, /서버에 연결하지 못했어요/, 'API 가 JSON 이 아닌 응답이면 서버 오류로 안내한다');
+});

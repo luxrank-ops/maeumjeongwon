@@ -292,6 +292,19 @@ Vercel 의 Express zero-config 빌드는 `server.js` 를 함수 하나로 묶으
    `updateViaCache:'none'` 으로 등록한다. CDN 이 예전 응답(HTML)을 물고 있어도 새 배포에서 갱신된다.
 가드: `delivery.test.js` 7·8·9 (404 응답·`includeFiles` 글롭 확장·버전 URL 검사).
 
+### 정적 호스팅에는 서버가 없다 (2026-10)
+
+GitHub Pages(`luxrank-ops.github.io/maeumjeongwon`)는 같은 저장소의 `main` 을 **정적으로** 올린다.
+`index.html`·`css/`·`js/` 는 있지만 `/api/*` 를 받아 줄 서버는 없다 — 실제로 이 주소의
+`POST /api/auth/signup` 은 **404 text/html** 이고, 화면에는 '가입하지 못했어요'만 반복됐다
+(같은 요청을 실제 배포로 보내면 201 로 계정이 만들어진다).
+
+→ `index.html` 맨 앞에서 `*.github.io`·`*.gitlab.io` 로 들어온 방문자를 서버가 있는 실제 배포
+   (`https://maeumjeongwon.vercel.app`)로 즉시 보낸다. 해시(`#/account/signup` 등)는 그대로 넘긴다.
+→ API 가 JSON 이 아닌 응답(정적 404 HTML·게이트웨이 오류 페이지)을 주면 `js/app.js` 의 `api()` 가
+   '서버에 연결하지 못했어요'로 안내한다. 예전에는 빈 body 라 '입력 내용을 확인해 주세요'가 나갔다.
+가드: `delivery.test.js` 10.
+
 ---
 
 ## 7. 가드 — 규칙이 다시 무너지지 않게
