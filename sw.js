@@ -21,6 +21,7 @@ const PRECACHE_URLS = [
 const LAZY_URLS = [
   '/vendor/leaflet.css',
   '/vendor/leaflet.js',
+  '/css/sagye.css?v=20261028sw',
   '/js/features.js?v=20261028sw',
   '/js/data-prayer.js?v=20261028sw',
   '/js/data-stories.js?v=20261028sw',
@@ -29,7 +30,8 @@ const LAZY_URLS = [
   '/js/planner-reco.js?v=20261028sw',
   '/js/app/planner.js?v=20261028sw',
   '/js/app/map.js?v=20261028sw',
-  '/js/app/community.js?v=20261028sw'
+  '/js/app/community.js?v=20261028sw',
+  '/js/app/report.js?v=20261028sw'
 ];
 
 /* 코드·스타일은 '지금 받아 본 응답'이 우선이다.

@@ -1,0 +1,160 @@
+/* 사경첩(寫經帖) — 2026-11 '주사 한 색' 테마의 화면 조각
+   ----------------------------------------------------------------------------
+   첫 화면 예산(140KB)을 지키려고 이 파일은 **화면에 들어갈 때** 받는다.
+     · #/report (마음의 결 리포트)  → js/lib/loader.js 의 NEEDS.report
+     · 마음 사경 시트               → js/features.js 가 시트를 열기 전에 ensure('sagye')
+   기본 팔레트·타이포·버튼 같은 공통 규칙은 css/style.css 에 그대로 있다.
+   ---------------------------------------------------------------------------- */
+
+/* ============================================================================
+   ⑰ 사경첩(寫經帖) — 2026-11 '주사朱砂 한 색' 테마
+   ----------------------------------------------------------------------------
+   화면을 한 권의 사경첩으로 본다. 종이 위에 가는 주사 격자를 깔고,
+   글은 먹으로만 앉힌다. 붉은색은 '지금 해야 할 한 가지'(인장 버튼 · 사경선)에만 쓴다.
+     · 격자는 배경에만 — 글자 뒤에 격자가 비쳐 판독성을 깎지 않게 대비를 낮게(9%) 둔다
+     · 붓글씨 타이핑 — AI 답은 한 글자씩 앉는다. 움직임을 줄인 사용자에게는 즉시 완성
+     · 인장(seal) — 보내기는 붉은 도장 모양. 엄지 존(시트 하단)에 붙여 둔다
+   근거: docs/design-sagyeong.md
+   ========================================================================== */
+
+/* ---------- ⑰-1 사경 격자 ----------
+   모눈은 두 겹이다. 32px 가는 선(사경지)과 128px 조금 진한 선(한 장의 경계).
+   선을 var() 로 두면 저조도에서 강조색이 밝아질 때 격자도 함께 옅어진다. */
+.sagye{position:relative;--sagye-cell:32px;
+  background:var(--surface-2);border:1px solid var(--border-1);border-radius:16px;
+  box-shadow:var(--elev-1);overflow:hidden}
+.sagye-paper{position:relative;padding:var(--s4) var(--s4) var(--s5);
+  background-image:
+    linear-gradient(90deg,rgba(var(--pine-rgb),.10) 1px,transparent 1px),
+    linear-gradient(0deg,rgba(var(--pine-rgb),.10) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(var(--pine-rgb),.16) 1px,transparent 1px),
+    linear-gradient(0deg,rgba(var(--pine-rgb),.16) 1px,transparent 1px);
+  background-size:
+    var(--sagye-cell) var(--sagye-cell),
+    var(--sagye-cell) var(--sagye-cell),
+    calc(var(--sagye-cell) * 4) calc(var(--sagye-cell) * 4),
+    calc(var(--sagye-cell) * 4) calc(var(--sagye-cell) * 4);
+  background-position:0 0,0 0,0 0,0 0;
+  background-repeat:repeat}
+/* 접힌 첩의 왼쪽 실밥 — 사경첩은 한 장씩 넘기는 책이라 '묶인 쪽'이 보여야 한다 */
+.sagye-paper::before{content:"";position:absolute;left:0;top:0;bottom:0;width:10px;
+  background:linear-gradient(180deg,rgba(var(--pine-rgb),.10),rgba(var(--pine-rgb),.02));
+  border-right:1px dashed rgba(var(--pine-rgb),.22)}
+
+/* ---------- ⑰-2 한 장(엽) — 질문과 답이 함께 앉는다 ---------- */
+.sagye-turn{position:relative;margin:0 0 var(--s5)}
+.sagye-turn:last-child{margin-bottom:0}
+.sagye-turn-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s2);
+  margin:0 0 var(--s2);color:var(--text-3);font-size:.78em;letter-spacing:.08em}
+.sagye-turn-head b{font-family:var(--font-display);color:var(--pine-ink);font-size:1.25em;letter-spacing:.1em}
+.sagye-q{margin:0 0 var(--s3);font-family:var(--font-display);font-size:1.02em;line-height:1.75;color:var(--text-1);
+  padding-left:var(--s3);border-left:2px solid var(--pine-line)}
+.sagye-a{font-family:var(--font-display);color:var(--text-1);line-height:1.85;font-size:1em}
+.sagye-a p{margin:0 0 var(--s3)}
+/* 붓글씨 타이핑 — 마지막 글자 뒤에서 붓끝이 깜빡인다 (움직임 축소 설정이면 숨긴다) */
+.sagye-typing::after{content:"";display:inline-block;width:2px;height:1.05em;margin-left:2px;
+  vertical-align:-.18em;background:var(--pine);animation:sagye-caret 1s steps(2,end) infinite}
+@keyframes sagye-caret{0%,50%{opacity:1}50.01%,100%{opacity:.15}}
+.sagye-a .sagye-verse{margin:var(--s3) 0;padding:var(--s3) var(--s4);
+  border-left:3px solid var(--pine);background:var(--pine-soft);border-radius:0 10px 10px 0}
+.sagye-a .sagye-verse .lbl{display:block;font-family:var(--font-ui);font-size:.78em;letter-spacing:.06em;color:var(--pine-ink);margin-bottom:4px}
+.sagye-a .sagye-verse p{margin:0;font-size:1.02em}
+.sagye-a ol{padding-left:1.25em;margin:0 0 var(--s3)}
+.sagye-a ol li{margin-bottom:6px}
+.sagye-a .sagye-answer-h{font-family:var(--font-ui);font-size:.82em;letter-spacing:.06em;color:var(--text-3);margin:var(--s4) 0 var(--s2)}
+/* 사찰 추천은 사경 안에서 '여백의 목록'으로 — 카드 테두리를 두르지 않는다 */
+.sagye-pick{display:block;padding:var(--s3) 0;border-bottom:1px solid var(--border-2);text-decoration:none;color:inherit;min-height:var(--tap)}
+.sagye-pick:last-child{border-bottom:0}
+.sagye-pick b{font-family:var(--font-display);font-size:1.02em}
+.sagye-pick .sub{display:block;font-family:var(--font-ui);font-size:.86em;line-height:1.6;margin-top:2px}
+.sagye-pick:active{background:var(--pine-soft)}
+
+/* ---------- ⑰-3 쓰는 자리 — 엄지 존에 붙은 인장 ----------
+   시트(.sheet)는 이미 스크롤된다. 그래서 하단 고정은 position:sticky 로 만든다.
+   사경이 길어져도 인장은 화면 아래에 남고, 홈 인디케이터(--safe-b)를 침범하지 않는다. */
+.sagye-foot{position:sticky;bottom:0;z-index:2;margin:var(--s4) calc(-1 * var(--pad-x)) calc(-1 * var(--s5));
+  padding:var(--s3) var(--pad-x) calc(var(--s3) + var(--safe-b));
+  background:color-mix(in srgb,var(--surface-1) 94%,transparent);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  border-top:1px solid var(--border-1)}
+@supports not (background:color-mix(in srgb,red 50%,transparent)){.sagye-foot{background:var(--surface-1)}}
+.sagye-compose{display:grid;grid-template-columns:1fr auto;gap:var(--s2);align-items:end}
+.sagye-inputwrap{position:relative;display:block}
+.sagye-inputwrap textarea{width:100%;min-height:var(--tap);max-height:38vh;resize:none;
+  padding:12px 48px 12px 14px;border-radius:12px;border:1px solid var(--border-1);
+  background:var(--surface-2);color:var(--text-1);font-family:var(--font-display);font-size:1em;line-height:1.6}
+.sagye-inputwrap textarea:focus{outline:none;border-color:var(--pine);box-shadow:var(--ring)}
+.sagye-clear{position:absolute;right:2px;bottom:6px;display:grid;place-items:center;
+  width:var(--tap-sm);height:var(--tap-sm);border-radius:50%;color:var(--text-3);background:transparent}
+.sagye-clear:hover{background:var(--surface-sunken);color:var(--text-1)}
+.sagye-clear[hidden]{display:none}
+/* 인장 — 붉은 도장. 글자는 먹이 아니라 '종이색'으로 찍는다(도장은 파낸 자국이다) */
+.seal-send{display:grid;place-items:center;gap:0;width:72px;height:72px;min-width:72px;
+  border:0;border-radius:8px;background:var(--pine);color:var(--on-pine);
+  box-shadow:var(--elev-2);font-family:var(--font-display);line-height:1;
+  transition:transform var(--dur-1) var(--ease),background var(--dur-1) var(--ease)}
+.seal-send b{font-size:1.55em;letter-spacing:.02em}
+.seal-send span{font-family:var(--font-ui);font-size:.62em;letter-spacing:.08em;margin-top:3px;opacity:.92}
+.seal-send:hover{background:var(--pine-hover)}
+.seal-send:active{transform:scale(.95)}
+.seal-send:focus-visible{outline:none;box-shadow:var(--ring)}
+.seal-send[aria-busy=true]{pointer-events:none}
+.seal-send:disabled{opacity:.55;box-shadow:none}
+.sagye-hint{margin:var(--s2) 0 0;font-size:.78em;color:var(--text-3);text-align:center}
+
+/* ---------- ⑰-4 빠른 마음 (칩) — 사경 위쪽, 가로로 흐른다 ---------- */
+.sagye-quick{display:flex;gap:6px;overflow-x:auto;padding:var(--s2) 0 var(--s3);
+  scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.sagye-quick::-webkit-scrollbar{display:none}
+.sagye-quick .chip{flex:0 0 auto}
+.sagye-sheet h2{font-family:var(--font-display);letter-spacing:.01em}
+
+/* ---------- ⑰-5 리포트 — 마음의 결 (SCR-REP-001) ----------
+   상태1(1~2회): 격려 카드 한 장. 상태2(3회~): 꺾은선 + 키워드 + 내보내기. */
+.report-encourage{text-align:center;padding:var(--s5) var(--s4)}
+.report-encourage .seal-mark{display:grid;place-items:center;width:64px;height:64px;margin:0 auto var(--s3);
+  border-radius:8px;background:var(--pine);color:var(--on-pine);font-family:var(--font-display);font-size:1.5em}
+.report-encourage h2{font-family:var(--font-display);margin:0 0 var(--s2)}
+.report-encourage p{margin:0 0 var(--s3);color:var(--text-2)}
+.counsel-trend{width:100%;height:auto;display:block;margin:var(--s2) 0 0}
+.counsel-trend .axis{stroke:var(--border-1);stroke-width:1}
+.counsel-trend .grid{stroke:var(--border-2);stroke-width:1;stroke-dasharray:3 5}
+.counsel-trend .line{fill:none;stroke:url(#sagyeGrad);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.counsel-trend .dot{fill:var(--pine);stroke:var(--surface-2);stroke-width:2}
+.counsel-trend .dot-last{fill:var(--gold)}
+.counsel-trend text{font-family:var(--font-ui);font-size:10px;fill:var(--text-3)}
+.tag-cloud{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:var(--s2);margin:var(--s2) 0 0}
+.kw{display:flex;align-items:baseline;justify-content:space-between;gap:6px;
+  padding:10px 12px;border-radius:10px;border:1px solid var(--border-1);
+  background:var(--surface-3);font-size:.92em}
+.kw b{font-weight:700;color:var(--pine-ink)}
+.kw .n{font-variant-numeric:tabular-nums;color:var(--text-3);font-size:.9em}
+.kw.hot{background:var(--pine-soft);border-color:var(--pine-line)}
+.report-cta{display:flex;flex-direction:column;gap:var(--s2);margin:var(--s4) 0 0}
+.report-cta .btn{width:100%}
+.report-foot-note{margin:var(--s2) 0 0;font-size:.8em;color:var(--text-3);text-align:center}
+
+/* ---------- ⑰-8 비밀번호 칸 — 보기 토글 (가입 2칸 · SCR-AUTH-001) ----------
+   확인 칸을 없애는 대신 '보기'를 둔다. 오타로 잠기는 일은 화면에서 막는 게 낫다. */
+.pw-row{position:relative;display:block}
+.pw-row input[type=password],.pw-row input[type=text]{padding-right:76px}
+.pw-toggle{position:absolute;right:2px;top:50%;transform:translateY(-50%);
+  min-height:var(--tap-sm);padding:0 12px;border-radius:10px;background:transparent;
+  color:var(--text-3);font-size:.86em;font-weight:700}
+.pw-toggle:hover{background:var(--surface-sunken);color:var(--text-1)}
+.pw-toggle[aria-pressed=true]{color:var(--pine-ink);background:var(--pine-soft)}
+
+/* ---------- ⑰-6 좁은 화면 ---------- */
+@media (max-width:380px){
+  .sagye-paper{--sagye-cell:26px;padding:var(--s3)}
+  .seal-send{width:64px;height:64px;min-width:64px}
+  .seal-send b{font-size:1.35em}
+  .tag-cloud{grid-template-columns:repeat(auto-fill,minmax(88px,1fr))}
+}
+
+/* ---------- ⑰-7 움직임을 줄인 사용자 ----------
+   붓글씨 타이핑은 JS 가 즉시 완성으로 바꾸고, 커서 깜빡임도 멈춘다. */
+@media (prefers-reduced-motion:reduce){
+  .sagye-typing::after{animation:none;opacity:.6}
+  .seal-send{transition:none}
+}

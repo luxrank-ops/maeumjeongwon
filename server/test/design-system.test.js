@@ -98,7 +98,7 @@ test('5. 첫 페인트 전에 테마를 정한다 — 흰색 번쩍임(FOUC) 방
   // 상단 토글 · 달 아이콘 · 어두운 상태바 색이 함께 있어야 한다
   assert.match(shellHtml, /id="themeToggle"/);
   assert.match(shellHtml, /id="i-moon"/);
-  assert.match(shellHtml, /<meta name="theme-color" content="#[0-9a-f]{6}" media="\(prefers-color-scheme: dark\)"/);
+  assert.match(shellHtml, /<meta name="theme-color" content="#[0-9a-fA-F]{6}" media="\(prefers-color-scheme: dark\)"/);
   assert.match(shellHtml, /<meta name="color-scheme" content="light dark"/);
 });
 

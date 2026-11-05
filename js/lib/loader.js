@@ -60,6 +60,14 @@
     features: {
       js: ['js/features.js'],
       ready: function () { return !!root.MJ_FEATURES; }
+    },
+    // 사경첩 화면 조각(격자·붓글씨·인장·리포트 꺾은선). 첫 화면에는 필요 없다.
+    // 리포트 라우트에서 먼저 받고, 상담 시트는 features.js 가 열기 전에 ensure 한다.
+    sagye: {
+      css: ['css/sagye.css'],
+      js: ['js/app/report.js'],
+      // 준비 판정은 모듈(MJ_REPORT)로 한다 — CSS 는 실패해도 화면을 막지 않는다
+      ready: function () { return !!root.MJ_REPORT; }
     }
   };
 
@@ -83,7 +91,8 @@
     fengshui: ['fengshui'],
     guide: ['prayer'],
     board: ['community'],
-    account: ['community']
+    account: ['community'],
+    report: ['sagye']
   };
 
   // 첫 화면을 막지 않는 자산 — 없으면 먼저 그리고, 도착하면 이어서 다시 그린다.

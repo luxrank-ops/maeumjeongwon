@@ -78,14 +78,39 @@ function validateSignup(raw) {
   if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
     return fail('password', '비밀번호에는 영문과 숫자를 함께 써 주세요.');
   }
+  // 닉네임은 '선택'이다 — 이메일과 비밀번호 두 칸이면 가입이 끝난다(2026-11 사경첩 전환).
+  // 비워 두면 이메일 앞부분으로 만들어 준다. 들어온 값이 있으면 그대로 검증한다.
   const nickname = normNick(raw.nickname);
-  if (!NICK_RE.test(nickname)) {
-    return fail('nickname', '닉네임은 한글·영문·숫자·밑줄(_)로 2~12자 사이로 적어 주세요.');
+  if (nickname) {
+    if (!NICK_RE.test(nickname)) {
+      return fail('nickname', '닉네임은 한글·영문·숫자·밑줄(_)로 2~12자 사이로 적어 주세요.');
+    }
+    if (NICK_RESERVED.includes(nickname.toLowerCase())) {
+      return fail('nickname', '사용할 수 없는 닉네임이에요. 다른 이름을 골라 주세요.');
+    }
   }
-  if (NICK_RESERVED.includes(nickname.toLowerCase())) {
-    return fail('nickname', '사용할 수 없는 닉네임이에요. 다른 이름을 골라 주세요.');
+  return { ok: true, value: { email, password, nickname, derived: !nickname } };
+}
+
+// 이메일 앞부분 → 쓸 수 있는 닉네임 후보. 한글·영문·숫자·밑줄만 남기고 2~10자로 자른다.
+function nicknameSeed(email) {
+  const local = String(email || '').split('@')[0] || '';
+  let seed = local.normalize('NFC').replace(/[^가-힣A-Za-z0-9_]/g, '').slice(0, 10);
+  if (seed.length < 2) seed = '걸음';
+  if (NICK_RESERVED.includes(seed.toLowerCase())) seed = seed + '_' + '님';
+  if (!NICK_RE.test(seed)) seed = '걸음';
+  return seed;
+}
+
+// 이미 쓰는 이름이면 뒤에 숫자를 붙여 빈자리를 찾는다. 다 차면 '' (화면에서 직접 고르게 안내).
+function freeNickname(taken, seed) {
+  if (!taken(seed)) return seed;
+  for (let i = 0; i < 40; i++) {
+    const n = String(2 + (i % 97));
+    const cand = (seed.slice(0, 12 - n.length) + n);
+    if (NICK_RE.test(cand) && !taken(cand)) return cand;
   }
-  return { ok: true, value: { email, password, nickname } };
+  return '';
 }
 
 function hashToken(token) {
@@ -143,12 +168,20 @@ function createAccounts({ getDb, now = () => Date.now() }) {
     const v = validateSignup(raw || {});
     if (!v.ok) return { status: 400, body: { error: 'validation', field: v.field, message: v.message } };
     const db = getDb();
-    const { email, password, nickname } = v.value;
+    const { email, password } = v.value;
 
     if (db.prepare('SELECT 1 AS ok FROM users WHERE email = ?').get(email)) {
       return { status: 409, body: { error: 'email_taken', field: 'email', message: '이미 가입된 이메일이에요. 로그인해 주세요.' } };
     }
-    if (db.prepare('SELECT 1 AS ok FROM users WHERE nick_key = ?').get(nickname.toLowerCase())) {
+    // 닉네임을 안 적었으면 서버가 만들어 준다. 화면이 '닉네임을 지어 주세요'로 가입을 막지 않게.
+    const taken = n => !!db.prepare('SELECT 1 AS ok FROM users WHERE nick_key = ?').get(n.toLowerCase());
+    let nickname = v.value.nickname;
+    if (!nickname) {
+      nickname = freeNickname(taken, nicknameSeed(email));
+      if (!nickname) {
+        return { status: 409, body: { error: 'nickname_taken', field: 'nickname', message: '닉네임을 자동으로 정하지 못했어요. 사용할 이름을 적어 주세요.' } };
+      }
+    } else if (taken(nickname)) {
       return { status: 409, body: { error: 'nickname_taken', field: 'nickname', message: '이미 쓰고 있는 닉네임이에요.' } };
     }
 

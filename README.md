@@ -27,7 +27,7 @@ Vercel 의 Express 빌드는 `server.js` 가 **실제로 참조하는 파일만*
 
 ## 구성
 - `index.html` — 앱 셸, 하단 탭(홈/탐색/지도/순례/수첩)·본문 바로가기 링크, 큰글씨 토글
-  - 2026-10: 탭·버튼·제목의 이모지를 **24px SVG 아이콘 스프라이트 38종**(`<symbol id="i-…">`)으로 교체 — JS의 `ic(name)`이 `<use>`로 참조한다. 기분·날씨·계절처럼 '내용인 이모지'는 그대로 남긴다. `theme-color`를 manifest·SEO와 같은 `#f6f1e7`로 통일(앱이 열리는 순간 상태바 색 점프 제거)
+  - 2026-10: 탭·버튼·제목의 이모지를 **24px SVG 아이콘 스프라이트 38종**(`<symbol id="i-…">`)으로 교체 — JS의 `ic(name)`이 `<use>`로 참조한다. 기분·날씨·계절처럼 '내용인 이모지'는 그대로 남긴다. `theme-color`를 manifest·SEO와 같은 값(2026-11 사경첩에서 `#FAF7F2`)으로 통일(앱이 열리는 순간 상태바 색 점프 제거)
   - 2026-10: 첫 화면 직접 로드를 **6개(loader·data-temples·planner-reco·config·analytics·app.js)**로 줄이고 `preload` 힌트 2개 + 준비 중 화면(`.boot-splash`)을 넣었다. `features.js`도 모든 라우트에서 첫 렌더 뒤 소프트 로드하며, 지도·전통사찰·기도·풍수·스토리 데이터는 필요한 화면에서 받는다
   - 넓은 화면(≥1120px) 좌측 레일에만 보이는 보조 메뉴(계획·상점, `.tabbar a.rail-only`) — 모바일 하단 탭은 5칸 유지
 - `css/style.css` — 따뜻한 한지 톤 **모바일 우선 반응형 시스템**(브레이크포인트 560·760·1120·1440·1760 + 가로모드·초소형 폰), `body.big` 큰 글씨·간편 모드
@@ -35,7 +35,8 @@ Vercel 의 Express 빌드는 `server.js` 가 **실제로 참조하는 파일만*
   - 같은 작업: `svh`+`vh` 폴백과 `env(safe-area-inset-*)`(`@supports` 폴백)로 노치·홈인디케이터·주소창 대응, 터치 타깃 44px·입력 `font-size:max(16px,1em)`(iOS 포커스 확대 방지), 모달은 모바일 하단 시트→태블릿 이상 중앙 대화상자(배경 스크롤 잠금·`Esc`·`overscroll-behavior`), 지도는 `resize/orientationchange/visualViewport` 디바운스 `invalidateSize()`, 큰 글씨 모드는 `--fs-base` 를 교체해 모든 화면 폭에서 배율이 함께 동작
   - 2026-10: **⑮ 디자인 시스템 v3** — 색 3+1+1(종이·먹·소나무 / 점토는 도장·기도 / 골드는 완성만), `--font-ui`·`--font-display` 토큰(없는 웹폰트 이름 폐지, 한글 자간 -.011em, 본문 줄높이 1.6, 최소 13px급), 여백·모서리·그림자 2종·`--ring`·`--ease/--dur-*` 단일 세트. 버튼 3단계(`.btn`/`.ghost`·`.soft`/`.text`), 세그먼트 컨트롤 `.seg`, 목록 행의 각진 도장(印), 시트 그랩 핸들·닫기, 빈 상태 `.empty`·스켈레톤 `.skel`, `entering` 클래스가 붙은 라우트 전환에서만 진입 애니메이션. 진입·hover lift·카드 안 카드·영문 마이크레이블 폐지
   - 2026-11: **모바일 조작 규칙 적용** — 1차 행동 터치 타깃 44 → **48px**(상단 칩은 44px + 히트 슬롭), 본문 기준 15 → **16px**, 모든 텍스트필드에 **Clear(×)**(`enhanceFields` 가 그린 뒤 한 번에 붙인다), 옵션 **5개 이하면 펼치고 7개 이상만 드롭다운**(`.choices`: 수첩 날씨·여행 기간·이동 수단·글 종류), 수량은 **스텝퍼**(`.stepper`: 함께 가는 사람 1~20명), 제출 중 `aria-busy` 스피너·행 누름 피드백, 저조도에서 깨지던 인라인 색(계획 패널·흰 박스·염주 SVG 글자) 정리, 대비 미달 2곳(placeholder 2.89:1 · 골드 배지 4.40:1) 수정. 예산 초과분은 **추천 엔진을 지연 자산으로** 옮겨 회수(첫 화면 141.5 → **136.4KB**/140KB)
-  - 상세: `docs/responsive-layout.md` · `docs/design-refresh.md` · `docs/mobile-ux-guidelines.md` · 가드: `server/test/responsive-layout.test.js` · `server/test/mobile-ux.test.js`
+  - 2026-11: **사경첩(寫經帖) — 주사 한 색** — 종이 `#FAF7F2` · 글 `#1A1A1A` · 강조 **주사 `#B71C1C` 하나**(점토는 도장, 먹금은 '이루었다'에만). 팔레트 두 블록만 갈아 끼웠고 컴포넌트는 시맨틱 토큰을 그대로 부른다. AI 상담은 **사경첩**: 32px 주사 격자 위에 질문 하나가 '한 장(第 一 問)', 답은 **붓글씨 타이핑**(축소 설정이면 즉시 완성), 전송은 **72px 인장**(시트 하단 고정 + `--safe-b`). `#/report` 위에 **마음 사경** 블록(1~2장 격려 / 3장부터 마음 온도 꺾은선 · `#불안 3회` 낱말 · PDF). 가입은 **이메일+비밀번호 두 칸**(닉네임은 서버가 이메일 앞부분으로), 부팅 실패에는 **인라인 CSS 부트 셸**(네트워크 점검 · 새로고침 · 캐시 초기화 · 게스트로 시작). 예산은 격자·리포트를 **지연 자산 `sagye`**(`css/sagye.css` + `js/app/report.js`)로 옮겨 회수 — 138.9KB/140KB
+  - 상세: `docs/responsive-layout.md` · `docs/design-refresh.md` · `docs/mobile-ux-guidelines.md` · `docs/design-sagyeong.md` · 가드: `server/test/responsive-layout.test.js` · `server/test/mobile-ux.test.js` · `server/test/design-sagyeong.test.js`
 - `js/lib/loader.js` — **지연 자산 표**와 로더: 라우트 → 필요한 데이터·지도(`ASSETS`·`NEEDS`), 첫 화면을 막지 않는 자산(`SOFT`). 라우터와 서비스워커가 같은 표를 본다. 가드: `server/test/app-runtime.test.js`
   - 2026-10: **회원가입 화면이 열리지 않던 문제 수정** — 회원 모듈(`js/app/community.js`)이 늦거나 실패해도 가입·로그인 화면은 셸(`js/app.js`)이 직접 그린다(제출 처리는 원래 셸 담당). 로더는 스크립트를 받은 뒤 **모듈이 실제로 등록됐는지** 확인하고, 아니면 `?bust=` 로 캐시를 우회해 한 번 더 받는다. 서비스워커는 JS/CSS 를 **네트워크 우선**으로 바꾸고 `Content-Type` 이 맞는 응답만 캐시한다(오류 페이지가 스크립트로 캐시되던 경로 차단). 정리: `docs/architecture.md` 6절
   - 2026-10: `js/data-traditional.js` 가 내려주는 이름(`TRADITIONAL_TEMPLES`)과 셸이 읽던 이름(`TRADITIONAL_TEMPLATES`)이 달라 전통사찰 991곳 목록이 비어 있던 문제도 함께 고쳤다(둘 다 인정)
@@ -70,6 +71,7 @@ Vercel 의 Express 빌드는 `server.js` 가 **실제로 참조하는 파일만*
 - `docs/design-refresh.md` — **디자인 리뷰 & 리프레시(2026-10)**: 13가지 관찰 → 7원칙 → 셸·타이포·홈 정보구조·사찰 상세 행동판·컴포넌트 변경과 근거, 검증(테스트·전송 예산), 의도적으로 미룬 다음 라운드
 - `docs/responsive-layout.md` — 화면(모바일·태블릿·웹)별 구성 배치 설계: 브레이크포인트 표, 셸 그리드 구조, 유동 타이포·여백 토큰, 지도·모달·SEO 페이지 대응, 알려진 한계
 - `docs/mobile-ux-guidelines.md` — **모바일 조작 규칙 적용(2026-11)**: 가이드 15항목 × 이 앱의 진단표, 48dp 손끝(보이는 크기 vs 닿는 크기), Clear(×) 일괄 적용, 5/7개 옵션 경계, 스텝퍼, 저조도 인라인 색 버그 3곳, 예산 회수(추천 엔진 지연 로드), 실DOM 확인과 실기기 확인 항목
+- `docs/design-sagyeong.md` — **사경첩 · 주사 한 색 적용(2026-11)**: 시안 6항목 × 적용 전/후 진단표, 팔레트를 하나로 줄인 근거와 실측 대비, 격자·붓글씨·인장 구현 규칙, 부트 셸(인라인 CSS)과 가입 2칸, 리포트 상태1/상태2 기준(3장)과 마음 온도 계산, 예산 회수(사경 자산 지연 로드 142.8 → 138.9KB), 실DOM 검증과 실기기 확인 항목
 - `tools/payload-budget.js` — 전송 예산 측정: 첫 화면 파일 목록은 `index.html` 에서, 지연 자산은 `js/lib/loader.js` 의 `ASSETS` 에서 읽어 gzip 크기와 라우트별 추가 전송량을 계산. `npm run budget [-- --check]`
 - `tools/_dep-audit.js` — 구조 감사 도구: `node tools/_dep-audit.js js/app.js` 로 섹션별 줄 범위와 밖에서 참조하는 심볼(결합도)을 센다. 모듈 경계를 정할 때 사용(`docs/architecture.md` 4절)
 - `tools/content-smoke.js` — 스토리·전설·풍수·기도 콘텐츠 정합성 검사, `tools/temple-smoke.js` — 큐레이션·전통사찰 991건 및 API 스모크 검사. `tools/test-content.js`·`tools/test-plus.js`·`tools/smoke-test.js`는 Playwright 브라우저 테스트/스크린샷용, `tools/geocode.py`는 좌표 조회 스크립트

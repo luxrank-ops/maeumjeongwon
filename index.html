@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#f6f1e7" />
+<meta name="theme-color" content="#FAF7F2" />
 <!-- 상태바 색은 OS 가 '시스템 설정'으로 고른 테마를 따라간다. 앱 안에서 토글로 바꾼 경우는
      js/app.js 가 같은 meta 를 다시 써 준다 (상단 바가 튀는 것을 막는 유일한 방법). -->
-<meta name="theme-color" content="#121815" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#14100F" media="(prefers-color-scheme: dark)" />
 <meta name="color-scheme" content="light dark" />
 <meta name="description" content="기분을 고르고, 전국 사찰 이야기를 읽고, 나만의 순례와 기록을 이어가는 사찰 여행 앱입니다." />
 <meta property="og:title" content="절로가 — 마음 따라 걷는 사찰 순례" />
@@ -29,6 +29,50 @@
   location.replace(CANONICAL + '/' + (location.hash || ''));
 })();
 </script>
+<style>
+/* 부트 셸 (SCR-AUTH-001) — css/style.css 를 일부러 부르지 않는다.
+   배포된 CSS 가 깨지거나 캐시가 어긋나도 첫 화면과 복구 버튼은 자리를 지켜야 한다.
+   색값을 여기 한 번 더 적는 것은 중복이 아니라 목적이다. 앱이 그려지면 MJ_BOOT.hide() 가 걷어 낸다. */
+#boot{position:fixed;inset:0;z-index:2000;display:grid;place-items:center;padding:24px;opacity:1;
+  background:#FAF7F2;color:#1A1A1A;font-family:"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+  line-height:1.6;transition:opacity .28s ease}
+#boot.is-done{opacity:0;pointer-events:none}
+#boot .boot-card{width:100%;max-width:420px}
+#boot .boot-seal{display:grid;place-items:center;width:64px;height:64px;margin:0 auto 14px;border-radius:8px;
+  background:#B71C1C;color:#FFFDF9;font-family:"NanumMyeongjo","Noto Serif KR",serif;font-size:26px}
+#boot h1{margin:0 0 6px;font-size:19px;line-height:1.45;text-align:center;font-family:"NanumMyeongjo","Noto Serif KR",serif}
+#boot .boot-sub,#boot .boot-note{margin:0 0 16px;font-size:13.5px;color:#5E5952;text-align:center}
+#boot .boot-net{margin:0 0 14px;padding:10px 12px;border-radius:10px;font-size:13px;text-align:center;
+  background:#FBF1EF;border:1px solid #EFCEC8;color:#8C1414}
+#boot .boot-net[hidden]{display:none}
+#boot .boot-skel{display:grid;gap:10px;margin:0 0 18px}
+#boot .boot-skel i{display:block;height:44px;border-radius:10px;border:1px solid #E5DCD0;
+  background:linear-gradient(90deg,#F1EAE0 25%,#FAF7F2 37%,#F1EAE0 63%);background-size:400% 100%;animation:boot-sheen 1.4s ease-in-out infinite}
+#boot .boot-skel i:last-child{height:48px;background:#B71C1C;border-color:#B71C1C;animation:none;opacity:.9}
+@keyframes boot-sheen{from{background-position:100% 0}to{background-position:0 0}}
+#boot .boot-actions{display:grid;gap:8px}
+#boot .boot-actions button{min-height:48px;border-radius:12px;padding:11px 14px;font-size:15px;font-weight:700;
+  border:1px solid #E5DCD0;background:#FFFDF9;color:#1A1A1A;font-family:inherit}
+#boot .boot-actions button.primary{background:#B71C1C;border-color:#B71C1C;color:#FFFDF9}
+#boot .boot-note{margin:14px 0 0;font-size:12.5px}
+#boot .boot-note a{color:#8C1414;font-weight:700}
+#boot .boot-hint{display:none;margin:10px 0 0;font-size:12.5px;color:#8C1414;text-align:center}
+#boot.is-slow .boot-hint{display:block}
+#boot .boot-static{display:none}
+#boot.is-guest .boot-static{display:block}
+@media (prefers-color-scheme:dark){
+  #boot{background:#14100F;color:#F2EDE7}
+  #boot h1{color:#F2EDE7}
+  #boot .boot-sub,#boot .boot-note{color:#A79C92}
+  #boot .boot-skel i{border-color:#2F2724;background:linear-gradient(90deg,#241E1C 25%,#1E1917 37%,#241E1C 63%);background-size:400% 100%}
+  #boot .boot-actions button{background:#1E1917;border-color:#2F2724;color:#F2EDE7}
+  #boot .boot-actions button.primary{background:#E2584A;border-color:#E2584A;color:#180E0C}
+  #boot .boot-seal{background:#E2584A;color:#180E0C}
+  #boot .boot-net{background:#2A1714;border-color:#4E241E;color:#F0A79A}
+  #boot .boot-note a,#boot .boot-hint{color:#F0A79A}
+}
+@media (prefers-reduced-motion:reduce){#boot .boot-skel i{animation:none}}
+</style>
 <link rel="manifest" href="/manifest.webmanifest?v=20261028sw" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -55,6 +99,96 @@
 </script>
 </head>
 <body>
+<div id="boot" role="status" aria-live="polite">
+  <div class="boot-card">
+    <div class="boot-seal" aria-hidden="true">印</div>
+    <h1>잠시 정원의 문을 정돈하고 있습니다</h1>
+    <p class="boot-sub">한지는 펴는 데 시간이 조금 걸려요. 화면을 준비하고 있습니다.</p>
+    <p class="boot-net" id="bootNet" hidden></p>
+    <div class="boot-skel" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="boot-actions">
+      <button type="button" data-boot="guest" class="primary">게스트로 시작</button>
+      <button type="button" data-boot="reload">새로고침</button>
+      <button type="button" data-boot="cache">캐시 초기화</button>
+    </div>
+    <p class="boot-hint">생각보다 오래 걸리고 있어요. 새로고침을 눌러도 같은 화면이면 캐시 초기화를 눌러 주세요.</p>
+    <p class="boot-note">게스트로 시작하면 회원 기능(방문 인증·수첩·게시판)은 로그인 후에 열려요. <a href="#/home">홈으로</a></p>
+    <p class="boot-note boot-static">앱 화면을 열지 못했어요. <a href="#/home">홈</a> · <a href="#/explore">사찰 둘러보기</a> · <a href="#/missions">순례</a> · <a href="#/plus">플러스</a></p>
+  </div>
+</div>
+<script>
+/* 부트 셸의 세 가지 문: 게스트로 시작(로그인 벽에 막히지 않기) · 새로고침 · 캐시 초기화(서비스워커·캐시만 지운다.
+   저장한 순례 기록(localStorage)은 건드리지 않는다) */
+(function () {
+  var GUEST_KEY = 'maeumjeongwon.guest.v1';
+  var boot = document.getElementById('boot');
+  if (!boot) return;
+  var done = false;
+
+  function hide() {
+    if (done) return;
+    done = true;
+    boot.classList.add('is-done');
+    setTimeout(function () { if (boot.parentNode) boot.parentNode.removeChild(boot); }, 320);
+  }
+  function appReady() {
+    var v = document.getElementById('view');
+    return !!(v && v.querySelector('section, .card, h1'));
+  }
+  function net() {
+    var el = document.getElementById('bootNet');
+    if (!el) return;
+    if (navigator.onLine === false) {
+      el.hidden = false;
+      el.textContent = '네트워크가 끊겨 있어요. 저장해 둔 사찰 정보는 오프라인에서도 열려요.';
+    } else {
+      el.hidden = true;
+    }
+  }
+  function guest() {
+    try { localStorage.setItem(GUEST_KEY, '1'); } catch (e) {}
+    document.documentElement.setAttribute('data-guest', '1');
+    if (appReady()) {
+      hide();
+      if (window.MJ_TOAST) window.MJ_TOAST('둘러보기로 시작합니다 · 회원 기능은 로그인 후 열려요');
+      return;
+    }
+    boot.classList.add('is-guest');
+  }
+  async function resetCache() {
+    boot.classList.add('is-slow');
+    try {
+      if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+        var rs = await navigator.serviceWorker.getRegistrations();
+        for (var i = 0; i < rs.length; i++) { try { await rs[i].unregister(); } catch (e) {} }
+      }
+    } catch (e) {}
+    try {
+      if (window.caches && caches.keys) {
+        var ks = await caches.keys();
+        for (var j = 0; j < ks.length; j++) { try { await caches.delete(ks[j]); } catch (e) {} }
+      }
+    } catch (e) {}
+    location.reload();
+  }
+
+  boot.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest ? e.target.closest('[data-boot]') : null;
+    if (!b) return;
+    var act = b.getAttribute('data-boot');
+    if (act === 'guest') guest();
+    else if (act === 'reload') location.reload();
+    else if (act === 'cache') resetCache();
+  });
+  window.addEventListener('online', net);
+  window.addEventListener('offline', net);
+  net();
+  setTimeout(function () { boot.classList.add('is-slow'); }, 6000);
+  // 앱이 스스로 그려지면(=정상 부팅) 안내 문구만 남기고 조용히 걷어 낸다
+  window.MJ_BOOT = { hide: hide, guest: guest, resetCache: resetCache };
+  try { if (localStorage.getItem(GUEST_KEY)) document.documentElement.setAttribute('data-guest', '1'); } catch (e) {}
+})();
+</script>
 <a class="skip-link" href="#view">본문으로 바로가기</a>
 <!-- 아이콘 스프라이트 — 이모지는 OS마다 모양·크기가 다르고 스크린리더가 글자로 읽는다.
      화면의 '구조'를 나타내는 아이콘은 여기서 24px 그리드 선 아이콘으로 쓴다 (js: ic()). -->

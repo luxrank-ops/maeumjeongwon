@@ -238,6 +238,8 @@ function loadApp(opts = {}) {
     'js/lib/loader.js',
     'js/data-temples.js',
     'js/planner-reco.js',
+    // 사경 리포트(지연 모듈) — 화면을 동기적으로 검사하기 위해 미리 넣는다
+    'js/app/report.js',
     'js/config.js',
     'js/analytics.js',
     'js/app.js'
@@ -656,7 +658,7 @@ test('회원 모듈을 받지 못해도 가입·로그인 화면은 열린다 (�
   const signup = await app.goAsync('#/account/signup');
   assert.match(signup, /data-auth-form="signup"/, '모듈 없이도 가입 폼을 그려야 함');
   assert.match(signup, /회원가입하고 바로 이용하기/);
-  assert.match(signup, /이메일·닉네임·비밀번호만 있으면 돼요/);
+  assert.match(signup, /이메일과 비밀번호만 있으면 돼요/, '가입은 두 칸 — 닉네임은 서버가 만든다');
 
   const login = await app.goAsync('#/account/login');
   assert.match(login, /data-auth-form="login"/, '모듈 없이도 로그인 폼을 그려야 함');
