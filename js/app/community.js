@@ -40,14 +40,39 @@
       returnTo: '#/board'                               // 로그인 뒤 돌아갈 곳
     };
 
-    // fetch 가 끊기면 예외가 나므로, 화면이 깨지지 않게 실패를 응답 모양으로 바꾼다
+    // fetch 가 끊기면 예외가 나므로, 화면이 깨지지 않게 실패를 응답 모양으로 바꾼다.
+    // 8초가 지나도 답이 없으면 '끊긴 것'으로 본다 — 스피너가 영원히 돌면 앱이 죽은 줄 안다 (SCR-AUTH-002).
+    const API_TIMEOUT = 8000;
     async function api(path, opts) {
+      let t;
       try {
-        return await rawApi(path, opts);
+        return await Promise.race([
+          rawApi(path, opts),
+          new Promise((_, reject) => { t = setTimeout(() => reject(new Error('timeout')), API_TIMEOUT); })
+        ]);
       } catch (e) {
         return { ok: false, status: 0, body: { message: '연결이 잠깐 끊겼어요. 다시 시도해 주세요.' } };
+      } finally {
+        clearTimeout(t);
       }
     }
+
+    // 서버가 죽어도 '가입을 못 해서 앱을 못 쓰는' 상태는 만들지 않는다 — 모달(app.js)과 같은 문구·같은 버튼
+    function guestBlock() {
+      return `<div class="auth-guest" id="authGuest" hidden>
+        <p class="sub" id="authGuestNote">서버가 응답하지 않아도 둘러보는 길은 있어요.</p>
+        <button type="button" class="btn ghost block" data-cm="guest">인터넷 없이 게스트로 임시 입장</button>
+      </div>`;
+    }
+    function showGuest(form, msg) {
+      const scope = (form && form.parentNode) || document;
+      const box = scope.querySelector ? scope.querySelector('#authGuest') : null;
+      if (!box) return;
+      box.hidden = false;
+      const note = box.querySelector('#authGuestNote');
+      if (note && msg) note.textContent = msg;
+    }
+    const netDown = r => !r || r.status === 0 || r.status >= 500;
 
     const isMember = () => !!getMember();
     const idOf = v => (/^\d{1,12}$/.test(String(v || '')) ? Number(v) : 0);
@@ -177,6 +202,7 @@
           <p class="cm-error" role="alert"></p>
           <button class="btn block" type="submit">로그인</button>
         </form>
+        ${guestBlock()}
         <p class="sub cm-center">아직 회원이 아니신가요? <a href="#/account/signup">회원가입</a></p>
       </section>`;
     }
@@ -202,6 +228,7 @@
           <p class="cm-error" role="alert"></p>
           <button class="btn block" type="submit">가입하고 시작하기</button>
         </form>
+        ${guestBlock()}
         <p class="sub cm-center">이미 회원이신가요? <a href="#/account/login">로그인</a></p>
       </section>`;
     }
@@ -406,6 +433,7 @@
       setBusy(form, false);
       if (!r.ok) {
         formError(form, (r.body && r.body.message) || '로그인하지 못했어요. 잠시 후 다시 시도해 주세요.');
+        if (netDown(r)) showGuest(form, '로그인 서버가 응답하지 않아요. 게스트로도 둘러볼 수 있어요.');
         const pw = form.querySelector('[name="password"]');
         if (pw && r.status === 401) pw.value = '';     // 틀린 비밀번호만 지운다
         return;
@@ -427,7 +455,10 @@
       setBusy(form, true);
       const r = await api('/api/auth/signup', { method: 'POST', body: { email, password, nickname: nickname || undefined } });
       setBusy(form, false);
-      if (!r.ok) return formError(form, (r.body && r.body.message) || '가입하지 못했어요. 잠시 후 다시 시도해 주세요.', (r.body && r.body.field) || null);
+      if (!r.ok) {
+        if (netDown(r)) showGuest(form, '가입 서버가 응답하지 않아요. 인터넷 없이도 둘러볼 수 있어요.');
+        return formError(form, (r.body && r.body.message) || '가입하지 못했어요. 잠시 후 다시 시도해 주세요.', (r.body && r.body.field) || null);
+      }
       await applySession({ uid: r.body.uid, token: r.body.token, member: r.body.member });
       toast(`가입을 환영해요, ${r.body.member.nickname}님 🪷`);
       afterAuth();
@@ -502,6 +533,7 @@
         box.focus();
         return;
       }
+      if (act === 'guest') { if (window.MJ_START_GUEST) window.MJ_START_GUEST(); return; }
       if (act === 'cat') { st.filter.cat = el.dataset.id; st.filter.page = 1; refetchList(); return; }
       if (act === 'page') {
         st.filter.page = Math.max(1, Number(el.dataset.p) || 1);

@@ -158,3 +158,33 @@
   .sagye-typing::after{animation:none;opacity:.6}
   .seal-send{transition:none}
 }
+
+/* ---------- 사경첩 · 예외 상태 조각 (SCR-MAIN-001 · SCR-REP-003) ---------- */
+
+/* 빈 입력으로 전송 — 테두리가 주사색으로 두 번 점멸하고 포커스는 입력칸에 남는다 */
+@keyframes sagye-alert{0%,100%{box-shadow:0 0 0 0 rgba(var(--pine-rgb),0)}50%{box-shadow:0 0 0 3px rgba(var(--pine-rgb),.45)}}
+.sagye-inputwrap.is-alert textarea{animation:sagye-alert .38s ease-in-out 2;border-color:var(--pine)}
+.sagye-inputwrap.is-alert .sagye-clear{color:var(--pine-ink)}
+
+/* 연결이 흐려진 자리 — 유실을 감추지 않고 문장으로 남긴다 */
+.sagye-lost{margin:0 0 var(--s3);color:var(--text-2);font-style:italic}
+
+/* 마음 씨앗(N<3) — 차트 대신 단계 점. 차트 컴포넌트는 아예 만들지 않는다 */
+.seed-card .seal-mark{font-size:1.6em}
+.seed-dots{display:flex;gap:8px;justify-content:center;margin:var(--s3) 0 0}
+.seed-dots i{width:10px;height:10px;border-radius:50%;background:var(--border-1);border:1px solid var(--pine-line)}
+.seed-dots i.on{background:var(--pine);border-color:var(--pine)}
+
+/* 주간 감정선 — 불안은 실선(주사), 안정은 점선(묵빛) */
+.counsel-trend .line.stable{stroke:var(--text-3);stroke-width:2;stroke-dasharray:4 6;opacity:.85}
+.trend-legend{display:flex;flex-wrap:wrap;gap:var(--s3);align-items:center;margin:var(--s2) 0 0;font-size:.82em;color:var(--text-2)}
+.trend-legend .lg{display:inline-block;width:12px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.trend-legend .lg.anxiety{background:var(--pine)}
+.trend-legend .lg.stable{background:var(--text-3)}
+
+/* 낱말의 농도 — 빈도가 아니라 '오래 머문 자리'를 진하게 */
+.kw.hi{background:var(--pine-soft);border-color:var(--pine-line)}
+.kw.hi b{color:var(--pine-ink)}
+.kw.mid b{color:var(--pine)}
+.kw.lo{background:var(--surface-2)}
+.kw.lo b{color:var(--text-2);font-weight:600}

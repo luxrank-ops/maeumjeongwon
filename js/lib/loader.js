@@ -103,7 +103,8 @@
   };
 
   function routeKeys(hash) {
-    var parts = String(hash || '#/home').replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent);
+    // 해시 뒤의 물음표는 경로가 아니다 — '#/report?demo=B' 의 키는 'report' (데모에 자산이 빠지면 안 된다)
+    var parts = String(hash || '#/home').split('?')[0].replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent);
     var keys = [];
     for (var i = parts.length; i > 0; i--) keys.push(parts.slice(0, i).join('/'));
     return keys;

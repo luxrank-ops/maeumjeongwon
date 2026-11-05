@@ -1112,8 +1112,41 @@
     openModal: function (opts = {}) {
       const modal = document.getElementById('modal');
       if (!modal) return;
-      // 사경첩 조각(css/sagye.css)은 첫 화면 예산 때문에 지연 자산이다 — 시트를 그리기 전에 요청만 걸어 둔다
-      try { if (root.MJ_LOADER && root.MJ_LOADER.ensure) root.MJ_LOADER.ensure(['sagye']); } catch (e) {}
+      /* 사경첩 조각(css/sagye.css)은 첫 화면 예산 때문에 지연 자산이다 — 시트를 그리기 전에 요청만 걸어 둔다.
+         받지 못하면(배포 CSS 유실·차단) 시트가 맨몸으로 뜬다. 그때를 위해 최소 테마를 인라인으로 얹는
+         '로컬 복구 번들'을 둔다 — 격자·인장·여백이 무너지지 않으면 상담은 계속된다 (SCR-AUTH-002 예외 1의 사경판). */
+      function applyFallbackTheme() {
+        const sheet = modal.querySelector('.sagye-sheet');
+        if (!sheet) return;
+        const F = { paper: '#FAF7F2', ink: '#1A1A1A', jusa: '#B71C1C', onJusa: '#FFFDF9', line: '#E5DCD0', sub: '#5E5952' };
+        sheet.style.background = F.paper; sheet.style.color = F.ink;
+        sheet.style.padding = '18px 16px'; sheet.style.borderRadius = '24px 24px 0 0';
+        const paperEl = sheet.querySelector('.sagye-paper');
+        if (paperEl) {
+          paperEl.style.borderRadius = '16px';
+          paperEl.style.border = '1px solid ' + F.line;
+          paperEl.style.padding = '16px';
+          paperEl.style.backgroundImage = 'linear-gradient(90deg, rgba(183,28,28,.10) 1px, transparent 1px), linear-gradient(0deg, rgba(183,28,28,.10) 1px, transparent 1px)';
+          paperEl.style.backgroundSize = '32px 32px';
+        }
+        const seal = sheet.querySelector('.seal-send');
+        if (seal) {
+          seal.style.background = F.jusa; seal.style.color = F.onJusa;
+          seal.style.width = '72px'; seal.style.height = '72px'; seal.style.borderRadius = '8px'; seal.style.border = '0';
+        }
+        const foot = sheet.querySelector('.sagye-foot');
+        if (foot) { foot.style.background = F.paper; foot.style.borderTop = '1px solid ' + F.line; foot.style.paddingTop = '12px'; }
+        const ta = sheet.querySelector('#aiPromptInput');
+        if (ta) { ta.style.color = F.ink; ta.style.border = '1px solid ' + F.line; ta.style.borderRadius = '12px'; ta.style.background = '#FFFDF9'; }
+        sheet.setAttribute('data-fallback-theme', '1');
+      }
+      try {
+        const loading = root.MJ_LOADER && root.MJ_LOADER.ensure ? root.MJ_LOADER.ensure(['sagye']) : null;
+        if (loading && typeof loading.catch === 'function') loading.catch(applyFallbackTheme);
+      } catch (e) { /* 로더가 없으면 아래 시간 점검이 맡는다 */ }
+      setTimeout(function () {
+        try { if (!document.querySelector('link[href*="css/sagye.css"]')) applyFallbackTheme(); } catch (e) {}
+      }, 1500);
       const cfg = AICounsel.getConfig();
       const temple = opts.temple || null;
       const presetMood = opts.mood || '';
@@ -1153,7 +1186,7 @@
                 <textarea id="aiPromptInput" rows="2" aria-label="나의 마음·질문" placeholder="지금 마음이나 찾고 싶은 사찰 분위기를 적어 주세요">${defaultPrompt}</textarea>
                 <button type="button" class="sagye-clear" id="sagyeClear" aria-label="입력한 내용 지우기" hidden>×</button>
               </span>
-              <button type="button" class="seal-send" id="aiCounselSubmitBtn" aria-label="상담 보내기"><b>問</b><span>보내기</span></button>
+              <button type="button" class="seal-send" id="aiCounselSubmitBtn" aria-label="상담 보내기"><b>印</b><span>보내기</span></button>
             </div>
             <p class="sagye-hint">이 기기에만 남아요 · 이름·연락처는 적지 마세요</p>
           </div>
@@ -1241,92 +1274,133 @@
         return el;
       }
 
-      async function runQuery() {
+      /* 답을 한 장에 앉히는 일 — 재시도로 다시 그릴 때도 같은 함수를 쓴다. */
+      function renderAnswer(ans, data, prompt) {
+        const verse = data.verse || { text: '마음이 청정하면 곧 불국토가 청정하다.', source: '유마경' };
+        const recs = Array.isArray(data.recommendations) ? data.recommendations : [];
+        const practice = Array.isArray(data.practice) ? data.practice : [];
+        ans.innerHTML = '';
+        ans.setAttribute('aria-busy', 'true');
+        const empathy = document.createElement('p');
+        empathy.setAttribute('aria-live', 'polite');
+        ans.appendChild(empathy);
+
+        typeInto(empathy, data.empathy || '', function () {
+          // 구절은 답이 다 앉은 뒤에 — 한 장이 완성되는 순서를 지킨다
+          const verseBox = document.createElement('div');
+          verseBox.className = 'sagye-verse';
+          verseBox.innerHTML = `<span class="lbl">오늘의 경전 구절 · ${verse.source || ''}</span><p>“${verse.text || ''}”</p>`;
+          ans.appendChild(verseBox);
+
+          if (recs.length) {
+            const h = document.createElement('div');
+            h.className = 'sagye-answer-h';
+            h.textContent = '이 마음에 걸을 곳';
+            ans.appendChild(h);
+            const list = document.createElement('div');
+            recs.forEach(r => {
+              const a = document.createElement('a');
+              a.className = 'sagye-pick';
+              a.href = `#/temple/${r.id}`;
+              a.setAttribute('data-act', 'close');
+              a.innerHTML = `<b>${r.name}</b> <span class="sub">${r.sido || ''} ${r.sgg || ''} · ${r.mountain || ''}</span>
+                <span class="sub">${r.reason || ''}</span>`;
+              list.appendChild(a);
+            });
+            ans.appendChild(list);
+          }
+
+          if (practice.length) {
+            const h = document.createElement('div');
+            h.className = 'sagye-answer-h';
+            h.textContent = '참배 · 명상 3단계';
+            ans.appendChild(h);
+            const ol = document.createElement('ol');
+            practice.forEach(step => { const li = document.createElement('li'); li.textContent = step; ol.appendChild(li); });
+            ans.appendChild(ol);
+          }
+
+          const foot = document.createElement('div');
+          foot.className = 'row between';
+          foot.innerHTML = `<button class="btn ghost small" id="aiCounselListenBtn">음성으로 듣기</button>
+            <span class="sub" style="font-size:.78em;flex:1 1 auto;text-align:right">${data.disclaimer || ''}</span>`;
+          ans.appendChild(foot);
+          const listenBtn = foot.querySelector('#aiCounselListenBtn');
+          if (listenBtn) {
+            listenBtn.addEventListener('click', () => {
+              const speechText = [data.empathy, `오늘의 경전 구절, ${verse.source}. ${verse.text}.`, ...practice]
+                .filter(Boolean).join(' ');
+              Docent.play('마음 사경 안내', speechText);
+            });
+          }
+          ans.setAttribute('aria-busy', 'false');
+
+          // 리포트의 씨앗 — 이 기기 안에만 남는다 (서버로 보내지 않는다).
+          // 기록 저장소는 지연 모듈(report.js)에 있다. 아직 없으면 큐에 넣어 두고, 모듈이 오면 비운다.
+          try {
+            const rec = { prompt, mood: presetMood || (opts.mood || ''), templeId: temple ? temple.id : '', verse: verse.source || '' };
+            if (root.MJ_COUNSEL && root.MJ_COUNSEL.add) root.MJ_COUNSEL.add(rec);
+            else (root.MJ_COUNSEL_QUEUE = root.MJ_COUNSEL_QUEUE || []).push(rec);
+          } catch (e) {}
+        });
+      }
+
+      /* 연결이 흐려질 때 — 3번까지 다시 붙어 본다. 그래도 안 되면 '유실 지점'을 숨기지 않고
+         안내 문장 + 인라인 재시도 버튼을 남긴다 (SCR-MAIN-001 예외 1). */
+      const RETRY_MAX = 3;
+      async function askWithRetry(payload, onAttempt) {
+        let lastErr = null;
+        for (let i = 1; i <= RETRY_MAX; i++) {
+          try { return await AICounsel.ask(payload); }
+          catch (err) {
+            lastErr = err;
+            if (onAttempt) onAttempt(i);
+            if (i < RETRY_MAX) await new Promise(r => setTimeout(r, 300 * i));
+          }
+        }
+        throw lastErr || new Error('연결 실패');
+      }
+
+      async function runQuery(again) {
+        const reuseTurn = again && again.turn ? again.turn : null;
         const prompt = (input && input.value.trim()) || defaultPrompt;
         if (submitBtn) {
           submitBtn.disabled = true;
           submitBtn.setAttribute('aria-busy', 'true');
         }
-        const el = newTurn(prompt);
+        const el = reuseTurn || newTurn(prompt);
         const ans = el.querySelector('.sagye-a');
-        const empathyEl = document.createElement('p');
-        empathyEl.className = 'sagye-typing';
-        empathyEl.textContent = '붓을 적시고 있습니다…';
-        ans.appendChild(empathyEl);
+        ans.innerHTML = '';
+        ans.setAttribute('aria-busy', 'true');
+        const pending = document.createElement('p');
+        pending.className = 'sagye-typing';
+        pending.textContent = '붓을 적시고 있습니다…';
+        ans.appendChild(pending);
         if (paper) {
           try { paper.scrollIntoView({ block: 'end', behavior: reduced ? 'auto' : 'smooth' }); } catch (e) {}
         }
 
         try {
-          const data = await AICounsel.ask({ prompt, mood: presetMood, templeId: temple ? temple.id : undefined });
-          const verse = data.verse || { text: '마음이 청정하면 곧 불국토가 청정하다.', source: '유마경' };
-          const recs = Array.isArray(data.recommendations) ? data.recommendations : [];
-          const practice = Array.isArray(data.practice) ? data.practice : [];
-          ans.innerHTML = '';
-          const empathy = document.createElement('p');
-          empathy.setAttribute('aria-live', 'polite');
-          ans.appendChild(empathy);
-
-          typeInto(empathy, data.empathy || '', function () {
-            // 구절은 답이 다 앉은 뒤에 — 한 장이 완성되는 순서를 지킨다
-            const verseBox = document.createElement('div');
-            verseBox.className = 'sagye-verse';
-            verseBox.innerHTML = `<span class="lbl">오늘의 경전 구절 · ${verse.source || ''}</span><p>“${verse.text || ''}”</p>`;
-            ans.appendChild(verseBox);
-
-            if (recs.length) {
-              const h = document.createElement('div');
-              h.className = 'sagye-answer-h';
-              h.textContent = '이 마음에 걸을 곳';
-              ans.appendChild(h);
-              const list = document.createElement('div');
-              recs.forEach(r => {
-                const a = document.createElement('a');
-                a.className = 'sagye-pick';
-                a.href = `#/temple/${r.id}`;
-                a.setAttribute('data-act', 'close');
-                a.innerHTML = `<b>${r.name}</b> <span class="sub">${r.sido || ''} ${r.sgg || ''} · ${r.mountain || ''}</span>
-                  <span class="sub">${r.reason || ''}</span>`;
-                list.appendChild(a);
-              });
-              ans.appendChild(list);
+          const data = await askWithRetry(
+            { prompt, mood: presetMood, templeId: temple ? temple.id : undefined },
+            function (attempt) {
+              pending.textContent = attempt === 1 ? '붓을 적시고 있습니다…' : `다시 붓을 고르는 중… (${attempt}/${RETRY_MAX})`;
             }
-
-            if (practice.length) {
-              const h = document.createElement('div');
-              h.className = 'sagye-answer-h';
-              h.textContent = '참배 · 명상 3단계';
-              ans.appendChild(h);
-              const ol = document.createElement('ol');
-              practice.forEach(step => { const li = document.createElement('li'); li.textContent = step; ol.appendChild(li); });
-              ans.appendChild(ol);
-            }
-
-            const foot = document.createElement('div');
-            foot.className = 'row between';
-            foot.innerHTML = `<button class="btn ghost small" id="aiCounselListenBtn">음성으로 듣기</button>
-              <span class="sub" style="font-size:.78em;flex:1 1 auto;text-align:right">${data.disclaimer || ''}</span>`;
-            ans.appendChild(foot);
-            const listenBtn = foot.querySelector('#aiCounselListenBtn');
-            if (listenBtn) {
-              listenBtn.addEventListener('click', () => {
-                const speechText = [data.empathy, `오늘의 경전 구절, ${verse.source}. ${verse.text}.`, ...practice]
-                  .filter(Boolean).join(' ');
-                Docent.play('마음 사경 안내', speechText);
-              });
-            }
-            ans.setAttribute('aria-busy', 'false');
-
-            // 리포트의 씨앗 — 이 기기 안에만 남는다 (서버로 보내지 않는다)
-            try {
-              if (root.MJ_COUNSEL && root.MJ_COUNSEL.add) {
-                root.MJ_COUNSEL.add({ prompt, mood: presetMood || (opts.mood || ''), templeId: temple ? temple.id : '', verse: verse.source || '' });
-              }
-            } catch (e) {}
-          });
+          );
+          renderAnswer(ans, data, prompt);
         } catch (err) {
+          // 유실된 자리를 감추지 않는다 — 안내 + 같은 장에서 이어 쓰는 버튼
+          ans.innerHTML = '<p class="sagye-lost">…(정원의 연결이 흐려져 잠시 후 이어집니다)</p>';
+          const retryBtn = document.createElement('button');
+          retryBtn.type = 'button';
+          retryBtn.className = 'btn ghost small';
+          retryBtn.textContent = '다시 이어 쓰기';
+          retryBtn.addEventListener('click', function () {
+            retryBtn.disabled = true;
+            runQuery({ turn: el });
+          });
+          ans.appendChild(retryBtn);
           ans.setAttribute('aria-busy', 'false');
-          ans.innerHTML = `<p class="sagye-typing" style="color:var(--text-2)">붓이 잠시 멈췄습니다. 잠시 뒤 다시 보내 주세요. (연결을 확인해 주세요)</p>`;
         } finally {
           if (submitBtn) {
             submitBtn.disabled = false;
@@ -1335,7 +1409,24 @@
         }
       }
 
-      if (submitBtn) submitBtn.addEventListener('click', runQuery);
+      /* 빈 입력으로 전송하면 조용히 실패하지 않는다 — 입력칸 테두리가 주사색으로 두 번 점멸하고 포커스는 그대로 (SCR-MAIN-001 예외 2) */
+      function alertInput() {
+        const wrap = modal.querySelector('.sagye-inputwrap');
+        if (wrap) {
+          wrap.classList.remove('is-alert');
+          void wrap.offsetWidth;                    // 같은 애니메이션을 다시 켜려면 리플로 한 번
+          wrap.classList.add('is-alert');
+          setTimeout(() => { try { wrap.classList.remove('is-alert'); } catch (e) {} }, 1000);
+        }
+        if (input) { input.setAttribute('aria-invalid', 'true'); input.focus(); }
+        if (root.MJ_TOAST) root.MJ_TOAST('마음을 한 줄 적어 주세요');
+      }
+      if (input) input.addEventListener('input', () => { try { input.removeAttribute('aria-invalid'); } catch (e) {} });
+
+      if (submitBtn) submitBtn.addEventListener('click', function () {
+        if (input && !input.value.trim()) { alertInput(); return; }
+        runQuery();
+      });
       runQuery();
     }
 

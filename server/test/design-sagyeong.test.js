@@ -186,26 +186,31 @@ test('③ 부트 셸 — CSS 가 깨져도 서는 첫 화면과 세 가지 문',
 // ---------- ④ 리포트 ----------
 
 test('④ 상담 기록은 이 기기에만 남고, 60장에서 멈춘다', () => {
-  assert.match(app, /window\.MJ_COUNSEL = \{ add: addCounsel, list: counselLog \}/);
+  // 기록 저장소는 지연 모듈(report.js)이 들고, 앱 셸은 읽고 쓰는 문만 연다 (첫 화면 예산)
+  assert.match(report, /root\.MJ_COUNSEL = \{ add: add, list: list, health: health, reset: reset \}/);
+  assert.match(app, /window\.MJ_STORE = \{/, '앱 셸의 저장소 문');
   assert.match(app, /counsel: \[\]/, '기본 상태에 사경 기록');
-  assert.match(app, /const COUNSEL_MAX = \d+/);
-  assert.match(app, /\.slice\(-COUNSEL_MAX\)/);
-  // 서버로 보내지 않는다 — addCounsel 안에 api() 가 있으면 안 된다
-  const add = app.slice(app.indexOf('function addCounsel'), app.indexOf('window.MJ_COUNSEL'));
+  assert.match(report, /const COUNSEL_MAX = \d+/);
+  assert.match(report, /\.slice\(-COUNSEL_MAX\)/);
+  // 서버로 보내지 않는다 — add 주변에 api()/fetch() 가 있으면 안 된다
+  const add = report.slice(report.indexOf('function add(rec)'), report.indexOf('function reset()'));
   assert.equal(/api\(|fetch\(/.test(add), false, '상담 기록은 기기 밖으로 나가지 않는다');
-  assert.match(app, /서버로 보내지 않아요/);
+  assert.match(report, /서버로 보내지 않아요/);
+  // 시트가 먼저 열려 모듈이 늦으면 큐에 넣었다가 모듈이 비운다
+  assert.match(features, /MJ_COUNSEL_QUEUE/, '기록 유실 방지 큐');
+  assert.match(report, /function drainQueue\(/, '도착하면 큐를 비운다');
 });
 
 test('④ 상태1(1~2장)은 격려 한 장, 상태2(3장~)부터 결을 보여 준다', () => {
-  const block = report.slice(report.indexOf('function counsel()'), report.length);
-  assert.match(block, /if \(!log\.length\)/, '0장: 문을 여는 안내');
-  assert.match(block, /if \(log\.length < 3\)/, '1~2장은 통계를 말하지 않는다');
-  assert.match(block, /첫 장을 남겼어요/);
-  assert.match(block, /마음의 결/, '3장부터 꺾은선');
-  assert.match(block, /sagyeGrad/, '주사 그라데이션');
-  assert.match(block, /class="tag-cloud"/);
-  assert.match(block, /회<\/span>/, '낱말마다 횟수 (#불안 3회)');
-  assert.match(block, /data-act="print"/, 'PDF 내보내기');
+  const block = report.slice(report.indexOf('function counsel('), report.length);
+  assert.match(report, /function emptyCard\(/, '0장: 문을 여는 안내');
+  assert.match(report, /function seedCard\(/, '1~2장: 마음 씨앗 (차트를 만들지 않는다)');
+  assert.match(report, /function fullReport\(/, '3장부터 결');
+  assert.match(block, /hasEnoughData/, '상태를 플래그로 가른다');
+  assert.match(report, /sagyeGrad/, '주사 그라데이션');
+  assert.match(report, /class="tag-cloud"/);
+  assert.match(report, /회<\/span>/, '낱말마다 횟수 (#불안 3회)');
+  assert.match(report, /data-act="print"/, 'PDF 내보내기');
   assert.match(app, /head \+ counselSection\(\)/, '리포트 화면에 사경 블록이 붙는다');
   assert.match(app, /window\.MJ_REPORT\.counsel/, '지연 모듈이 그린다');
   assert.match(app, /마음 사경 리포트를 불러오지 못했어요/, '모듈이 없으면 다음 행동을 준다');
