@@ -60,6 +60,10 @@ a{color:inherit}
   min-height:100vh;min-height:100svh;
   background:var(--surface-1);position:relative;
   box-shadow:0 0 30px rgba(0,0,0,.06);
+  /* 안티 퍼펙트 질감 — 완전한 흰 바탕 대신 한지 + 32px 연한 눈금 (글자 뒤에만, 아주 옅게) */
+  background-image:
+    repeating-linear-gradient(0deg,var(--grid-line) 0 1px,transparent 1px var(--grid-step)),
+    repeating-linear-gradient(90deg,var(--grid-line) 0 1px,transparent 1px var(--grid-step));
 }
 .topbar{grid-area:top;position:sticky;top:0;z-index:500;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:calc(10px + var(--safe-t)) var(--pad-x) 10px;background:rgba(var(--paper-rgb),.94);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--border-1)}
 .logo{display:flex;align-items:center;gap:6px;min-width:0;font-size:1.12em;padding:0;text-align:left}
@@ -436,26 +440,10 @@ table.cmp td:nth-child(2),table.cmp td:nth-child(3),table.cmp th:nth-child(2),ta
 .templestay-hero{border-left:4px solid var(--accent);background:linear-gradient(135deg,var(--tint-warm-1),var(--tint-warm-2))}
 .templestay-tag{background:var(--pine-soft);color:var(--pine-ink);font-weight:700;padding:2px 8px;border-radius:6px;font-size:.8em}
 /* ============================================================================
-   ⑮ 절로가 디자인 시스템 v3 — "산사의 낮" (2026-10 디자인 리뷰)
-   ----------------------------------------------------------------------------
-   이 앱이 시키는 일은 셋뿐이다. ① 마음을 고른다(처방전) ② 사찰을 읽는다(이야기)
-   ③ 걸어본다(인증·기록·여행 계획). 그런데 첫 화면이 등급·염주·상점·배너를 같은
-   무게로 늘어놓아 "무엇을 여는 앱인가"가 흐려져 있었다. 그래서 색보다 먼저
-   우선순위를 고쳤다.
-
-   지운 것
-     · 이모지를 아이콘으로 쓰던 관행  → 24px 그리드 인라인 SVG 스프라이트 (js: ic())
-       (OS마다 모양·크기가 다르고, grayscale 필터로 색까지 잃고, SR 은 글자로 읽는다)
-     · 영문 마이크레이블(MY JOURNEY · DIGITAL MALA · MINDFUL BREAK) → 한국어 라벨 하나
-     · 카드 안 카드, 카드 전체 hover lift, 9~11px 마이크로 텍스트
-     · 장식색 4종(골드·연분홍·테라코타·초록) 동시 사용 → 색 3 + 강조 1 + 완성 1
-   남긴 것
-     · 한지 색온도 · 108 염주 SVG · 도장(印) 모티프 · 큰 글씨 모드 · 5단 반응형 · data-flow
-   규칙
-     · 색: 종이(--paper) · 먹(--ink) · 소나무(--pine, 주 행동) · 점토(--clay, 도장/기도)
-          Gold(--gold)는 '이루었다'에만 — 다른 데 쓰면 강조가 죽는다.
-     · 글자: 본문 ≥ 1em(15~17.5px 유동), 보조 ≥ .86em, 줄높이 1.6, 한글 자간 -.011em
-     · 그림자 2종, 움직임 150/240/420ms + easing 1종, 모든 상태에 포커스 링
+   ⑮ 디자인 시스템 v3 — "산사의 낮" (2026-10)
+   색 3+1+1: 종이(--paper) · 먹(--ink) · 소나무(--pine, 주 행동) / 점토(--clay, 도장·기도)
+   / Gold(--gold)는 '이루었다'에만. 이모지 대신 24px SVG 스프라이트(ic()). 카드 안 카드
+   금지, 마이크로 텍스트 금지, 그림자 2종, 움직임 150/240/420ms. 근거: docs/design-refresh.md
    ============================================================================ */
 
 /* ---------- ⑮-1 토큰 ----------
@@ -482,6 +470,7 @@ table.cmp td:nth-child(2),table.cmp td:nth-child(3),table.cmp th:nth-child(2),ta
   --shade:26,20,18;--scrim:20,16,14;--glow-rgb:236,224,212;--clay-rgb:142,59,44;
   --paper-rgb:250,247,242;--card-rgb:255,253,249;--pine-rgb:183,28,28;
   --dot-off:#CFC6BA;--text-placeholder:#6B6660;--skel-hi:#F7F2EA;
+  --grid-line:rgba(26,20,18,.032);--grid-step:32px;
   --tint-warm-1:#FFFDF9;--tint-warm-2:#F7F1E8;
   --tint-gold-1:#FFFCF5;--tint-gold-2:#F8F1E6;
   --tint-danger-1:#FDF7F5;--tint-danger-2:#FBF2EF;
@@ -539,6 +528,7 @@ table.cmp td:nth-child(2),table.cmp td:nth-child(3),table.cmp th:nth-child(2),ta
   --shade:0,0,0;--scrim:0,0,0;--glow-rgb:58,32,26;--clay-rgb:217,139,114;
   --paper-rgb:20,16,15;--card-rgb:30,25,23;--pine-rgb:226,88,74;
   --dot-off:#4E453E;--text-placeholder:#8E857C;--skel-hi:#2F2724;
+  --grid-line:rgba(242,237,231,.04);--grid-step:32px;
   --tint-warm-1:#1E1917;--tint-warm-2:#171311;
   --tint-gold-1:#231D13;--tint-gold-2:#1B1710;
   --tint-danger-1:#251614;--tint-danger-2:#1E1210;
@@ -581,10 +571,22 @@ body{
   padding-top:calc(11px + var(--safe-t));padding-bottom:11px;gap:var(--s2);
   background:color-mix(in srgb,var(--surface-1) 88%,transparent);
   -webkit-backdrop-filter:saturate(1.1) blur(12px);backdrop-filter:saturate(1.1) blur(12px);
-  border-bottom:1px solid transparent;transition:border-color var(--dur-2) var(--ease),box-shadow var(--dur-2) var(--ease)
+  border-bottom:1px solid transparent;transition:border-color var(--dur-2) var(--ease),box-shadow var(--dur-2) var(--ease),padding var(--dur-2) var(--ease),background var(--dur-2) var(--ease)
 }
 @supports not (background:color-mix(in srgb,red 50%,transparent)){.topbar{background:rgba(var(--paper-rgb),.94)}}
-body.scrolled .topbar{border-bottom-color:var(--border-1);box-shadow:0 8px 20px -18px rgba(var(--shade),.5)}
+/* 스크롤 주도형 ①— 스크롤을 내리면 머리가 줄고, 보더가 '리퀴드 글래스' 한 줄로 바뀐다.
+   body.scrolled 는 app.js 의 스크롤 감시가 붙인다(스크롤 이벤트는 rAF 로 한 번만). */
+body.scrolled .topbar{
+  padding-top:calc(4px + var(--safe-t));padding-bottom:4px;
+  background:color-mix(in srgb,var(--surface-1) 74%,transparent);
+  -webkit-backdrop-filter:saturate(1.6) blur(20px);backdrop-filter:saturate(1.6) blur(20px);
+  border-bottom-color:var(--border-1);box-shadow:0 10px 24px -20px rgba(var(--shade),.6)
+}
+@supports not (background:color-mix(in srgb,red 50%,transparent)){body.scrolled .topbar{background:rgba(var(--paper-rgb),.86)}}
+body.scrolled .brand-mark{transform:scale(.86)}
+body.scrolled .brand-copy small{opacity:0;transform:translateY(-4px)}
+.brand-mark,.brand-copy small{transition:transform var(--dur-2) var(--ease),opacity var(--dur-2) var(--ease)}
+@media (prefers-reduced-motion:reduce){.brand-mark,.brand-copy small,.topbar{transition:none!important}}
 .logo{gap:9px;min-width:0;flex:1 1 auto}
 .brand-mark{
   position:relative;display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;
@@ -670,7 +672,7 @@ h3{font-size:1em;font-weight:700;font-family:var(--font-ui)}
 }
 .btn .ic{color:currentColor}
 .btn:hover{background:var(--pine-hover)}
-.btn:active{transform:translateY(1px) scale(.995)}
+.btn:active{transform:translateY(1px) scale(.97)}
 .btn:focus-visible{outline:none;box-shadow:var(--ring)}
 .btn.ghost{background:var(--surface-2);color:var(--text-1);border:1px solid var(--border-1);font-weight:600}
 .btn.ghost:hover{background:var(--pine-soft);border-color:var(--pine-line);color:var(--pine-ink)}
@@ -1391,22 +1393,9 @@ body.big .main-title__desc{font-size:1em}
 
 /* ============================================================================
    ⑯ 모바일 조작 규칙 — 손끝 48dp · 입력의 지우기 · 옵션은 펼쳐서 · 즉각 피드백
-   ----------------------------------------------------------------------------
-   실무 가이드(터치 48dp · 엄지 존 · 본문 16pt/행간 150% · WCAG 4.5:1 · 뒤로가기 1개 ·
-   텍스트필드 Clear · 수량은 스텝퍼 · 5개 이하 옵션은 직접 노출 · 가벼운 모달 시트 ·
-   즉각적 피드백)를 이 앱의 화면에 대 보니, 이미 되어 있는 것과 비어 있는 것이 갈렸다.
-
-   이미 있던 것 → 손대지 않았다
-     · 하단 탭바(엄지 존) · 사찰 상세 하단 고정 행동판 · 저조도 모드 · 모달 시트 ·
-       스켈레톤·빈 상태 · 화면당 뒤로가기 1개(.backlink) · 본문 줄높이 1.6
-   비어 있던 것 → 이 블록에서 채웠다
-     · 터치 44px → 1차 행동 48px, 상단 칩은 44px + 히트 슬롭 4px = 48px
-     · 본문 기준 15px → 16px (큰 글씨 모드는 19px 부터)
-     · 텍스트필드 Clear(×) — 마크업마다 넣지 않고 JS(enhanceFields)가 한 번에 붙인다
-     · 5개 이하 옵션은 .choices 로 펼치고, 7개 이상만 <select> 로 남긴다
-     · 수량은 .stepper (드롭다운 금지)
-     · 모든 조작에 누름 피드백, 오래 걸리는 제출에는 aria-busy 스피너
-     · 대비 미달 두 곳(placeholder 2.89:1, 골드 배지 4.40:1) 수정
+   2026-11: 터치 44→48px(상단 칩은 44+히트 슬롭) · 본문 15→16px · 모든 텍스트필드에
+   Clear(×)(JS enhanceFields) · 5개 이하 옵션은 .choices 로 펼침 · 수량은 .stepper ·
+   모든 조작에 누름 피드백 · 대비 미달 2곳 수정. 근거와 실측: docs/mobile-ux-guidelines.md
    ============================================================================ */
 
 /* ---------- ⑯-1 손끝 크기 ----------
