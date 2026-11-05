@@ -185,18 +185,19 @@
       return `<section class="cm-page">
         ${tabs('signup')}
         <h1>회원가입</h1>
-        <p class="sub">이메일·닉네임·비밀번호만 있으면 돼요. 가입하면 바로 로그인돼요.</p>
+        <p class="sub">이메일과 비밀번호만 있으면 돼요. 가입하면 바로 로그인돼요.</p>
         <form class="card cm-form" data-cm-form="signup" novalidate>
           <label for="cm-s-email">이메일</label>
           <input id="cm-s-email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" maxlength="254" required>
-          <label for="cm-s-nick">닉네임</label>
-          <input id="cm-s-nick" name="nickname" autocomplete="nickname" maxlength="12" required>
-          <p class="sub cm-hint">한글·영문·숫자·밑줄(_)로 2~12자. 다른 회원과 겹칠 수 없어요.</p>
           <label for="cm-s-pw">비밀번호</label>
-          <input id="cm-s-pw" name="password" type="password" autocomplete="new-password" maxlength="100" required>
+          <span class="pw-row">
+            <input id="cm-s-pw" name="password" type="password" autocomplete="new-password" maxlength="100" required>
+            <button type="button" class="pw-toggle" data-cm="pw-toggle" aria-pressed="false" aria-controls="cm-s-pw">보기</button>
+          </span>
           <p class="sub cm-hint">8자 이상, 영문과 숫자를 함께 써 주세요.</p>
-          <label for="cm-s-pw2">비밀번호 확인</label>
-          <input id="cm-s-pw2" name="password2" type="password" autocomplete="new-password" maxlength="100" required>
+          <label for="cm-s-nick">닉네임 <span class="sub">(선택)</span></label>
+          <input id="cm-s-nick" name="nickname" autocomplete="nickname" maxlength="12" placeholder="비워 두면 이메일 앞부분으로 정해져요">
+          <p class="sub cm-hint">한글·영문·숫자·밑줄(_)로 2~12자. 나중에 내 정보에서 바꿀 수 있어요.</p>
           <label class="cm-agree"><input type="checkbox" name="agree"> <span>회원 게시판 규칙(서로 존중하기 · 개인정보 올리지 않기)에 동의해요</span></label>
           <p class="cm-error" role="alert"></p>
           <button class="btn block" type="submit">가입하고 시작하기</button>
@@ -417,13 +418,14 @@
     async function doSignup(form) {
       const fd = new FormData(form);
       const email = String(fd.get('email') || '').trim();
+      // 닉네임은 '선택' — 비워 두면 서버가 이메일 앞부분으로 만들어 준다 (가입을 길게 만들지 않는다)
       const nickname = String(fd.get('nickname') || '').trim();
       const password = String(fd.get('password') || '');
       const password2 = String(fd.get('password2') || '');
       if (!fd.get('agree')) return formError(form, '회원 게시판 규칙에 동의해 주세요.', 'agree');
-      if (password !== password2) return formError(form, '비밀번호 확인이 달라요. 다시 입력해 주세요.', 'password2');
+      if (password2 && password !== password2) return formError(form, '비밀번호 확인이 달라요. 다시 입력해 주세요.', 'password2');
       setBusy(form, true);
-      const r = await api('/api/auth/signup', { method: 'POST', body: { email, nickname, password } });
+      const r = await api('/api/auth/signup', { method: 'POST', body: { email, password, nickname: nickname || undefined } });
       setBusy(form, false);
       if (!r.ok) return formError(form, (r.body && r.body.message) || '가입하지 못했어요. 잠시 후 다시 시도해 주세요.', (r.body && r.body.field) || null);
       await applySession({ uid: r.body.uid, token: r.body.token, member: r.body.member });
@@ -489,6 +491,17 @@
       if (!el) return;
       const act = el.dataset.cm;
       if (act === 'login-next') { st.returnTo = el.dataset.next || '#/board'; return; }   // 링크는 그대로 이동한다
+      if (act === 'pw-toggle') {
+        // 확인 칸 대신 '보기' — 오타로 잠기는 일을 화면에서 줄인다
+        const box = document.getElementById(el.getAttribute('aria-controls') || '');
+        if (!box) return;
+        const shown = box.getAttribute('type') === 'password';
+        box.setAttribute('type', shown ? 'text' : 'password');
+        el.setAttribute('aria-pressed', shown ? 'true' : 'false');
+        el.textContent = shown ? '숨기기' : '보기';
+        box.focus();
+        return;
+      }
       if (act === 'cat') { st.filter.cat = el.dataset.id; st.filter.page = 1; refetchList(); return; }
       if (act === 'page') {
         st.filter.page = Math.max(1, Number(el.dataset.p) || 1);

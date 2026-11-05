@@ -7,9 +7,9 @@
 
 /* ---------- ① 디자인 토큰 : 화면 너비에 따라 글자·여백·열 폭이 함께 변한다 ---------- */
 :root{
-  /* 색 (따뜻한 한지 톤) */
-  --bg:#f6f1e7;--card:#fffdf8;--ink:#2f2a24;--sub:#7a6f62;--line:#e6dccb;
-  --accent:#7a8f5c;--accent2:#b5643c;--gold:#c9a24a;--lotus:#d98a8a;
+  /* 색 (한지 + 묵 + 주사) — ⑮-1 에서 한 번 더 정리되지만, 이 블록만 읽는 규칙을 위해 같은 값을 둔다 */
+  --bg:#FAF7F2;--card:#FFFDF9;--ink:#1A1A1A;--sub:#5E5952;--line:#E5DCD0;
+  --accent:#B71C1C;--accent2:#8E3B2C;--gold:#6B4E2E;--lotus:#B71C1C;
   /* 유동 타이포: 기준 크기를 뷰포트에 맞춰놓고, 큰 글씨 모드는 body 에서 기저값만 교체한다 */
   --fs-base:clamp(16px, .55vw + 13.5px, 18px);   /* 본문 16px 이상 — 가이드: 본문 16pt·행간 150% */
   /* 유동 여백·배율 */
@@ -61,7 +61,7 @@ a{color:inherit}
   background:var(--surface-1);position:relative;
   box-shadow:0 0 30px rgba(0,0,0,.06);
 }
-.topbar{grid-area:top;position:sticky;top:0;z-index:500;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:calc(10px + var(--safe-t)) var(--pad-x) 10px;background:rgba(246,241,231,.94);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--border-1)}
+.topbar{grid-area:top;position:sticky;top:0;z-index:500;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:calc(10px + var(--safe-t)) var(--pad-x) 10px;background:rgba(var(--paper-rgb),.94);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--border-1)}
 .logo{display:flex;align-items:center;gap:6px;min-width:0;font-size:1.12em;padding:0;text-align:left}
 .logo b{font-family:"Noto Serif CJK KR",serif;letter-spacing:.02em;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .topright{display:flex;gap:6px;align-items:center;flex:0 1 auto;min-width:0}
@@ -466,27 +466,28 @@ table.cmp td:nth-child(2),table.cmp td:nth-child(3),table.cmp th:nth-child(2),ta
    화면 전체의 밝기를 바꿀 수 있어야 시맨틱 토큰을 둔 이유가 생긴다.
    ---------------------------------------------------------------------------- */
 :root{
-  /* ① 팔레트 · 낮 (한지 + 먹 + 소나무 + 점토 + 골드) */
-  --paper:#f6f1e7;--paper-2:#ece5d5;
-  --card:#fffefb;--ink:#1c2621;--ink-2:#3e4c46;--sub:#5c6a63;
-  --line:#e2ddcf;--line-2:#ece8dd;
-  --pine:#33604a;--pine-2:#264a39;--pine-soft:#e9f0ea;--pine-line:#c7d9c9;--pine-ink:#1e3b2c;
-  --clay:#a4543a;--clay-soft:#f7e9e0;--clay-line:#e8cdbe;
-  --gold:#8a6a22;--gold-soft:#f8efd8;--gold-line:#e6d3a6;
-  --danger:#9c3626;
+  /* ① 팔레트 · 낮 (한지 + 묵 + 주사朱砂) — 2026-11 '사경첩'
+     강조는 주사 하나(--pine). 점토(--clay)는 도장, 먹금(--gold)은 '이루었다'에만. */
+  --paper:#FAF7F2;--paper-2:#F1EAE0;
+  --card:#FFFDF9;--ink:#1A1A1A;--ink-2:#3A3733;--sub:#5E5952;
+  --line:#E5DCD0;--line-2:#F0E9DF;
+  --pine:#B71C1C;--pine-2:#7A1010;--pine-soft:#FBEEEB;--pine-line:#EFCEC8;--pine-ink:#8C1414;
+  --clay:#8E3B2C;--clay-soft:#F6E9E2;--clay-line:#E8CDBF;
+  --gold:#6B4E2E;--gold-soft:#F5EDE1;--gold-line:#E2D3B8;
+  --danger:#7B2D26;
   /* 강조색 위에 얹는 글자 — 흰색이 통하는 건 '낮'의 진한 강조색뿐이다.
      저조도에서는 강조색이 밝아지므로 글자를 어둡게 뒤집어야 대비가 산다. */
-  --on-pine:#fff;--on-clay:#fff;--on-gold:#fff;--on-deep:#f7efd8;
+  --on-pine:#FFFDF9;--on-clay:#FFFDF9;--on-gold:#FFF8EC;--on-deep:#F7EFD8;
   /* 파생 — 색을 '숫자'로 들고 있어야 하는 자리(rgba) */
-  --shade:28,38,33;--scrim:24,32,28;--glow-rgb:233,240,234;--clay-rgb:164,84,58;
-  --paper-rgb:246,241,231;--card-rgb:255,254,251;--pine-rgb:51,96,74;
-  --dot-off:#c9c1ad;--text-placeholder:#66716b;--skel-hi:#f6f3ea;
-  --tint-warm-1:#fffdf7;--tint-warm-2:#f4f1e6;
-  --tint-gold-1:#fffdf5;--tint-gold-2:#fbf5e6;
-  --tint-danger-1:#fffaf8;--tint-danger-2:#fdf4f1;
-  --pine-soft-2:#dfeadf;--pine-line-2:#b9d0bb;--pine-3:#5d8f6f;--pine-hover:#264a39;
-  --clay-2:#8e462f;--gold-ink:#6b5116;--gold-line-2:#d8bd7e;
-  --danger-soft:#fbeae6;--danger-line:#edd3cd;--breath-1:#dfeadd;
+  --shade:26,20,18;--scrim:20,16,14;--glow-rgb:236,224,212;--clay-rgb:142,59,44;
+  --paper-rgb:250,247,242;--card-rgb:255,253,249;--pine-rgb:183,28,28;
+  --dot-off:#CFC6BA;--text-placeholder:#6B6660;--skel-hi:#F7F2EA;
+  --tint-warm-1:#FFFDF9;--tint-warm-2:#F7F1E8;
+  --tint-gold-1:#FFFCF5;--tint-gold-2:#F8F1E6;
+  --tint-danger-1:#FDF7F5;--tint-danger-2:#FBF2EF;
+  --pine-soft-2:#F6E3DE;--pine-line-2:#E6BFB8;--pine-3:#C33A3A;--pine-hover:#9C1717;
+  --clay-2:#7A3125;--gold-ink:#54401F;--gold-line-2:#D9C49A;
+  --danger-soft:#FAEDE9;--danger-line:#EBD2CA;--breath-1:#F7E4DF;
   /* 모서리·여백 */
   --r:18px;--r-sm:12px;--r-lg:26px;
   --s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:22px;--s6:30px;
@@ -526,24 +527,24 @@ table.cmp td:nth-child(2),table.cmp td:nth-child(3),table.cmp th:nth-child(2),ta
    적용은 <html data-theme> 하나로 정한다. 기본은 '시스템 설정을 따른다'이고,
    상단 토글로 하루 중에도 바꿀 수 있다 (js/app.js 의 applyTheme). */
 :root[data-theme=dark]{
-  --paper:#121815;--paper-2:#0a0e0c;
-  --card:#1b221e;
-  --ink:#eef1ea;--ink-2:#cdd6cd;--sub:#9aaca0;
-  --line:#2c3730;--line-2:#232c26;
-  --pine:#5f9a78;--pine-2:#1c2c23;--pine-soft:#1c2b23;--pine-line:#2f4a3a;--pine-ink:#a8d3b7;
-  --clay:#d98b6a;--clay-soft:#2b1e18;--clay-line:#4a3025;
-  --gold:#d9b666;--gold-soft:#2a2415;--gold-line:#4a3d18;
-  --danger:#e08a76;
-  --on-pine:#0e1511;--on-clay:#2a1206;--on-gold:#241c05;--on-deep:#f7efd8;
-  --shade:0,0,0;--scrim:0,0,0;--glow-rgb:26,44,34;--clay-rgb:217,139,106;
-  --paper-rgb:18,24,21;--card-rgb:27,34,30;--pine-rgb:95,154,120;
-  --dot-off:#4b5a50;--text-placeholder:#7d8f84;--skel-hi:#2c3730;
-  --tint-warm-1:#202822;--tint-warm-2:#1a211c;
-  --tint-gold-1:#241f11;--tint-gold-2:#1e1a0e;
-  --tint-danger-1:#251813;--tint-danger-2:#1f130f;
-  --pine-soft-2:#24402f;--pine-line-2:#3a5a47;--pine-3:#78b18e;--pine-hover:#78b18e;
-  --clay-2:#e8a184;--gold-ink:#e6cd8e;--gold-line-2:#6b5a26;
-  --danger-soft:#2f1b16;--danger-line:#4a2c24;--breath-1:#24402f;
+  --paper:#14100F;--paper-2:#0B0908;
+  --card:#1E1917;
+  --ink:#F2EDE7;--ink-2:#D3CAC1;--sub:#A79C92;
+  --line:#2F2724;--line-2:#241E1C;
+  --pine:#E2584A;--pine-2:#3A1512;--pine-soft:#2A1714;--pine-line:#4E241E;--pine-ink:#F0A79A;
+  --clay:#D98B72;--clay-soft:#2C1C16;--clay-line:#4C2E24;
+  --gold:#D9BC8C;--gold-soft:#2A2419;--gold-line:#4A3E28;
+  --danger:#EE9080;
+  --on-pine:#180E0C;--on-clay:#23120C;--on-gold:#241C10;--on-deep:#F7EFD8;
+  --shade:0,0,0;--scrim:0,0,0;--glow-rgb:58,32,26;--clay-rgb:217,139,114;
+  --paper-rgb:20,16,15;--card-rgb:30,25,23;--pine-rgb:226,88,74;
+  --dot-off:#4E453E;--text-placeholder:#8E857C;--skel-hi:#2F2724;
+  --tint-warm-1:#1E1917;--tint-warm-2:#171311;
+  --tint-gold-1:#231D13;--tint-gold-2:#1B1710;
+  --tint-danger-1:#251614;--tint-danger-2:#1E1210;
+  --pine-soft-2:#3A1E19;--pine-line-2:#5C2E26;--pine-3:#EF7A6A;--pine-hover:#F07C6E;
+  --clay-2:#E8A184;--gold-ink:#E6CDA8;--gold-line-2:#6B5A38;
+  --danger-soft:#2F1B17;--danger-line:#4A2C24;--breath-1:#3A1E19;
   --elev-1:0 1px 2px rgba(0,0,0,.5);
   --elev-2:0 2px 6px rgba(0,0,0,.45),0 20px 44px -26px rgba(0,0,0,.7);
   --ring:0 0 0 3px rgba(143,205,166,.42);
@@ -853,7 +854,7 @@ input[type=search]::-webkit-search-cancel-button,input[type=search]::-webkit-sea
 .audio-bar{background:var(--pine-2);border-bottom:1px solid rgba(255,255,255,.08);padding:9px var(--s4)}
 .audio-btn{background:rgba(255,255,255,.12)}
 .audio-btn.play{background:var(--gold-soft);color:var(--gold-ink)}
-.breath-circle{background:radial-gradient(circle,var(--breath-1),var(--pine));box-shadow:0 0 30px rgba(51,96,74,.22)}
+.breath-circle{background:radial-gradient(circle,var(--breath-1),var(--pine));box-shadow:0 0 30px rgba(var(--pine-rgb),.22)}
 .sound-btn{border-radius:12px;background:var(--surface-2)}
 .sound-btn.on{background:var(--pine-soft);color:var(--pine-ink);border-color:var(--pine-line)}
 .timer-digits{color:var(--pine-ink)}
@@ -1498,3 +1499,18 @@ textarea{min-height:96px}
   .chip{min-height:var(--tap-sm);padding:6px 9px;font-size:.82em}
   .topright{gap:4px}
 }
+
+/* ---------- ⑰ 사경첩 — 화면 조각은 css/sagye.css 에서 받는다 ----------
+   격자·붓글씨·인장·리포트 꺾은선은 첫 화면에 필요 없다. 보고서 화면과 상담 시트가
+   열릴 때 js/lib/loader.js 가 그 파일만 내려받는다 (첫 화면 예산 140KB).
+   여기에는 가입 폼에서 바로 쓰는 비밀번호 토글만 남긴다. */
+/* ---------- ⑰-8 비밀번호 칸 — 보기 토글 (가입 2칸 · SCR-AUTH-001) ----------
+   확인 칸을 없애는 대신 '보기'를 둔다. 오타로 잠기는 일은 화면에서 막는 게 낫다. */
+.pw-row{position:relative;display:block}
+.pw-row input[type=password],.pw-row input[type=text]{padding-right:76px}
+.pw-toggle{position:absolute;right:2px;top:50%;transform:translateY(-50%);
+  min-height:var(--tap-sm);padding:0 12px;border-radius:10px;background:transparent;
+  color:var(--text-3);font-size:.86em;font-weight:700}
+.pw-toggle:hover{background:var(--surface-sunken);color:var(--text-1)}
+.pw-toggle[aria-pressed=true]{color:var(--pine-ink);background:var(--pine-soft)}
+

@@ -206,7 +206,7 @@
   // ---------- 상태 ----------
   const SESS_KEY = 'maeumjeongwon.sess.v1';
   const ENT_KEY = 'maeumjeongwon.ent.v1';
-  const defaults = { visits: [], journal: [], big: false, moodIdx: 0, plus: null, plan: 'yearly', packs: [], offline: [], adLog: {}, adUnlocks: {}, skin: null, moodLog: [], trips: [], tripChecks: {}, streak: 0, streakDate: null, streakFreezes: 1, onboarded: false, onboardPrefs: {} };
+  const defaults = { visits: [], journal: [], big: false, moodIdx: 0, plus: null, plan: 'yearly', packs: [], offline: [], adLog: {}, adUnlocks: {}, skin: null, moodLog: [], trips: [], tripChecks: {}, streak: 0, streakDate: null, streakFreezes: 1, onboarded: false, onboardPrefs: {}, counsel: [], guest: false };
   let S;
   try { S = Object.assign({}, defaults, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { S = Object.assign({}, defaults); }
 
@@ -825,6 +825,56 @@
     openAd._t = setInterval(() => { n--; const c = document.getElementById('adcount'), b = document.getElementById('adreward'); if (!c || !b) { clearInterval(openAd._t); return; } c.textContent = n > 0 ? n : '✓'; if (n <= 0) { b.disabled = false; clearInterval(openAd._t); } }, 1000);
   }
 
+  /* ---------- 마음 사경 기록 (SCR-REP-001 의 씨앗) — 기기 밖으로 나가지 않는다.
+     3장을 기준으로 상태1(1~2장)/상태2(3장~)을 가른다: 한 장은 우연, 세 장은 결. */
+  const COUNSEL_MAX = 60;
+  const COUNSEL_KW = [
+    { k: '불안', re: /불안|걱정|초조|두렵|무섭|긴장|떨려/ },
+    { k: '지침', re: /지치|지쳐|피곤|힘들|번아웃|무기력|쉬고\s*싶|녹초/ },
+    { k: '관계', re: /관계|친구|동료|사람\s*때문|가족|부모|자녀|아이|연인|부부/ },
+    { k: '건강', re: /건강|아프|병원|수술|치료|회복|몸이/ },
+    { k: '일·진로', re: /회사|직장|진로|이직|취업|업무|일이\s*안|프로젝트/ },
+    { k: '시험·승진', re: /시험|수능|합격|승진|면접|자격증|논문/ },
+    { k: '돈', re: /돈|빚|생계|월급|재정|가계/ },
+    { k: '외로움', re: /외롭|혼자|고독|쓸쓸|적적/ },
+    { k: '이별·상실', re: /이별|헤어|떠나|장례|상실|죽음/ },
+    { k: '화·억울', re: /화가|분노|억울|짜증|미움|서운/ },
+    { k: '감사', re: /감사|고맙|기쁨|행복|설레|좋은\s*일/ },
+    { k: '기도·발원', re: /기도|발원|소원|바라|기원|빌고/ },
+    { k: '쉼', re: /쉬고|휴식|명상|숲|걷|조용/ }
+  ];
+  // 기분 라벨 → 마음 온도(1~5). 리포트 꺾은선의 y축.
+  const COUNSEL_TEMP = { '지쳤어요': 2, '마음이 복잡해요': 2.6, '설레요': 3.8, '바라는 게 있어요': 3.2, '쓸쓸해요': 2.4, '감사해요': 4.4 };
+  function counselKeywords(text) {
+    const t = String(text || '');
+    return COUNSEL_KW.filter(x => x.re.test(t)).map(x => x.k);
+  }
+  function counselScore(mood, kws) {
+    let v = COUNSEL_TEMP[mood] || 3;
+    if (kws.some(k => k === '불안' || k === '지침' || k === '외로움' || k === '화·억울')) v -= 0.3;
+    if (kws.some(k => k === '감사' || k === '기도·발원' || k === '쉼')) v += 0.3;
+    return Math.max(1, Math.min(5, Math.round(v * 10) / 10));
+  }
+  function counselLog() { return (Array.isArray(S.counsel) ? S.counsel : []).filter(x => x && x.at); }
+  function addCounsel(rec) {
+    const prompt = String((rec && rec.prompt) || '').slice(0, 300);
+    if (!prompt) return;
+    const kws = counselKeywords(prompt);
+    const mood = String((rec && rec.mood) || '');
+    const entry = {
+      at: new Date().toISOString(),
+      prompt,
+      mood,
+      kw: kws,
+      score: counselScore(mood, kws),
+      templeId: (rec && rec.templeId) || '',
+      verse: (rec && rec.verse) || ''
+    };
+    S.counsel = counselLog().concat(entry).slice(-COUNSEL_MAX);
+    save();
+  }
+  window.MJ_COUNSEL = { add: addCounsel, list: counselLog };
+
   // ---------- 나의 순례 리포트 (이 기기 데이터로 생성) ----------
   const SEASONS = m => m >= 3 && m <= 5 ? '봄' : m >= 6 && m <= 8 ? '여름' : m >= 9 && m <= 11 ? '가을' : '겨울';
   function reportData() {
@@ -844,11 +894,21 @@
       missions: MISSIONS.filter(m => m.ids).filter(m => { const p = missionProgress(m); return p.done >= p.total; })
     };
   }
+  /* 사경 리포트(마음의 결)는 첫 화면 예산 때문에 지연 모듈 js/app/report.js 가 그린다.
+     #/report 는 NEEDS.report 로 그 모듈을 먼저 받으므로, 여기서 없는 경우는 '받지 못한' 경우뿐이다. */
+  function counselSection() {
+    if (window.MJ_REPORT && window.MJ_REPORT.counsel) {
+      try { return window.MJ_REPORT.counsel(); } catch (e) { /* 아래 안내로 떨어진다 */ }
+    }
+    return `<section class="card" role="status"><h2 style="margin-top:0">마음 사경 리포트를 불러오지 못했어요</h2>
+      <p class="sub" style="margin:0">연결이 잠깐 끊겼거나 예전 화면이 남아 있을 수 있어요. 순례 기록은 그대로 볼 수 있어요.</p>
+      <div class="btn-group" style="margin-top:8px"><button type="button" class="btn" data-act="reload">새로고침</button></div></section>`;
+  }
   function viewReport() {
     const d = reportData(), open = isPlus();
     const g = gradeInfo(d.uniq.length);
-    const head = `<h1>나의 순례 리포트 ${open ? '' : '<span class="tag">플러스 미리보기</span>'}</h1><p class="sub">이 기기에 저장된 방문·수첩 기록만으로 계산해요. 서버로 보내지 않아요.</p>`;
-    if (!d.vs.length) return head + `<section class="card"><p>아직 방문 기록이 없어요. 사찰 상세에서 GPS 인증(또는 🧪 데모 체크인)을 하면 리포트가 만들어져요.</p><a class="btn" style="text-decoration:none" href="#/explore">사찰 둘러보기</a></section>`;
+    const head = `<h1>나의 순례 리포트 ${open ? '' : '<span class="tag">플러스 미리보기</span>'}</h1><p class="sub">이 기기에 저장된 방문·수첩·상담 기록만으로 계산해요. 서버로 보내지 않아요.</p>`;
+    if (!d.vs.length) return head + `<section class="card"><p>아직 방문 기록이 없어요. 사찰 상세에서 GPS 인증(또는 🧪 데모 체크인)을 하면 리포트가 만들어져요.</p><a class="btn" style="text-decoration:none" href="#/explore">사찰 둘러보기</a></section>` + counselSection();
     const summary = `<section class="card hero"><div class="sub">지금까지</div><div class="grade">${d.uniq.length}곳 · ${d.vs.length}번의 걸음</div>
       <p style="margin:6px 0 0">${d.sido.length}개 시·도를 다녔어요 · 현재 등급 <b>${g.cur ? g.cur.name : '첫걸음 전'}</b>${d.demo ? ` <span class="sub">(🧪 데모 ${d.demo}회 포함)</span>` : ''}</p>
       ${open ? '' : `<p class="sub" style="margin:6px 0 0">무료 미리보기 · 가장 많이 간 지역은 <b>${esc(d.sido[0][0])}</b>예요. 아래에서 발자취·취향·계절·연말 결산을 볼 수 있어요.</p>`}</section>`;
@@ -867,7 +927,7 @@
       <section class="card"><h2>📔 수첩</h2><p style="margin:0">기록 ${d.journal}편${d.weather[0] ? ` · 가장 많았던 날씨 ${esc(d.weather[0][0])}` : ''}</p></section>
       <section class="card legend"><span class="lbl">${d.yr} 연말 결산 미리보기</span><h2 style="margin-top:8px">올해 ${d.yuniq}곳, ${d.yv.length}번 걸었어요</h2>
         <p class="sub" style="margin:0">12월에는 한 해 순례를 카드 한 장으로 정리해 저장·공유할 수 있게 만들 예정이에요.</p></section>`;
-    return head + summary + (open ? full : lockBlock('report', full.replace(/<section/g, '<div').replace(/<\/section>/g, '</div>')));
+    return head + counselSection() + summary + (open ? full : lockBlock('report', full.replace(/<section/g, '<div').replace(/<\/section>/g, '</div>')));
   }
 
   // ---------- 단품 콘텐츠 화면 ----------
@@ -1867,13 +1927,12 @@
       ? `<form class="card cm-form" data-auth-form="signup" novalidate>
           <label for="fb-s-email">이메일</label>
           <input id="fb-s-email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" maxlength="254" placeholder="example@email.com" required>
-          <label for="fb-s-nick">닉네임</label>
-          <input id="fb-s-nick" name="nickname" autocomplete="nickname" maxlength="12" placeholder="한글·영문·숫자 2~12자" required>
-          <p class="sub cm-hint">한글·영문·숫자·밑줄(_)로 2~12자. 다른 회원과 겹칠 수 없어요.</p>
           <label for="fb-s-pw">비밀번호</label>
-          <input id="fb-s-pw" name="password" type="password" autocomplete="new-password" maxlength="100" placeholder="8자 이상, 영문+숫자 조합" required>
-          <label for="fb-s-pw2">비밀번호 확인</label>
-          <input id="fb-s-pw2" name="password2" type="password" autocomplete="new-password" maxlength="100" placeholder="비밀번호 다시 입력" required>
+          <span class="pw-row">
+            <input id="fb-s-pw" name="password" type="password" autocomplete="new-password" maxlength="100" placeholder="8자 이상, 영문+숫자 조합" required>
+            <button type="button" class="pw-toggle" data-act="pw-toggle" aria-pressed="false" aria-controls="fb-s-pw">보기</button>
+          </span>
+          <p class="sub cm-hint">8자 이상, 영문과 숫자를 함께. 닉네임은 이메일 앞부분으로 정해지고, 나중에 내 정보에서 바꿀 수 있어요.</p>
           <label class="cm-agree"><input type="checkbox" name="agree" checked> <span>회원 이용 규칙(서로 존중하기 · 개인정보 올리지 않기)에 동의해요</span></label>
           <p class="cm-error" role="alert"></p>
           <button class="btn block" type="submit">회원가입하고 바로 이용하기</button>
@@ -1891,7 +1950,7 @@
     return `<section class="cm-page">
       ${tabs}
       <h1>${signup ? '회원가입' : '로그인'}</h1>
-      <p class="sub">${signup ? '이메일·닉네임·비밀번호만 있으면 돼요. 가입하면 바로 로그인돼요.' : '가입한 이메일과 비밀번호로 들어오세요.'}</p>
+      <p class="sub">${signup ? '이메일과 비밀번호만 있으면 돼요. 가입하면 바로 로그인돼요.' : '가입한 이메일과 비밀번호로 들어오세요.'}</p>
       ${form}
     </section>`;
   }
@@ -2101,13 +2160,12 @@
       ? `<form class="cm-form auth-modal-form" data-auth-form="signup" novalidate>
           <label for="am-s-email">이메일</label>
           <input id="am-s-email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" maxlength="254" placeholder="example@email.com" required>
-          <label for="am-s-nick">닉네임</label>
-          <input id="am-s-nick" name="nickname" autocomplete="nickname" maxlength="12" placeholder="한글·영문·숫자 2~12자" required>
-          <p class="sub cm-hint">한글·영문·숫자·밑줄(_)로 2~12자. 다른 회원과 겹칠 수 없어요.</p>
           <label for="am-s-pw">비밀번호</label>
-          <input id="am-s-pw" name="password" type="password" autocomplete="new-password" maxlength="100" placeholder="8자 이상, 영문+숫자 조합" required>
-          <label for="am-s-pw2">비밀번호 확인</label>
-          <input id="am-s-pw2" name="password2" type="password" autocomplete="new-password" maxlength="100" placeholder="비밀번호 다시 입력" required>
+          <span class="pw-row">
+            <input id="am-s-pw" name="password" type="password" autocomplete="new-password" maxlength="100" placeholder="8자 이상, 영문+숫자 조합" required>
+            <button type="button" class="pw-toggle" data-act="pw-toggle" aria-pressed="false" aria-controls="am-s-pw">보기</button>
+          </span>
+          <p class="sub cm-hint">8자 이상, 영문과 숫자를 함께. 닉네임은 이메일 앞부분으로 정해지고, 나중에 내 정보에서 바꿀 수 있어요.</p>
           <label class="cm-agree"><input type="checkbox" name="agree" checked> <span>회원 이용 규칙(서로 존중하기 · 개인정보 올리지 않기)에 동의해요</span></label>
           <p class="cm-error" role="alert"></p>
           <button class="btn block" type="submit">회원가입하고 바로 이용하기</button>
@@ -2210,7 +2268,9 @@
     const gateLabel = !isMember() ? routeGateLabel(r, a, b) : '';
     if (gateLabel) html = html + authGateBanner(gateLabel);
     $view.innerHTML = html;
-    enhanceFields($view);   // 텍스트필드마다 Clear(×) — 마크업이 아니라 규칙으로 붙인다
+    enhanceFields($view);
+    // 첫 화면이 실제로 그려졌다 — 부트 셸(SCR-AUTH-001)을 걷어 낸다
+    if (window.MJ_BOOT && window.MJ_BOOT.hide) window.MJ_BOOT.hide();   // 텍스트필드마다 Clear(×) — 마크업이 아니라 규칙으로 붙인다
     if (gateLabel) openAuthModal({ mode: 'login', feature: gateLabel, preserveIfOpen: true });
     // 회원 화면인데 모듈이 아직/끝내 없다면 조용히 한 번 더 받아 본다 (사용자가 '다시 불러오기'를 누르지 않아도 되게)
     if ((r === 'board' || r === 'account') && !community) scheduleCommunityRetry();
@@ -2357,14 +2417,15 @@
       } else if (authKind === 'signup') {
         const fd = new FormData(form);
         const email = String(fd.get('email') || '').trim();
+        // 길게 묻지 않는다 — 이메일과 비밀번호 두 칸이면 가입된다. 닉네임은 서버가 이메일 앞부분으로 만들어 준다.
         const nickname = String(fd.get('nickname') || '').trim();
         const password = String(fd.get('password') || '');
         const password2 = String(fd.get('password2') || '');
         if (!fd.get('agree')) return setErr('회원 이용 규칙에 동의해 주세요.');
-        if (!email || !nickname || !password) return setErr('이메일·닉네임·비밀번호를 모두 입력해 주세요.');
-        if (password !== password2) return setErr('비밀번호 확인이 달라요. 다시 입력해 주세요.');
+        if (!email || !password) return setErr('이메일과 비밀번호를 입력해 주세요.');
+        if (password2 && password !== password2) return setErr('비밀번호 확인이 달라요. 다시 입력해 주세요.');
         setBusy(true);
-        const r = await api('/api/auth/signup', { method: 'POST', body: { email, nickname, password } });
+        const r = await api('/api/auth/signup', { method: 'POST', body: { email, password, nickname: nickname || undefined } });
         setBusy(false);
         if (!r.ok) return setErr((r.body && r.body.message) || '가입하지 못했어요. 입력 내용을 확인해 주세요.');
         const nextHash = authModalState.nextHash;
@@ -2478,6 +2539,16 @@
       return;
     }
     const act = el.dataset.act;
+    if (act === 'pw-toggle') {
+      const box = document.getElementById(el.getAttribute('aria-controls') || '');
+      if (!box) return;
+      const shown = box.getAttribute('type') === 'password';
+      box.setAttribute('type', shown ? 'text' : 'password');
+      el.setAttribute('aria-pressed', shown ? 'true' : 'false');
+      el.textContent = shown ? '숨기기' : '보기';
+      box.focus();
+      return;
+    }
     if (act === 'auth-tab') {
       authModalState.mode = el.dataset.tab === 'signup' ? 'signup' : 'login';
       openModal(authModalHTML());
@@ -2829,7 +2900,7 @@
    * 값은 앱 상태(S)와 섞지 않고 별도 키에 둔다 — 첫 페인트 전(<head> 의 인라인 스크립트)에도
    * 읽어야 하므로, 앱 상태 JSON 전체를 기다릴 수 없다. */
   const THEME_KEY = 'maeumjeongwon.theme.v1';
-  const THEME_BAR = { light: '#f6f1e7', dark: '#121815' };
+  const THEME_BAR = { light: '#FAF7F2', dark: '#14100F' };
   let themePref = '';
   try { themePref = localStorage.getItem(THEME_KEY) || ''; } catch (e) { themePref = ''; }
   const systemDark = () => !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);

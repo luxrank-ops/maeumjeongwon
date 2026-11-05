@@ -20,7 +20,7 @@ test('1. PWA 표준 준수 — manifest.webmanifest 필수 항목 및 아이콘 
   assert.ok(manifest.short_name, 'short_name이 있어야 함');
   assert.ok(manifest.short_name.length <= 12, 'short_name은 12자 이하여야 함 (PWA 가이드라인)');
   assert.ok(manifest.name, 'name이 정의되어 있어야 함');
-  assert.equal(manifest.theme_color, '#f6f1e7', '사찰 한지 테마 색상이어야 함');
+  assert.equal(manifest.theme_color, '#FAF7F2', '한지(주사 테마) 색상이어야 함');
 
   const icons = manifest.icons || [];
   assert.ok(icons.length >= 3, '최소 192, 512, maskable 아이콘이 정의되어 있어야 함');
@@ -67,7 +67,7 @@ test('3. Service Worker sw.js 오프라인 캐시 및 인덱스 HTML 연동 검�
      같은 태그를 가리키는지 여기서 묶어 둔다. */
   const versioned = src => [...src.matchAll(/["'](\/(?:js|css)\/[^"']+\.js\?v=[^"']+)["']/g)].map(m => m[1]);
   // 2026-11: 계획 추천 엔진(planner-reco)도 계획 화면에서만 받는 지연 자산이 됐다
-  const isLazyAsset = u => /\/js\/(?:features|data-prayer|data-stories|data-traditional|data-fengshui|planner-reco|app\/(?:planner|map|community))\.js/.test(u);
+  const isLazyAsset = u => /\/js\/(?:features|data-prayer|data-stories|data-traditional|data-fengshui|planner-reco|app\/(?:planner|map|community|report))\.js/.test(u) || /\/css\/sagye\.css/.test(u);
   const swUrls = versioned(swContent).filter(u => !isLazyAsset(u));
   for (const url of swUrls) {
     // index.html 은 상대경로(js/…), sw.js 는 절대경로(/js/…)로 적는다 — 경로 앞 '/'만 맞춰 비교
