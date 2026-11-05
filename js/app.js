@@ -121,6 +121,88 @@
     return `<svg class="ic${cls ? ' ' + cls : ''}" aria-hidden="true" focusable="false"><use href="#i-${name}"/></svg>`;
   }
 
+  /* SVG 안에서는 CSS 변수를 못 읽는다 — 저조도 모드에서 염주 그림의 글자가 사라지던 원인.
+   * 테마가 바뀌면 다시 그리므로, 그릴 때 계산된 값을 읽어 온다. */
+  function themeColor(name, fallback) {
+    try {
+      const v = window.getComputedStyle(document.documentElement).getPropertyValue(name);
+      const t = (v || '').trim();
+      return t || fallback;
+    } catch (e) { return fallback; }
+  }
+
+  /* ---------- 입력칸의 Clear(×) 버튼 ----------
+   * 가이드: 텍스트필드에는 필수로 지우기 버튼. 템플릿 60여 곳에 마크업을 넣는 대신
+   * 화면을 그린 뒤 한 번에 감싼다(다시 그려져도 같은 규칙이 적용되고, 폼 전송 값은 그대로).
+   * 날짜·파일·비밀번호는 브라우저 자체 UI가 있거나 지우는 것이 곧 노출이라 제외한다. */
+  const CLEARABLE = 'input:not([type]),input[type=text],input[type=search],input[type=email],input[type=tel],input[type=url],input[type=number]';
+  function enhanceFields(root) {
+    const scope = root && root.querySelectorAll ? root : document;
+    const inputs = scope.querySelectorAll(CLEARABLE);
+    for (let i = 0; i < inputs.length; i++) {
+      const inp = inputs[i];
+      if (inp.disabled || inp.readOnly || inp.dataset.noClear) continue;
+      if (inp.parentElement && inp.parentElement.classList.contains('field')) continue;
+      const wrap = document.createElement('span');
+      wrap.className = 'field';
+      inp.parentNode.insertBefore(wrap, inp);
+      wrap.appendChild(inp);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'field-clear';
+      btn.setAttribute('aria-label', '입력한 내용 지우기');
+      btn.innerHTML = ic('x');
+      btn.hidden = true;
+      btn.addEventListener('click', () => {
+        inp.value = '';
+        // 검색은 'input' 을 듣고 즉시 다시 그린다 — 값만 지우면 화면이 그대로 남는다
+        inp.dispatchEvent(new Event('input', { bubbles: true }));
+        inp.dispatchEvent(new Event('change', { bubbles: true }));
+        btn.hidden = true;
+        inp.focus();
+      });
+      inp.addEventListener('input', () => { btn.hidden = !inp.value; });
+      inp.addEventListener('change', () => { btn.hidden = !inp.value; });
+      wrap.appendChild(btn);
+      btn.hidden = !inp.value;
+    }
+  }
+
+  /* ---------- 옵션이 5개 이하면 펼친다 (.choices, ⑯-3) ----------
+   * 드롭다운은 '열기 전에는 무엇이 있는지 모르는' UI다. 5개까지는 화면에 그대로 두고
+   * 7개 이상(지역 17 · 테마 9 · 사찰 1,000+)만 <select> 로 접는다.
+   * 폼 값은 hidden input 이 들고 있으므로 기존 submit 코드(FormData)는 그대로 동작한다. */
+  function choiceGroup(name, label, opts, cur, attrs) {
+    const value = cur || opts[0];
+    return `<span class="field-label">${esc(label)}</span>
+      <div class="choices" role="group" aria-label="${esc(label)}"${attrs || ''}>
+        <input type="hidden" name="${esc(name)}" value="${esc(value)}">
+        ${opts.map(o => `<button type="button" class="choice" data-choice="${esc(o)}" aria-pressed="${o === value}">${ic('check')}<span>${esc(o)}</span></button>`).join('')}
+      </div>`;
+  }
+
+  /* ---------- 수량은 스텝퍼 (.stepper, ⑯-4) ----------
+   * 몇 개인지 세는 값은 목록을 열어 고르게 하지 않는다. −/값/+ 세 칸이면
+   * 지금 값과 '한 걸음'의 방향이 동시에 보인다. 값은 hidden input 으로 폼에 실린다. */
+  function stepperGroup(name, label, value, min, max, unit) {
+    const v = Math.min(max, Math.max(min, parseInt(value, 10) || min));
+    const out = `${v}${unit || ''}`;
+    return `<div class="stepper" data-stepper data-min="${min}" data-max="${max}" data-unit="${esc(unit || '')}" role="group" aria-label="${esc(label)}">
+        <button type="button" class="step-btn" data-step="-1" aria-label="${esc(label)} 줄이기"${v <= min ? ' disabled' : ''}>−</button>
+        <output class="step-value" aria-live="polite">${esc(out)}</output>
+        <button type="button" class="step-btn" data-step="1" aria-label="${esc(label)} 늘리기"${v >= max ? ' disabled' : ''}>+</button>
+        <input type="hidden" name="${esc(name)}" value="${v}">
+      </div>`;
+  }
+
+  /* 오래 걸리는 제출에 눈에 보이는 상태를 준다 — 잠금 + aria-busy(스피너는 CSS ⑯-5) */
+  function markBusy(btn, on) {
+    if (!btn) return;
+    btn.disabled = !!on;
+    btn.setAttribute('aria-busy', String(!!on));
+    btn.classList.toggle('busy', !!on);
+  }
+
   // ---------- 상태 ----------
   const SESS_KEY = 'maeumjeongwon.sess.v1';
   const ENT_KEY = 'maeumjeongwon.ent.v1';
@@ -888,10 +970,13 @@
   }
   function beadSVG(n, size) {
     size = size || 220; const c = size / 2, R = size / 2 - 10, out = [];
-    for (let i = 0; i < 108; i++) { const a = (i / 108) * Math.PI * 2 - Math.PI / 2; const x = c + R * Math.cos(a), y = c + R * Math.sin(a); out.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(size / 70).toFixed(1)}" fill="${i < n ? (S.skin === 'maple' ? ['#c2410c', '#d97706', '#b91c1c'][i % 3] : '#8a5a2b') : '#e3d8c4'}" stroke="${i < n ? (S.skin === 'maple' ? '#7c2d12' : '#5e3b19') : '#d4c7ae'}" stroke-width="0.8"/>`); }
+    // 아직 찍히지 않은 알과 글자는 테마를 따라야 한다 (저조도에서 #1c2621 글자는 사라졌다)
+    const offFill = themeColor('--border-2', '#ece8dd'), offLine = themeColor('--border-1', '#e2ddcf');
+    const ink = themeColor('--text-1', '#1c2621'), sub = themeColor('--text-3', '#5c6a63');
+    for (let i = 0; i < 108; i++) { const a = (i / 108) * Math.PI * 2 - Math.PI / 2; const x = c + R * Math.cos(a), y = c + R * Math.sin(a); out.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(size / 70).toFixed(1)}" fill="${i < n ? (S.skin === 'maple' ? ['#c2410c', '#d97706', '#b91c1c'][i % 3] : '#8a5a2b') : offFill}" stroke="${i < n ? (S.skin === 'maple' ? '#7c2d12' : '#5e3b19') : offLine}" stroke-width="0.8"/>`); }
     return `<svg class="beads" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="디지털 염주 ${n}/108">${out.join('')}
-      <text x="${c}" y="${c - 4}" text-anchor="middle" font-size="${size / 7}" font-family="${DISPLAY_FONT}" fill="#1c2621">${n}</text>
-      <text x="${c}" y="${c + size / 9}" text-anchor="middle" font-size="${size / 16}" fill="#5c6a63">/ 108 알</text></svg>`;
+      <text x="${c}" y="${c - 4}" text-anchor="middle" font-size="${size / 7}" font-family="${DISPLAY_FONT}" fill="${ink}">${n}</text>
+      <text x="${c}" y="${c + size / 9}" text-anchor="middle" font-size="${size / 16}" fill="${sub}">/ 108 알</text></svg>`;
   }
 
   // ---------- 화면: 홈 ----------
@@ -1186,9 +1271,9 @@
     const query = exploreQueryOf(tab, arg, q).trim();
     const facet = (tab === 'theme' || tab === 'region') ? (arg || '') : '';
     const qs = query ? '/' + encodeURIComponent(query) : '';
+    /* 지우기는 입력칸 안의 ×(⑯-2 enhanceFields)가 맡는다 — 검색칸 옆의 별도 버튼은 없앴다. */
     const search = `<div class="searchbar explore-search">
         <span class="search-wrap">${ic('search')}<input id="eq" type="search" placeholder="사찰명 · 지역 · 테마 (예: 해인사, 경주, 단풍)" value="${esc(query)}" aria-label="사찰 검색" autocomplete="off" enterkeyhint="search" /></span>
-        <button type="button" class="chip${query ? '' : ' hidden'}" id="eclear">지우기</button>
       </div>`;
     return `<div class="screen-head"><h1>사찰 탐색</h1><p class="sub"> 수록 ${TEMPLES.length}곳 · 전통사찰 ${TRAD.length}곳 · 이야기 ${STORIES.length}편</p></div>
       ${search}
@@ -1255,7 +1340,6 @@
    * 커서가 튀지 않게 하고, 주소는 replaceState 로만 따라간다. */
   function bindExplore() {
     const q = document.getElementById('eq'); if (!q) return;
-    const clear = document.getElementById('eclear');
     const box = document.getElementById('eres');
     let limit = 100;
     let t = null;
@@ -1300,7 +1384,6 @@
       if (resetLimit !== false) limit = 100;
       const k = q.value.trim();
       const { tab, facet } = ctx();
-      if (clear) clear.classList.toggle('hidden', !k);
       if (sync !== false) syncUrl(k);        // 최초 바인딩 때는 주소가 이미 답을 들고 있다
       if (tab === 'all') {
         const sd = (document.getElementById('ts') || {}).value || '';
@@ -1318,7 +1401,6 @@
     }
     q.addEventListener('input', onInput);
     q.addEventListener('keydown', e => { if (e.key === 'Enter') { if (t) clearTimeout(t); run(true); q.blur(); } });
-    if (clear) clear.addEventListener('click', () => { q.value = ''; run(true); q.focus(); });
     ['ts', 'to'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', () => run(true)); });
     run(false, false);
   }
@@ -1698,7 +1780,7 @@
     <form id="jform" class="card">
       <label>사찰 (주요 사찰 및 전통사찰 991곳)</label><select name="tid">${extraOpt}${TEMPLES.map(t => `<option value="${t.id}" ${t.id === tid ? 'selected' : ''}>[${esc(t.sido)}] ${esc(t.name)}</option>`).join('')}${TRAD.map(r => `<option value="${r.id}" ${r.id === tid ? 'selected' : ''}>[${esc(r.sido)} ${esc(r.sgg)}] ${esc(r.name)} (No.${r.no})</option>`).join('')}</select>
       <label>날짜</label><input type="date" name="date" value="${today()}" required>
-      <label>날씨</label><select name="weather"><option>☀️ 맑음</option><option>⛅ 구름</option><option>🌧 비</option><option>❄️ 눈</option><option>🌫 안개</option></select>
+      ${choiceGroup('weather', '날씨', ['☀️ 맑음', '⛅ 구름', '🌧 비', '❄️ 눈', '🌫 안개'], '☀️ 맑음')}
       <label>오늘의 다짐·메모</label><textarea name="note" placeholder="걸으며 떠오른 생각, 오늘의 다짐을 적어 보세요" maxlength="1000"></textarea>
       <label>사진 (선택)</label><input type="file" name="photo" accept="image/*">
       <p class="sub" style="font-size:.8em">사진은 기기 저장 공간 절약을 위해 작게 줄여 저장해요.</p>
@@ -1714,10 +1796,15 @@
   function bindJournalForm() {
     const f = document.getElementById('jform'); if (!f) return;
     f.addEventListener('submit', async e => {
-      e.preventDefault(); const fd = new FormData(f); const file = fd.get('photo');
+      e.preventDefault();
+      const btn = f.querySelector('button[type=submit]');
+      if (btn && btn.disabled) return;                 // 두 번 눌러 두 번 저장되는 것을 막는다
+      markBusy(btn, true);                             // 사진 축소는 눈에 보이는 시간이 걸린다
+      const fd = new FormData(f); const file = fd.get('photo');
       let photo = null; if (file && file.size) { try { photo = await resizeImage(file); } catch (er) { toast('사진을 읽지 못했어요.'); } }
       S.journal.push({ id: Date.now().toString(36), tid: fd.get('tid'), date: fd.get('date'), weather: fd.get('weather'), note: (fd.get('note') || '').trim(), photo });
       save(); toast('수첩에 저장했어요 📔'); location.hash = '#/journal';
+      markBusy(btn, false);
     });
   }
 
@@ -1727,6 +1814,8 @@
   let planner = null;
   let community = null;                            // 회원·게시판 화면 모듈 (js/app/community.js)
   function plannerMod() {
+    // 추천 엔진은 계획 자산과 함께 늦게 도착한다 — 모듈을 만들기 직전에 다시 확인한다
+    if (!PLAN_RECO && window.PLANNER_RECO) PLAN_RECO = window.PLANNER_RECO;
     if (!planner && window.MJ_PLANNER_FACTORY) {
       planner = window.MJ_PLANNER_FACTORY({
         S, save, render, toast, esc, today, haversine, resolveTemple, visited, openModal,
@@ -1880,6 +1969,7 @@
   function openModal(html) {
     const m = document.getElementById('modal');
     m.innerHTML = html; m.classList.remove('hidden');
+    enhanceFields(m);
     document.body.classList.add('modal-open');   // 배경 스크롤 잠금 — 시트가 화면 높이만큼만 스크롤되게
     const sheet = m.querySelector('.sheet');
     if (sheet) {
@@ -2120,6 +2210,7 @@
     const gateLabel = !isMember() ? routeGateLabel(r, a, b) : '';
     if (gateLabel) html = html + authGateBanner(gateLabel);
     $view.innerHTML = html;
+    enhanceFields($view);   // 텍스트필드마다 Clear(×) — 마크업이 아니라 규칙으로 붙인다
     if (gateLabel) openAuthModal({ mode: 'login', feature: gateLabel, preserveIfOpen: true });
     // 회원 화면인데 모듈이 아직/끝내 없다면 조용히 한 번 더 받아 본다 (사용자가 '다시 불러오기'를 누르지 않아도 되게)
     if ((r === 'board' || r === 'account') && !community) scheduleCommunityRetry();
@@ -2237,7 +2328,7 @@
       const errBox = form.querySelector('.cm-error');
       const setErr = msg => { if (errBox) errBox.textContent = msg || ''; };
       const btns = form.querySelectorAll('button[type="submit"]');
-      const setBusy = on => btns.forEach(b => { b.disabled = on; });
+      const setBusy = on => btns.forEach(b => markBusy(b, on));
 
       if (authKind === 'login') {
         const fd = new FormData(form);
@@ -2315,7 +2406,7 @@
         }
       }
     }
-    const el = e.target.closest('#langToggle,[data-act],[data-mood],[data-f],[data-go],[data-map-view]'); if (!el) return;
+    const el = e.target.closest('#langToggle,[data-act],[data-mood],[data-f],[data-go],[data-map-view],[data-choice],[data-step]'); if (!el) return;
     if (el.id === 'langToggle') {
       withFeatures(features => {
         features.I18N.toggleLang();
@@ -2338,6 +2429,40 @@
       if (listPane) listPane.classList.toggle('hidden', mapMode !== 'list');
       document.querySelectorAll('.map-view-switch [data-map-view]').forEach(b => b.setAttribute('aria-pressed', b === el ? 'true' : 'false'));
       if (mapMode === 'map') fitMap();
+      return;
+    }
+    /* 선택 그룹(.choices) — 옵션 5개 이하를 드롭다운 대신 펼쳐 둔 자리 (⑯-3).
+     * 상태는 aria-pressed + 체크 표시 + 테두리로 함께 알리고, 폼 값은 hidden input 으로 넘긴다. */
+    if (el.dataset.choice != null) {
+      const group = el.closest('.choices');
+      if (group) {
+        group.querySelectorAll('.choice').forEach(c => c.setAttribute('aria-pressed', String(c === el)));
+        const hidden = group.querySelector('input[type=hidden]');
+        if (hidden) {
+          hidden.value = el.dataset.choice;
+          hidden.dispatchEvent(new Event('change', { bubbles: true }));   // 폼의 change 처리(초안 저장 등)를 그대로 태운다
+        }
+      }
+      return;
+    }
+    /* 스텝퍼(.stepper) — 수량은 목록이 아니라 −/+ 로 (⑯-4) */
+    if (el.dataset.step != null) {
+      const box = el.closest('[data-stepper]');
+      if (box) {
+        const hidden = box.querySelector('input[type=hidden]');
+        const min = box.dataset.min ? +box.dataset.min : 1;
+        const max = box.dataset.max ? +box.dataset.max : 99;
+        const now = hidden ? (parseInt(hidden.value, 10) || min) : min;
+        const next = Math.min(max, Math.max(min, now + (+el.dataset.step)));
+        if (hidden) {
+          hidden.value = String(next);
+          hidden.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        const out = box.querySelector('.step-value');
+        if (out) out.textContent = next + (box.dataset.unit || '');
+        const minus = box.querySelector('[data-step="-1"]'); if (minus) minus.disabled = next <= min;
+        const plus = box.querySelector('[data-step="1"]'); if (plus) plus.disabled = next >= max;
+      }
       return;
     }
     if (el.dataset.f != null) {
