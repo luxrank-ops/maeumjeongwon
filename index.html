@@ -32,46 +32,31 @@
 <style>
 /* 부트 셸 (SCR-AUTH-001) — css/style.css 를 일부러 부르지 않는다.
    배포된 CSS 가 깨지거나 캐시가 어긋나도 첫 화면과 복구 버튼은 자리를 지켜야 한다.
-   색값을 여기 한 번 더 적는 것은 중복이 아니라 목적이다. 앱이 그려지면 MJ_BOOT.hide() 가 걷어 낸다. */
-#boot{position:fixed;inset:0;z-index:2000;display:grid;place-items:center;padding:24px;opacity:1;
-  background:#FAF7F2;color:#1A1A1A;font-family:"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
-  line-height:1.6;transition:opacity .28s ease}
-#boot.is-done{opacity:0;pointer-events:none}
-#boot .boot-card{width:100%;max-width:420px}
-#boot .boot-seal{display:grid;place-items:center;width:64px;height:64px;margin:0 auto 14px;border-radius:8px;
-  background:#B71C1C;color:#FFFDF9;font-family:"NanumMyeongjo","Noto Serif KR",serif;font-size:26px}
-#boot h1{margin:0 0 6px;font-size:19px;line-height:1.45;text-align:center;font-family:"NanumMyeongjo","Noto Serif KR",serif}
-#boot .boot-sub,#boot .boot-note{margin:0 0 16px;font-size:13.5px;color:#5E5952;text-align:center}
-#boot .boot-net{margin:0 0 14px;padding:10px 12px;border-radius:10px;font-size:13px;text-align:center;
-  background:#FBF1EF;border:1px solid #EFCEC8;color:#8C1414}
+   색값을 여기 한 번 더 적는 것은 중복이 아니라 목적이다. 다만 '로딩 화면'은 두지 않는다 —
+   정상 부팅에서는 아무것도 보이지 않고, 첫 화면을 못 그렸을 때만 6초 뒤에 이 카드가 나타난다. */
+#boot{position:fixed;inset:0;z-index:2000;display:grid;place-items:center;padding:24px;background:#FAF7F2;color:#1A1A1A;
+  font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
+#boot[hidden]{display:none}
+#boot .boot-card{width:100%;max-width:400px}
+#boot h1{margin:0 0 8px;font-size:18px;line-height:1.45;font-family:"NanumMyeongjo","Noto Serif KR",serif}
+#boot .boot-sub,#boot .boot-note{margin:0 0 16px;font-size:13.5px;color:#5E5952}
+#boot .boot-net{margin:0 0 14px;padding:10px 12px;border-radius:10px;font-size:13px;
+  background:#FBEEEA;border:1px solid #E8C4BA;color:#8C1414}
 #boot .boot-net[hidden]{display:none}
-#boot .boot-skel{display:grid;gap:10px;margin:0 0 18px}
-#boot .boot-skel i{display:block;height:44px;border-radius:10px;border:1px solid #E5DCD0;
-  background:linear-gradient(90deg,#F1EAE0 25%,#FAF7F2 37%,#F1EAE0 63%);background-size:400% 100%;animation:boot-sheen 1.4s ease-in-out infinite}
-#boot .boot-skel i:last-child{height:48px;background:#B71C1C;border-color:#B71C1C;animation:none;opacity:.9}
-@keyframes boot-sheen{from{background-position:100% 0}to{background-position:0 0}}
 #boot .boot-actions{display:grid;gap:8px}
 #boot .boot-actions button{min-height:48px;border-radius:12px;padding:11px 14px;font-size:15px;font-weight:700;
-  border:1px solid #E5DCD0;background:#FFFDF9;color:#1A1A1A;font-family:inherit}
+  background:#FFFDF9;border:1px solid #E5DCD0;color:#1A1A1A}
 #boot .boot-actions button.primary{background:#B71C1C;border-color:#B71C1C;color:#FFFDF9}
 #boot .boot-note{margin:14px 0 0;font-size:12.5px}
 #boot .boot-note a{color:#8C1414;font-weight:700}
-#boot .boot-hint{display:none;margin:10px 0 0;font-size:12.5px;color:#8C1414;text-align:center}
-#boot.is-slow .boot-hint{display:block}
-#boot .boot-static{display:none}
-#boot.is-guest .boot-static{display:block}
 @media (prefers-color-scheme:dark){
   #boot{background:#14100F;color:#F2EDE7}
-  #boot h1{color:#F2EDE7}
   #boot .boot-sub,#boot .boot-note{color:#A79C92}
-  #boot .boot-skel i{border-color:#2F2724;background:linear-gradient(90deg,#241E1C 25%,#1E1917 37%,#241E1C 63%);background-size:400% 100%}
   #boot .boot-actions button{background:#1E1917;border-color:#2F2724;color:#F2EDE7}
   #boot .boot-actions button.primary{background:#E2584A;border-color:#E2584A;color:#180E0C}
-  #boot .boot-seal{background:#E2584A;color:#180E0C}
   #boot .boot-net{background:#2A1714;border-color:#4E241E;color:#F0A79A}
-  #boot .boot-note a,#boot .boot-hint{color:#F0A79A}
+  #boot .boot-note a{color:#F0A79A}
 }
-@media (prefers-reduced-motion:reduce){#boot .boot-skel i{animation:none}}
 </style>
 <link rel="manifest" href="/manifest.webmanifest?v=20261028sw" />
 <meta name="mobile-web-app-capable" content="yes" />
@@ -99,26 +84,24 @@
 </script>
 </head>
 <body>
-<div id="boot" role="status" aria-live="polite">
+<!-- 첫 화면을 열지 못했을 때만 나타나는 복구 카드 (SCR-AUTH-001).
+     정상 부팅에는 로딩 화면을 띄우지 않는다 — 흰 화면 대신 '다음 행동'만 준다. -->
+<div id="boot" role="alert" aria-live="assertive" hidden>
   <div class="boot-card">
-    <div class="boot-seal" aria-hidden="true">印</div>
-    <h1>잠시 정원의 문을 정돈하고 있습니다</h1>
-    <p class="boot-sub">한지는 펴는 데 시간이 조금 걸려요. 화면을 준비하고 있습니다.</p>
+    <h1>화면을 열지 못했어요</h1>
+    <p class="boot-sub">한지가 젖어 붓이 멈춘 것 같아요. 아래에서 다시 시도해 주세요.</p>
     <p class="boot-net" id="bootNet" hidden></p>
-    <div class="boot-skel" aria-hidden="true"><i></i><i></i><i></i></div>
     <div class="boot-actions">
-      <button type="button" data-boot="guest" class="primary">게스트로 시작</button>
-      <button type="button" data-boot="reload">새로고침</button>
+      <button type="button" data-boot="reload" class="primary">새로고침</button>
       <button type="button" data-boot="cache">캐시 초기화</button>
+      <button type="button" data-boot="guest">게스트로 보기</button>
     </div>
-    <p class="boot-hint">생각보다 오래 걸리고 있어요. 새로고침을 눌러도 같은 화면이면 캐시 초기화를 눌러 주세요.</p>
-    <p class="boot-note">게스트로 시작하면 회원 기능(방문 인증·수첩·게시판)은 로그인 후에 열려요. <a href="#/home">홈으로</a></p>
-    <p class="boot-note boot-static">앱 화면을 열지 못했어요. <a href="#/home">홈</a> · <a href="#/explore">사찰 둘러보기</a> · <a href="#/missions">순례</a> · <a href="#/plus">플러스</a></p>
+    <p class="boot-note">게스트로 보면 회원 기능(방문 인증·수첩·게시판)은 로그인 후에 열려요. <a href="#/home">홈으로</a></p>
   </div>
 </div>
 <script>
-/* 부트 셸의 세 가지 문: 게스트로 시작(로그인 벽에 막히지 않기) · 새로고침 · 캐시 초기화(서비스워커·캐시만 지운다.
-   저장한 순례 기록(localStorage)은 건드리지 않는다) */
+/* 부트 카드의 세 가지 문: 새로고침 · 캐시 초기화(서비스워커·캐시만 지운다. 저장한 순례 기록은
+   건드리지 않는다) · 게스트로 보기(로그인 벽에 막히지 않기). 카드는 실패했을 때만 열린다. */
 (function () {
   var GUEST_KEY = 'maeumjeongwon.guest.v1';
   var boot = document.getElementById('boot');
@@ -128,8 +111,13 @@
   function hide() {
     if (done) return;
     done = true;
-    boot.classList.add('is-done');
-    setTimeout(function () { if (boot.parentNode) boot.parentNode.removeChild(boot); }, 320);
+    boot.hidden = true;
+    if (boot.parentNode) boot.parentNode.removeChild(boot);
+  }
+  // 첫 화면을 못 그린 채로 시간이 흐르면 카드를 연다 — 로딩 화면이 아니라 '실패 화면'이다
+  function show() {
+    if (done) return;
+    boot.hidden = false;
   }
   function appReady() {
     var v = document.getElementById('view');
@@ -153,10 +141,11 @@
       if (window.MJ_TOAST) window.MJ_TOAST('둘러보기로 시작합니다 · 회원 기능은 로그인 후 열려요');
       return;
     }
-    boot.classList.add('is-guest');
+    var note = boot.querySelector('.boot-note');
+    if (note) note.textContent = '게스트로 기록했어요. 새로고침하면 바로 열립니다.';
+    show();
   }
   async function resetCache() {
-    boot.classList.add('is-slow');
     try {
       if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
         var rs = await navigator.serviceWorker.getRegistrations();
@@ -183,9 +172,10 @@
   window.addEventListener('online', net);
   window.addEventListener('offline', net);
   net();
-  setTimeout(function () { boot.classList.add('is-slow'); }, 6000);
+  // 6초: 이 시간 안에 첫 화면이 그려지지 않으면 '기다림'이 아니라 '실패'로 보고 길을 준다
+  setTimeout(function () { if (!appReady()) show(); }, 6000);
   // 앱이 스스로 그려지면(=정상 부팅) 안내 문구만 남기고 조용히 걷어 낸다
-  window.MJ_BOOT = { hide: hide, guest: guest, resetCache: resetCache };
+  window.MJ_BOOT = { hide: hide, show: show, guest: guest, resetCache: resetCache };
   try { if (localStorage.getItem(GUEST_KEY)) document.documentElement.setAttribute('data-guest', '1'); } catch (e) {}
 })();
 </script>
