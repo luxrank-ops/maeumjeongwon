@@ -278,14 +278,27 @@
     </section>`;
   }
 
+  // 데이터가 쌓일수록 카드가 넓어진다 (프로그래시브 → 벤토). 6장(줄기)부터 숫자 타일이 붙는다.
+  function statTiles(state, trend) {
+    const avg = Math.round(trend.reduce((a, p) => a + p.anxietyScore, 0) / trend.length);
+    const calm = trend.filter(p => p.stabilityScore >= 60).length;
+    return `<div class="bento-stats">
+        <div class="tile"><b>${state.totalConsultationCount}</b><span>쌓인 장</span></div>
+        <div class="tile"><b>${avg}</b><span>평균 불안</span></div>
+        <div class="tile"><b>${calm}일</b><span>고요했던 날</span></div>
+      </div>`;
+  }
+
   function fullReport(state) {
     const { weeklyTrend: trend, topKeywords: keywords } = state.analyticsData;
     const best = trend.reduce((a, b) => (b.stabilityScore >= a.stabilityScore ? b : a), trend[0]);
-    return `<section class="card">
+    const grown = state.mindGrowthSeed && state.mindGrowthSeed.seedStage >= 3;
+    return `<div class="report-bento" data-stage="${grown ? 'grown' : 'basic'}"><section class="card" data-span="wide">
         <div class="row between"><h2 style="margin:0">주간 감정선</h2><span class="tag">${state.totalConsultationCount}장</span></div>
         <p class="sub" style="margin:4px 0 0">붉은 선은 불안, 점선은 안정이에요. 두 선이 벌어질수록 마음이 흔들린 한 주였습니다.</p>
         ${chart(state)}
         <p class="sub" style="margin:10px 0 0">가장 안정적이었던 날은 <b>${esc(best.dayOfWeek || best.date)}</b> — 안정 ${best.stabilityScore}. 그날의 마음('${esc(best.primaryEmotion)}')을 한 번 더 떠올려 보세요.</p>
+        ${grown ? statTiles(state, trend) : ''}
       </section>
       <section class="card">
         <h2 style="margin-top:0">되풀이되는 마음</h2>
@@ -300,7 +313,7 @@
           <button class="btn ghost" data-act="ai-counsel">마음 사경 이어 쓰기</button>
           <p class="report-foot-note">인쇄 대화상자에서 'PDF로 저장'을 고르세요 · 인쇄물에는 광고·탭이 빠집니다</p>
         </div>
-      </section>`;
+      </section></div>`;
   }
 
   // 화면에 그리는 유일한 문 — state 를 직접 넘기면 그 상태로 그린다(테스트·데모).

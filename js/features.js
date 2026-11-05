@@ -1376,6 +1376,12 @@
         pending.className = 'sagye-typing';
         pending.textContent = '붓을 적시고 있습니다…';
         ans.appendChild(pending);
+        // 영리한 스켈레톤: 회색 상자 대신 '구절·실천·사찰'이 앉을 자리를 파형으로 보여 준다
+        const skel = document.createElement('div');
+        skel.className = 'sagye-skel';
+        skel.setAttribute('aria-hidden', 'true');
+        skel.innerHTML = '<i></i><i></i><i></i>';
+        ans.appendChild(skel);
         if (paper) {
           try { paper.scrollIntoView({ block: 'end', behavior: reduced ? 'auto' : 'smooth' }); } catch (e) {}
         }
@@ -1425,6 +1431,14 @@
 
       if (submitBtn) submitBtn.addEventListener('click', function () {
         if (input && !input.value.trim()) { alertInput(); return; }
+        // 인장을 찍는 손맛 — 짧은 진동 + 도장이 눌렸다 튀어 오르는 모션 (지원 기기에서만)
+        try { if (navigator.vibrate) navigator.vibrate(8); } catch (e) {}
+        try {
+          submitBtn.classList.remove('is-stamped');
+          void submitBtn.offsetWidth;
+          submitBtn.classList.add('is-stamped');
+          submitBtn.addEventListener('animationend', function () { submitBtn.classList.remove('is-stamped'); }, { once: true });
+        } catch (e) {}
         runQuery();
       });
       runQuery();
