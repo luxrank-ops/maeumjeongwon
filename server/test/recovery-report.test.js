@@ -109,8 +109,10 @@ test('③ 외부 CSS 유실 — 사경 시트도 인라인 테마로 버틴다 (
   assert.match(features, /data-fallback-theme/, '복구 번들이 적용됐다는 표시');
   assert.match(features, /loading\.catch\(applyFallbackTheme\)/, '지연 CSS 실패를 잡는다');
   assert.match(features, /link\[href\*="css\/sagye\.css"\]/, '1.5초 뒤에도 없으면 복구');
-  // 부트 셸은 첫 화면 단계의 같은 정책이다 (인라인 CSS)
+  // 부트 카드는 첫 화면 단계의 같은 정책이다 (인라인 CSS) — 다만 정상 부팅에는 열리지 않는다
   assert.match(shell, /#boot\{position:fixed/);
+  assert.match(shell, /<div id="boot"[^>]*hidden/, '로딩 화면이 아니라 실패 화면');
+  assert.match(shell, /if \(!appReady\(\)\) show\(\)/, '실패했을 때만 연다');
 });
 
 test('③ 인증 서버 불통 — 타임아웃 뒤 게스트로 임시 입장', () => {

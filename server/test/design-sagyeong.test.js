@@ -168,19 +168,32 @@ test('③ 서버는 닉네임 없이도 가입을 받는다 — 이메일 앞부
   }
 });
 
-test('③ 부트 셸 — CSS 가 깨져도 서는 첫 화면과 세 가지 문', () => {
+test('③ 부트 카드 — 정상 부팅에는 보이지 않고, 실패했을 때만 길을 준다', () => {
   // 인라인 CSS 는 일부러 css/style.css 를 부르지 않는다 (깨진 배포에서도 자리를 지킨다)
   const head = shell.slice(0, shell.indexOf('</head>'));
   assert.match(head, /부트 셸 \(SCR-AUTH-001\)/);
   assert.match(head, /#boot\{position:fixed/, '스타일시트 장애와 무관한 인라인 규칙');
-  assert.match(shell, /잠시 정원의 문을 정돈하고 있습니다/);
+
+  // 2026-11: 전체 화면 로딩 스플래시는 없앴다 — 실기기에서 몇 초씩 붙잡고 있었다
+  assert.match(shell, /<div id="boot"[^>]*hidden/, '카드는 hidden 으로 시작한다');
+  assert.match(head, /#boot\[hidden\]\{display:none\}/, 'hidden 이면 한 프레임도 그리지 않는다');
+  assert.equal(/정돈하고 있습니다/.test(shell), false, '기다리라는 스플래시 문구는 없다');
+  assert.equal(/boot-skel/.test(shell), false, '스켈레톤으로 자리를 채우지 않는다');
+  assert.equal(/is-slow/.test(shell), false, '"오래 걸린다"는 안내도 두지 않는다');
+  assert.match(shell, /화면을 열지 못했어요/, '실패했을 때의 문구');
+
+  // 실패 판정: 6초 안에 첫 화면이 안 그려졌을 때만 연다
+  assert.match(shell, /setTimeout\(function \(\) \{ if \(!appReady\(\)\) show\(\); \}, 6000\)/);
+  assert.match(shell, /function show\(\) \{\n    if \(done\) return;\n    boot\.hidden = false;/);
   assert.match(shell, /data-boot="reload"/);
   assert.match(shell, /data-boot="cache"/);
   assert.match(shell, /data-boot="guest"/);
   assert.match(shell, /navigator\.onLine === false/, '네트워크 점검 안내');
-  assert.match(shell, /caches\.delete/, '캐시 초기화');
-  assert.match(shell, /window\.MJ_BOOT = \{ hide: hide/, '앱이 그려지면 걷어 낸다');
-  assert.match(app, /window\.MJ_BOOT\.hide\(\)/, '첫 화면을 그린 뒤 부트 셸 제거');
+  assert.match(shell, /caches\.delete/, '캐시 초기화 — 순례 기록은 건드리지 않는다');
+  assert.match(shell, /window\.MJ_BOOT = \{ hide: hide, show: show/, '앱이 그려지면 걷어 낸다');
+  assert.match(app, /window\.MJ_BOOT\.hide\(\)/, '첫 화면을 그린 뒤 부트 카드 제거');
+  // 그 사이 '준비 중'은 본문 안의 가벼운 스켈레톤이 맡는다 (전체 화면을 덮지 않는다)
+  assert.match(shell, /class="boot-splash"/);
 });
 
 // ---------- ④ 리포트 ----------
