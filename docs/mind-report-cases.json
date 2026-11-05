@@ -1,0 +1,77 @@
+{
+  "_readme": "마음정원 적응형 리포트 목업 — 두 상태(N<3 / N>=3)를 모두 검증하기 위한 표본. 필드 이름은 js/app/report.js 의 buildReport() 반환값과 같다. #/report?demo=A 또는 ?demo=B 로 브라우저에서 바로 확인할 수 있다.",
+  "CASE_A_DATA_INSUFFICIENT": {
+    "userId": "user_luxrank_01",
+    "totalConsultationCount": 1,
+    "lastUpdated": "2026-11-05T23:50:00Z",
+    "hasEnoughData": false,
+    "mindGrowthSeed": {
+      "seedStage": 1,
+      "message": "아직 마음정원에 심어진 이야기의 씨앗이 적어 분석 그래프를 그릴 수 없어요. 마음의 지기와 2번 더 이야기를 나누시면 주간 감정선 차트가 피어납니다."
+    }
+  },
+  "CASE_B_DATA_SUFFICIENT": {
+    "userId": "user_luxrank_02",
+    "totalConsultationCount": 8,
+    "lastUpdated": "2026-11-05T23:53:00Z",
+    "hasEnoughData": true,
+    "mindGrowthSeed": {
+      "seedStage": 3,
+      "message": "마음의 줄기가 단단하게 자라나고 있습니다. 주간 흐름을 확인해 보세요."
+    },
+    "analyticsData": {
+      "weeklyTrend": [
+        {
+          "dayOfWeek": "월",
+          "date": "2026-11-02",
+          "anxietyScore": 75,
+          "stabilityScore": 25,
+          "primaryEmotion": "불안"
+        },
+        {
+          "dayOfWeek": "화",
+          "date": "2026-11-03",
+          "anxietyScore": 60,
+          "stabilityScore": 40,
+          "primaryEmotion": "초조"
+        },
+        {
+          "dayOfWeek": "수",
+          "date": "2026-11-04",
+          "anxietyScore": 40,
+          "stabilityScore": 60,
+          "primaryEmotion": "평온"
+        },
+        {
+          "dayOfWeek": "목",
+          "date": "2026-11-05",
+          "anxietyScore": 25,
+          "stabilityScore": 75,
+          "primaryEmotion": "기대"
+        }
+      ],
+      "topKeywords": [
+        {
+          "keyword": "새로운 도전",
+          "frequency": 5,
+          "intensity": "High"
+        },
+        {
+          "keyword": "미래 불안",
+          "frequency": 3,
+          "intensity": "Medium"
+        },
+        {
+          "keyword": "서예 몰입",
+          "frequency": 2,
+          "intensity": "Low"
+        },
+        {
+          "keyword": "Vercel 배포",
+          "frequency": 2,
+          "intensity": "Low"
+        }
+      ]
+    }
+  }
+}

@@ -208,7 +208,12 @@
   const ENT_KEY = 'maeumjeongwon.ent.v1';
   const defaults = { visits: [], journal: [], big: false, moodIdx: 0, plus: null, plan: 'yearly', packs: [], offline: [], adLog: {}, adUnlocks: {}, skin: null, moodLog: [], trips: [], tripChecks: {}, streak: 0, streakDate: null, streakFreezes: 1, onboarded: false, onboardPrefs: {}, counsel: [], guest: false };
   let S;
-  try { S = Object.assign({}, defaults, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { S = Object.assign({}, defaults); }
+  // 저장소 파싱 실패를 기억한다 — 조용히 기본값으로 되돌리면 '기록이 없다'와 '깨졌다'를 구별할 수 없다.
+  // 리포트의 [기록 새로고침] 이 이 깃발을 본다 (SCR-REP-003 예외 2).
+  let storageBroken = false;
+  try { S = Object.assign({}, defaults, JSON.parse(localStorage.getItem(KEY) || '{}')); }
+  catch (e) { S = Object.assign({}, defaults); storageBroken = true; }
+  if (!S || typeof S !== 'object' || !Array.isArray(S.counsel)) { S = Object.assign({}, defaults, S || {}); if (!Array.isArray(S.counsel)) { S.counsel = []; storageBroken = true; } }
 
   const SAMPLE_DATA = {
     visits: [
@@ -392,12 +397,6 @@
     MJAnalytics.track('ritual_complete', { feature: 'daily' });
   }
   function ritualDoneToday() { return S.streakDate === today(); }
-  function streakMilestoneHTML(n) {
-    if (n >= 100) return '🏆';
-    if (n >= 30) return '🔥';
-    if (n >= 7) return '✨';
-    return '📿';
-  }
 
   // ---------- 온보딩 ----------
   const ONBOARD_STEPS = [
@@ -825,55 +824,30 @@
     openAd._t = setInterval(() => { n--; const c = document.getElementById('adcount'), b = document.getElementById('adreward'); if (!c || !b) { clearInterval(openAd._t); return; } c.textContent = n > 0 ? n : '✓'; if (n <= 0) { b.disabled = false; clearInterval(openAd._t); } }, 1000);
   }
 
-  /* ---------- 마음 사경 기록 (SCR-REP-001 의 씨앗) — 기기 밖으로 나가지 않는다.
-     3장을 기준으로 상태1(1~2장)/상태2(3장~)을 가른다: 한 장은 우연, 세 장은 결. */
-  const COUNSEL_MAX = 60;
-  const COUNSEL_KW = [
-    { k: '불안', re: /불안|걱정|초조|두렵|무섭|긴장|떨려/ },
-    { k: '지침', re: /지치|지쳐|피곤|힘들|번아웃|무기력|쉬고\s*싶|녹초/ },
-    { k: '관계', re: /관계|친구|동료|사람\s*때문|가족|부모|자녀|아이|연인|부부/ },
-    { k: '건강', re: /건강|아프|병원|수술|치료|회복|몸이/ },
-    { k: '일·진로', re: /회사|직장|진로|이직|취업|업무|일이\s*안|프로젝트/ },
-    { k: '시험·승진', re: /시험|수능|합격|승진|면접|자격증|논문/ },
-    { k: '돈', re: /돈|빚|생계|월급|재정|가계/ },
-    { k: '외로움', re: /외롭|혼자|고독|쓸쓸|적적/ },
-    { k: '이별·상실', re: /이별|헤어|떠나|장례|상실|죽음/ },
-    { k: '화·억울', re: /화가|분노|억울|짜증|미움|서운/ },
-    { k: '감사', re: /감사|고맙|기쁨|행복|설레|좋은\s*일/ },
-    { k: '기도·발원', re: /기도|발원|소원|바라|기원|빌고/ },
-    { k: '쉼', re: /쉬고|휴식|명상|숲|걷|조용/ }
-  ];
-  // 기분 라벨 → 마음 온도(1~5). 리포트 꺾은선의 y축.
-  const COUNSEL_TEMP = { '지쳤어요': 2, '마음이 복잡해요': 2.6, '설레요': 3.8, '바라는 게 있어요': 3.2, '쓸쓸해요': 2.4, '감사해요': 4.4 };
-  function counselKeywords(text) {
-    const t = String(text || '');
-    return COUNSEL_KW.filter(x => x.re.test(t)).map(x => x.k);
+  /* 마음 사경 기록의 창고 — 기록·낱말·리포트는 지연 모듈(js/app/report.js)이 맡고,
+     셸은 첫 화면 예산 때문에 읽고 쓰는 문만 열어 둔다. */
+  window.MJ_STORE = {
+    counsel: function () { return Array.isArray(S.counsel) ? S.counsel : []; },
+    setCounsel: function (v) { S.counsel = Array.isArray(v) ? v : []; },
+    save: function () { save(); },
+    broken: function () { return storageBroken; },
+    heal: function () { storageBroken = false; }
+  };
+
+  /* 인증 요청은 '영원히 기다리지' 않는다 — 8초가 지나면 실패로 보고 게스트 입장 훅을 연다 (SCR-AUTH-002 예외 2). */
+  function withTimeout(promise, ms) {
+    let t;
+    const timer = new Promise((_, reject) => { t = setTimeout(() => reject(new Error('timeout')), ms || 8000); });
+    return Promise.race([promise, timer]).finally(() => clearTimeout(t));
   }
-  function counselScore(mood, kws) {
-    let v = COUNSEL_TEMP[mood] || 3;
-    if (kws.some(k => k === '불안' || k === '지침' || k === '외로움' || k === '화·억울')) v -= 0.3;
-    if (kws.some(k => k === '감사' || k === '기도·발원' || k === '쉼')) v += 0.3;
-    return Math.max(1, Math.min(5, Math.round(v * 10) / 10));
+  // 인증 화면 하단의 '게스트로 임시 입장' 블록을 켠다 (모달을 다시 그리지 않아 입력값이 남는다)
+  function showGuestEntry(msg) {
+    authModalState.netDown = true;
+    const box = document.getElementById('authGuest');
+    if (box) box.hidden = false;
+    const note = document.getElementById('authGuestNote');
+    if (note && msg) note.textContent = msg;
   }
-  function counselLog() { return (Array.isArray(S.counsel) ? S.counsel : []).filter(x => x && x.at); }
-  function addCounsel(rec) {
-    const prompt = String((rec && rec.prompt) || '').slice(0, 300);
-    if (!prompt) return;
-    const kws = counselKeywords(prompt);
-    const mood = String((rec && rec.mood) || '');
-    const entry = {
-      at: new Date().toISOString(),
-      prompt,
-      mood,
-      kw: kws,
-      score: counselScore(mood, kws),
-      templeId: (rec && rec.templeId) || '',
-      verse: (rec && rec.verse) || ''
-    };
-    S.counsel = counselLog().concat(entry).slice(-COUNSEL_MAX);
-    save();
-  }
-  window.MJ_COUNSEL = { add: addCounsel, list: counselLog };
 
   // ---------- 나의 순례 리포트 (이 기기 데이터로 생성) ----------
   const SEASONS = m => m >= 3 && m <= 5 ? '봄' : m >= 6 && m <= 8 ? '여름' : m >= 9 && m <= 11 ? '가을' : '겨울';
@@ -1006,17 +980,6 @@
     return `<section class="card"><div class="row between"><h2 style="margin:0">🍁 계절 한정 스탬프</h2>${owned ? `<span class="tag ok">${got.size}개 획득</span>` : '<span class="tag">플러스·단품</span>'}</div>
       ${owned ? inner : lockBlock('season', inner)}
       ${owned ? '' : `<div class="row" style="margin-top:8px"><button class="btn ghost small" data-act="buy" data-id="${SEASON.id}">단품 2,900원 (데모)</button></div>`}</section>`;
-  }
-
-  // ---------- 오디오 (Web Speech API 데모) ----------
-  function playAudio(id) {
-    const t = byId[id]; if (!t) return;
-    if (!isPlus()) { openPaywall('audio'); return; }
-    if (!('speechSynthesis' in window)) { toast('이 브라우저는 음성 읽기를 지원하지 않아요.'); return; }
-    const parts = [t.name + '. 전해지는 이야기입니다.'].concat([t.legend].concat(t.legends || []).filter(Boolean).map(l => l.title + '. ' + l.text));
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(parts.join(' ')); u.lang = 'ko-KR'; u.rate = 0.95;
-    speechSynthesis.speak(u); toast('🎧 이야기를 읽어 드려요 (데모: 기기 음성 사용)');
   }
 
   // ---------- 공통 렌더 조각 ----------
@@ -2131,7 +2094,7 @@
     return routeGateLabel(r, a, b);
   }
 
-  const authModalState = { mode: 'login', feature: '', nextHash: '', onSuccess: null };
+  const authModalState = { mode: 'login', feature: '', nextHash: '', onSuccess: null, netDown: false };
 
   function authGateBanner(label) {
     return `<section class="card auth-gate-banner" aria-label="회원 전용 기능 안내">
@@ -2195,8 +2158,25 @@
       </div>
       ${tabs}
       ${form}
+      <div class="auth-guest" id="authGuest" ${authModalState.netDown ? '' : 'hidden'}>
+        <p class="sub" id="authGuestNote">서버가 응답하지 않아도 둘러보는 길은 있어요.</p>
+        <button type="button" class="btn ghost block" data-act="guest-start">인터넷 없이 게스트로 임시 입장</button>
+      </div>
     </div>`;
   }
+
+  /* 게스트(오프라인) 입장 — 부트 셸의 '게스트로 시작'과 같은 키를 남긴다.
+     회원 기능은 열리지 않는다. '가입을 못 해서 앱을 못 쓰는' 상태를 만들지 않는 것이 목적이다. */
+  const GUEST_KEY = 'maeumjeongwon.guest.v1';
+  function startGuest() {
+    try { localStorage.setItem(GUEST_KEY, '1'); } catch (e) {}
+    document.documentElement.setAttribute('data-guest', '1');
+    if (window.MJ_BOOT && window.MJ_BOOT.hide) window.MJ_BOOT.hide();
+    closeModal();
+    if (location.hash === '#/home' || !location.hash) render(); else goHash('#/home');
+    toast('게스트로 둘러보는 중이에요 · 회원 기능은 로그인 후 열려요');
+  }
+  window.MJ_START_GUEST = startGuest;
 
   function openAuthModal(opts = {}) {
     const m = document.getElementById('modal');
@@ -2226,7 +2206,8 @@
   }
 
   function render() {
-    const parts = (location.hash || '#/home').slice(2).split('/').map(decodeURIComponent);
+    // 해시 안의 물음표는 경로가 아니다 — '#/report?demo=A' 의 route 는 'report'
+    const parts = (location.hash || '#/home').slice(2).split('?')[0].split('/').map(decodeURIComponent);
     const [r, a, b, c] = parts;
     if (mapObj) { mapObj.remove(); mapObj = null; }
     let html, tab = r;
@@ -2235,6 +2216,12 @@
     const WIDE_FLOW = ['home', 'missions', 'store', 'planner', 'journal', 'fengshui', 'explore', 'map', 'report', 'mind'];
     $view.dataset.route = route;
     $view.dataset.flow = WIDE_FLOW.includes(route) && a !== 'new' ? 'cards' : '';
+    /* 화면 ID — 기획·QA·분석이 같은 이름을 쓰게 DOM 에 남긴다 (docs/routing-resilience-spec.md).
+       전환: 메인 Fade-in · 가입 Slide Left · 리포트 Staggered Lift. */
+    const SCREEN_ID = { home: 'SCR-MAIN-001', report: 'SCR-REP-003', account: 'SCR-AUTH-002' };
+    const SCREEN_MOTION = { 'SCR-MAIN-001': 'fade', 'SCR-AUTH-002': 'slide', 'SCR-REP-003': 'lift' };
+    $view.dataset.screen = SCREEN_ID[route] || '';
+    $view.dataset.motion = SCREEN_MOTION[SCREEN_ID[route]] || 'fade';
     try {
     switch (r) {
       case 'explore': html = viewExplore(a, b, c); break;
@@ -2396,8 +2383,16 @@
         const password = String(fd.get('password') || '');
         if (!email || !password) return setErr('이메일과 비밀번호를 입력해 주세요.');
         setBusy(true);
-        const r = await api('/api/auth/login', { method: 'POST', body: { email, password } });
+        let r;
+        try { r = await withTimeout(api('/api/auth/login', { method: 'POST', body: { email, password } })); }
+        catch (e) {
+          setBusy(false);
+          setErr('서버에 연결하지 못했어요. 인터넷을 확인하거나 게스트로 둘러보세요.');
+          showGuestEntry('로그인 서버가 응답하지 않아요. 게스트로도 둘러볼 수 있어요.');
+          return;
+        }
         setBusy(false);
+        if (!r.ok && r.status >= 500) showGuestEntry('로그인 서버에 문제가 생겼어요. 게스트로도 둘러볼 수 있어요.');
         if (!r.ok) {
           setErr((r.body && r.body.message) || '로그인하지 못했어요. 이메일과 비밀번호를 확인해 주세요.');
           const pw = form.querySelector('[name="password"]');
@@ -2425,8 +2420,16 @@
         if (!email || !password) return setErr('이메일과 비밀번호를 입력해 주세요.');
         if (password2 && password !== password2) return setErr('비밀번호 확인이 달라요. 다시 입력해 주세요.');
         setBusy(true);
-        const r = await api('/api/auth/signup', { method: 'POST', body: { email, password, nickname: nickname || undefined } });
+        let r;
+        try { r = await withTimeout(api('/api/auth/signup', { method: 'POST', body: { email, password, nickname: nickname || undefined } })); }
+        catch (e) {
+          setBusy(false);
+          setErr('서버에 연결하지 못했어요. 입력은 그대로 두었어요 — 다시 보내거나 게스트로 시작하세요.');
+          showGuestEntry('가입 서버가 응답하지 않아요. 인터넷 없이도 둘러볼 수 있어요.');
+          return;
+        }
         setBusy(false);
+        if (!r.ok && r.status >= 500) showGuestEntry('가입 서버에 문제가 생겼어요. 게스트로도 둘러볼 수 있어요.');
         if (!r.ok) return setErr((r.body && r.body.message) || '가입하지 못했어요. 입력 내용을 확인해 주세요.');
         const nextHash = authModalState.nextHash;
         const cb = authModalState.onSuccess;
@@ -2570,6 +2573,18 @@
     }
     if (act === 'reload') {
       location.reload();
+      return;
+    }
+    /* SCR-REP-003 예외 2 — 깨진 사경 기록. 지우기 전에 한 번 더 읽고, 깨진 항목만 걷어 낸다. */
+    if (act === 'counsel-reset') {
+      const kept = (window.MJ_COUNSEL && window.MJ_COUNSEL.reset) ? window.MJ_COUNSEL.reset() : 0;
+      toast(kept ? `기록을 다시 읽었어요 · 남은 장 ${kept}개` : '읽을 수 있는 기록이 없어 새 장부터 시작해요');
+      render();
+      return;
+    }
+    /* SCR-AUTH-002 예외 2 — 인증 서버가 죽어도 앱에 들어갈 길은 남긴다 (오프라인 게스트 세션). */
+    if (act === 'guest-start') {
+      startGuest();
       return;
     }
     if (act === 'logout') {
