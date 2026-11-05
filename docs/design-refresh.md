@@ -92,7 +92,7 @@
 ## 4. 검증
 
 - `npm test` — 100/100 통과. 반응형 가드(`server/test/responsive-layout.test.js`) 10개 전부 그대로 통과:
-  5단 브레이크포인트, 셸 그리드, `--tap:44px`, 유동 `--fs-base`, `svh`·`env(safe-area)`,
+  5단 브레이크포인트, 셸 그리드, `--tap:48px`(2026-11 상향), 유동 `--fs-base`, `svh`·`env(safe-area)`,
   `data-flow=cards` 재배치 훅, 지도 리사이즈·모달 스크롤 잠금.
 - `npm run test:content` / `test:temples` / API 스모크 전부 통과.
   기도 테마 가드 하나는 **제목의 이모지 의존**을 제거하도록 함께 손봤다

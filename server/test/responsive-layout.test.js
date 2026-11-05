@@ -71,16 +71,17 @@ test('5. 모바일 브라우저 UI(주소창)가 접혀도 본문·지도가 잘
   assert.match(declOf('.sheet'), /min\(90svh,900px\)/);
 });
 
-test('6. 터치 타깃 44px · iOS 입력 확대(16px) 방지 · 큰 글씨 모드도 유동 스케일', () => {
-  assert.match(css, /--tap:44px/);
+test('6. 터치 타깃 48px · iOS 입력 확대(16px) 방지 · 큰 글씨 모드도 유동 스케일', () => {
+  // 2026-11: 44px → 48px (모바일 실무 가이드의 48×48dp). 상단 칩만 44px + 히트 슬롭으로 48px.
+  assert.match(css, /--tap:48px/);
   assert.match(declOf('.btn'), /min-height:var\(--tap\)/);
   assert.match(declOf('.tabbar a'), /min-height:var\(--tabbar-h\)/);
   assert.match(declOf('input,textarea,select'), /font-size:max\(16px,1em\)/);
   assert.match(declOf('input:not\(\[type=checkbox\]\):not\(\[type=radio\]\),select'), /min-height:var\(--tap\)/);
   // 큰 글씨 모드는 px 하드코딩이 아니라 '기저 크기'를 교체해서 어떤 화면에서도 같이 커진다
-  assert.match(css, /--fs-base:clamp\(15px, \.55vw \+ 13px, 17\.5px\)/);
+  assert.match(css, /--fs-base:clamp\(16px, \.55vw \+ 13\.5px, 18px\)/);
   assert.match(css, /body\{--fs:var\(--fs-base\);[^}]*font-size:var\(--fs\)/);
-  assert.match(declOf('body.big'), /--fs-base:clamp\(18px/);
+  assert.match(declOf('body.big'), /--fs-base:clamp\(19px/);
 });
 
 test('7. 지도는 화면 회전·창 리사이즈에 다시 맞고, 모달은 배경 스크롤을 잠근다', () => {

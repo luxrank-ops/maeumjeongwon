@@ -89,7 +89,7 @@
         <div class="sheet" style="text-align:center">
           <h2>📲 ${I18N.t('pwa_ios_title')}</h2>
           <p class="sub">${I18N.t('pwa_ios_desc')}</p>
-          <div style="text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin:12px 0;line-height:1.7">
+          <div class="panel-plain" style="text-align:left;margin:12px 0;line-height:1.7">
             1. Safari 하단 툴바의 <b>공유 버튼 (네모 위 화살표)</b>을 누릅니다.<br>
             2. 화면을 아래로 스크롤하여 <b>'홈 화면에 추가'</b>를 선택합니다.<br>
             3. 우측 상단의 <b>'추가'</b>를 누르면 설치가 완료됩니다.
@@ -251,7 +251,7 @@
             </a>
           </div>
 
-          <div style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;font-size:.88em">
+          <div class="panel-plain" style="margin-top:10px;font-size:.88em">
             <div>🅿️ <b>${I18N.t('parking')}</b>: ${temple.practical ? temple.practical.parking : '사찰 입구 주차장'}</div>
             <div style="margin-top:4px">🚌 <b>${I18N.t('transit')}</b>: ${temple.practical ? temple.practical.transit : '대중교통 안내 확인 필요'}</div>
           </div>
@@ -534,15 +534,15 @@
 
           <h3>주요 프로그램 유형</h3>
           <div style="display:flex;flex-direction:column;gap:8px">
-            <div style="background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px">
+            <div class="panel-plain">
               <b>🧘‍♀️ 휴식형 (Rest)</b>
               <p class="sub" style="margin:2px 0 0">새벽예불과 공양 외의 시간은 숲길 산책, 명상, 독서 등 자유롭게 쉬어가는 일정</p>
             </div>
-            <div style="background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px">
+            <div class="panel-plain">
               <b>📿 체험형 (Experience)</b>
               <p class="sub" style="margin:2px 0 0">108배 염주 만들기, 스님과의 차담, 타종 체험, 숲길 포행 등 사찰 문화 체험</p>
             </div>
-            <div style="background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px">
+            <div class="panel-plain">
               <b>🍵 당일형 (One-day)</b>
               <p class="sub" style="margin:2px 0 0">숙박 없이 2~3시간 동안 사찰 안내, 다도 체험, 명상을 경험하는 프로그램</p>
             </div>

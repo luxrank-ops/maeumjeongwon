@@ -41,9 +41,10 @@
       js: ['js/data-fengshui.js'],
       ready: function () { return !!root.FENGSHUI_ATLAS; }
     },
-    // 계획 화면 모듈(945줄) — 계획 라우트에 들어갈 때만 받는다
+    // 계획 화면 모듈(945줄) + 추천 엔진 — 계획 라우트에 들어갈 때만 받는다.
+    // 추천 엔진은 계획 화면에서만 쓰이므로 첫 화면에서 내려받지 않는다 (예산 여유 5.3KB).
     planner: {
-      js: ['js/app/planner.js'],
+      js: ['js/planner-reco.js', 'js/app/planner.js'],
       ready: function () { return typeof root.MJ_PLANNER_FACTORY === 'function'; }
     },
     mapUi: {

@@ -341,16 +341,19 @@
         return `<section class="cm-page"><a class="text-link" href="#/board/${editId}">${ic('back')} 글로 돌아가기</a><p class="notice" role="alert">작성자만 고칠 수 있어요.</p></section>`;
       }
       const d = editing ? st.post.data : { category: 'free', title: '', body: '' };
-      const opts = Object.entries(CATS)
-        .map(([k, v]) => `<option value="${k}" ${d.category === k ? 'selected' : ''}>${esc(v.label)}</option>`).join('');
+      /* 글 종류는 3가지 — 드롭다운 대신 펼쳐 둔다 (⑯-3). 값은 hidden input 이 폼에 싣는다. */
+      const opts = `<div class="choices" role="group" aria-label="글 종류">
+          <input type="hidden" name="category" value="${esc(d.category)}">
+          ${Object.entries(CATS).map(([k, v]) => `<button type="button" class="choice" data-choice="${k}" aria-pressed="${d.category === k}">${ic('check')}<span>${esc(v.label)}</span></button>`).join('')}
+        </div>`;
       const back = editing ? `#/board/${editId}` : '#/board';
       return `<section class="cm-page">
         <a class="text-link" href="${back}">${ic('back')} ${editing ? '글로 돌아가기' : '게시판'}</a>
         <h1>${editing ? '글 고치기' : '새 글 쓰기'}</h1>
         <p class="sub">${esc(RULES)}</p>
         <form class="card cm-form" data-cm-form="post" ${editing ? `data-id="${editId}"` : ''} novalidate>
-          <label for="cm-p-cat">글 종류</label>
-          <select id="cm-p-cat" name="category">${opts}</select>
+          <span class="field-label" id="cm-p-cat-label">글 종류</span>
+          ${opts}
           <label for="cm-p-title">제목</label>
           <input id="cm-p-title" name="title" maxlength="80" value="${esc(d.title)}" required>
           <label for="cm-p-body">내용</label>

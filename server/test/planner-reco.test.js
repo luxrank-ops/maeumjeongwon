@@ -130,12 +130,16 @@ test('9. 사찰 데이터가 없으면 추천하지 않고 이유를 돌려준�
   assert.match(r.message, /사찰/);
 });
 
-test('10. 앱 셸은 추천 엔진을 먼저 불러오고, 실행·적용 버튼과 연결돼 있다', () => {
-  // <script> 태그 기준으로 순서를 본다 (head의 preload 힌트는 실행 순서와 무관)
-  const recoIdx = indexHtml.indexOf('<script src="js/planner-reco.js');
-  const appIdx = indexHtml.indexOf('<script src="js/app.js');
-  assert.ok(recoIdx > -1, 'index.html에 추천 엔진 로드');
-  assert.ok(appIdx > recoIdx, '추천 엔진을 app.js보다 먼저 로드');
+test('10. 앱 셸은 추천 엔진을 계획 화면에서 함께 받고, 실행·적용 버튼과 연결돼 있다', () => {
+  /* 2026-11: 추천 엔진은 계획 화면에서만 쓰이므로 첫 화면(index.html)에서 빼고
+   * 로더의 planner 자산으로 옮겼다(첫 화면 gzip 5.3KB 회수). 대신 'planner.js 보다 먼저'
+   * 실행되는지는 로더 표가 지킨다 — planner.js 는 팩토리를 만들 때 window.PLANNER_RECO 를 읽는다. */
+  const loaderSrc = fs.readFileSync(path.join(__dirname, '..', '..', 'js', 'lib', 'loader.js'), 'utf-8');
+  const recoIdx = loaderSrc.indexOf("'js/planner-reco.js'");
+  const plannerIdx = loaderSrc.indexOf("'js/app/planner.js'");
+  assert.ok(recoIdx > -1, '로더가 추천 엔진을 받는다');
+  assert.ok(plannerIdx > recoIdx, '추천 엔진을 planner.js보다 먼저 받는다');
+  assert.equal(indexHtml.includes('<script src="js/planner-reco.js'), false, '첫 화면에서 직접 받지 않는다');
 
   assert.ok(appSource.includes('window.PLANNER_RECO'), '앱이 추천 엔진을 읽는다');
   assert.ok(appSource.includes('PLAN_RECO.recommend('), '앱이 추천 계산을 호출한다');

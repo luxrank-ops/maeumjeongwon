@@ -316,8 +316,8 @@
 
     // 새 여행 계획 작성 중인 임시 초안 (저장 전까지만 유지, 초기화 버튼으로 비울 수 있음)
     const DRAFT_SAMPLE_STOPS = ['bulguksa', 'tongdosa'];
-    const DRAFT_FIELDS = ['title', 'date', 'days', 'transport', 'companion', 'memo'];
-    const DRAFT_DEFAULTS = { days: '당일치기', transport: '자가용', companion: '혼자 조용히' };
+    const DRAFT_FIELDS = ['title', 'date', 'days', 'transport', 'companion', 'people', 'memo'];
+    const DRAFT_DEFAULTS = { days: '당일치기', transport: '자가용', companion: '혼자 조용히', people: '2' };
     const DAYS_OPTS = ['반나절·당일', '당일치기', '1박 2일', '2박 3일', '3박 4일 이상'];
     const TRANSPORT_OPTS = ['자가용', '대중교통', '대중교통·도보', '산행·트레킹'];
     const COMPANION_OPTS = ['혼자 조용히', '가족·부모님과', '연인·친구와', '아이와 함께', '불자·순례 모임', '기도처 중심 일정', '기도효험 좋은 곳'];
@@ -408,6 +408,29 @@
       return list.map(o => `<option${o === cur ? ' selected' : ''}>${esc(o)}</option>`).join('');
     }
 
+    const CHECK_IC = '<svg class="ic" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>';
+
+    /* 옵션이 5개 이하면 드롭다운 대신 펼친다 (⑯-3). 값은 hidden input 이 들고 있으므로
+     * FormData·change 처리(초안 저장·이동수단별 시간 재계산)는 그대로 동작한다. */
+    function choiceGroup(name, label, opts, cur, id) {
+      return `<span class="field-label">${esc(label)}</span>
+        <div class="choices" role="group" aria-label="${esc(label)}">
+          <input type="hidden" name="${name}"${id ? ` id="${id}"` : ''} value="${esc(cur)}">
+          ${opts.map(o => `<button type="button" class="choice" data-choice="${esc(o)}" aria-pressed="${o === cur}">${CHECK_IC}<span>${esc(o)}</span></button>`).join('')}
+        </div>`;
+    }
+
+    /* 수량(함께 가는 사람)은 목록이 아니라 −/+ 로 (⑯-4) */
+    function stepperGroup(name, label, value, min, max, unit) {
+      const v = Math.min(max, Math.max(min, parseInt(value, 10) || min));
+      return `<div class="stepper" data-stepper data-min="${min}" data-max="${max}" data-unit="${esc(unit)}" role="group" aria-label="${esc(label)}">
+          <button type="button" class="step-btn" data-step="-1" aria-label="${esc(label)} 줄이기"${v <= min ? ' disabled' : ''}>−</button>
+          <output class="step-value" aria-live="polite">${v}${esc(unit)}</output>
+          <button type="button" class="step-btn" data-step="1" aria-label="${esc(label)} 늘리기"${v >= max ? ' disabled' : ''}>+</button>
+          <input type="hidden" name="${name}" value="${v}">
+        </div>`;
+    }
+
     // 사찰을 추가/삭제하면 화면을 다시 그리므로, 입력 중인 값은 그때그때 초안에 담아 둔다
     function captureDraftField(e) {
       const el = e.target;
@@ -487,7 +510,7 @@
       if (!recoResult.ok) return `<p class="notice" style="margin-top:8px">${esc(recoResult.message || '추천 코스를 만들지 못했어요. 조건을 바꿔 다시 시도해 주세요.')}</p>`;
       const r = recoResult;
       const sum = calcRouteSummary(r.stops, currentTransport());
-      return `<div class="card reco-card" style="background:#f9f5ec;margin-top:10px">
+      return `<div class="card reco-card panel-soft" style="margin-top:10px">
         <div class="row between"><b>✨ 추천 코스</b><span class="tag ok">${sum.stops.length}곳 · 약 ${fmtMin(sum.totalMin)}</span></div>
         <h3 style="margin:6px 0 2px">${esc(r.title)}</h3>
         <div class="sub">조건: ${esc(recoConditionText(r))}</div>
@@ -722,14 +745,17 @@
           <input name="title" placeholder="예: 가을 산사 힐링 1박 2일 순례" value="${esc(draftValue('title'))}" required maxlength="60">
           <div class="grid2">
             <div><label>출발 예정일</label><input type="date" name="date" value="${esc(draftValue('date'))}" required></div>
-            <div><label>여행 기간</label><select name="days">${selOpts(DAYS_OPTS, draftValue('days'))}</select></div>
+            <div>
+              <span class="field-label">함께 가는 사람</span>
+              ${stepperGroup('people', '함께 가는 사람', draftValue('people'), 1, 20, '명')}
+            </div>
           </div>
-          <div class="grid2">
-            <div><label>이동 수단</label><select name="transport" id="planTransport">${selOpts(TRANSPORT_OPTS, draftValue('transport'))}</select></div>
-            <div><label>동행 스타일</label><select name="companion">${selOpts(COMPANION_OPTS, draftValue('companion'))}</select></div>
-          </div>
+          ${choiceGroup('days', '여행 기간', DAYS_OPTS, draftValue('days'))}
+          ${choiceGroup('transport', '이동 수단', TRANSPORT_OPTS, draftValue('transport'), 'planTransport')}
+          <div><label>동행 스타일</label><select name="companion">${selOpts(COMPANION_OPTS, draftValue('companion'))}</select></div>
+          <p class="step-hint">동행 스타일은 7가지라 목록(드롭다운)으로, 기간·이동 수단은 5개 이하라 펼쳐 두었어요.</p>
 
-          <section class="card reco-panel" style="background:#f9f5ec;margin-top:12px">
+          <section class="card reco-panel panel-soft" style="margin-top:12px">
             <div class="row between"><b>🔎 추천 계획 검색</b><span class="sub">지역·테마를 고르고 실행하세요</span></div>
             <p class="sub" style="margin:4px 0 0">기간·이동 수단·동행 스타일까지 함께 반영해 사찰과 동선을 골라 드려요.</p>
             <div class="grid2" style="margin-top:8px">
@@ -743,7 +769,7 @@
           <label style="margin-top:12px">📍 경유 사찰 구성 (${draftStops.length}곳 선택됨)</label>
           <div id="draftStopList">${draftStopsHtml(sum)}</div>
 
-          <div class="card" style="background:#f9f5ec;margin-top:8px">
+          <div class="card panel-soft" style="margin-top:8px">
             <div class="row between"><b>사찰 추가하기 (전통사찰 991곳 전체 지원)</b><button type="button" class="btn ghost small" data-act="draft-optimize">✨ 동선 순서 자동 정렬</button></div>
             <div class="row" style="margin-top:6px">
               <select id="addTempleFilter" style="max-width:105px">
@@ -790,7 +816,7 @@
           </div>
         </div>
         <section class="card hero" style="margin-top:8px">
-          <div class="sub">🗓️ ${esc(tr.date || '날짜 미정')} · ${esc(tr.days)} · ${esc(tr.transport)} · ${esc(tr.companion)}</div>
+          <div class="sub">🗓️ ${esc(tr.date || '날짜 미정')} · ${esc(tr.days)} · ${esc(tr.transport)} · ${esc(tr.companion)}${tr.people ? ' · ' + tr.people + '명' : ''}</div>
           <h1 style="margin:6px 0">${esc(tr.title)}</h1>
           <div class="row wrap">
             <span class="tag ok">경유 사찰 ${sum.stops.length}곳</span>
@@ -916,6 +942,7 @@
           days: fd.get('days') || '당일치기',
           transport: fd.get('transport') || '자가용',
           companion: fd.get('companion') || '혼자 조용히',
+          people: Math.max(1, parseInt(fd.get('people'), 10) || 1),
           stops: draftStops.slice(),
           memo: (fd.get('memo') || '').trim(),
           createdAt: new Date().toISOString()

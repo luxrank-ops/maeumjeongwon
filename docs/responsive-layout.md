@@ -7,7 +7,7 @@
 
 | 폭 | 대상 | 화면이 바뀌는 것 |
 | --- | --- | --- |
-| 기본 ~559px | 스마트폰 | 1열 스택, 하단 스티키 탭바, 하단 시트 모달, 터치 타깃 44px |
+| 기본 ~559px | 스마트폰 | 1열 스택, 하단 스티키 탭바, 하단 시트 모달, 터치 타깃 48px(칩은 44px + 히트 슬롭) |
 | ≥560px | 큰 폰·좁은 창·분할 화면 | 사찰 목록·배지·기분 칩 2열 후보, 카드 여백 확대 |
 | ≥760px | 태블릿 세로 | 본문 740px, 지도 62vh, 모달이 중앙 대화상자로 전환, 스탬프 확대 |
 | ≥1120px | 태블릿 가로·노트북 | **하단 탭 → 좌측 사이드 내비**, 캐버스 1240px, 본문은 900px 열로 중앙 정렬, 카드 안 본문은 72ch 로 선 길이 제한 |
@@ -38,8 +38,8 @@
 
 ## 3. 타이포·여백 스케일
 
-* `--fs-base: clamp(15px, .55vw + 13px, 17.5px)` → `body{--fs:var(--fs-base); font-size:var(--fs)}`.
-  계산 위치가 `body` 이므로 `body.big` 에서 `--fs-base` 를 교체하는 방식으로 큰 글씨 모드(18~21.5px)가 모든 화면 크기에서 함께 동작한다. (`:root` 에서 계산하면 자식 오버라이드가 반영되지 않는다.)
+* `--fs-base: clamp(16px, .55vw + 13.5px, 18px)` → `body{--fs:var(--fs-base); font-size:var(--fs)}`.
+  계산 위치가 `body` 이므로 `body.big` 에서 `--fs-base` 를 교체하는 방식으로 큰 글씨 모드(19~22px)가 모든 화면 크기에서 함께 동작한다. (`:root` 에서 계산하면 자식 오버라이드가 반영되지 않는다.)
 * `--pad-x/--pad-y/--gap/--r/--tap` 토큰으로 여백을 함께 키워, 태블릿·데스크톱에서 모바일 밀도가 그대로 유지되지 않게 했다.
 * 입력기는 `font-size:max(16px, 1em)` — iOS Safari 의 포커스 자동 확대 방지. `input[type=checkbox]` 는 제외하고, `select` 는 `appearance:none` + 내장 화살표.
 
@@ -80,7 +80,7 @@
 
 ## 9. 가드
 
-`server/test/responsive-layout.test.js` 가 정적 검사로 다음을 지킨다: 5단계 브레이크포인트 존재, `max-width:480px` 하드 캡 금지, safe-area 폴백 구조, `svh`+`vh` 동반, 터치 44px·입력 16px, `auto-fill` 유지, `data-flow` 훅과 CSS 짝, 모달 스크롤 잠금, 리사이즈 시 `invalidateSize`, SEO 페이지 유동 폭.
+`server/test/responsive-layout.test.js` 가 정적 검사로 다음을 지킨다: 5단계 브레이크포인트 존재, `max-width:480px` 하드 캡 금지, safe-area 폴백 구조, `svh`+`vh` 동반, 터치 48px(칩 44px+슬롭)·입력 16px, `auto-fill` 유지, `data-flow` 훅과 CSS 짝, 모달 스크롤 잠금, 리사이즈 시 `invalidateSize`, SEO 페이지 유동 폭.
 
 ## Known limitations
 
