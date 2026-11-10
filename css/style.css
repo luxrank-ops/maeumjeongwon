@@ -87,8 +87,9 @@ h1{font-size:1.45em}h2{font-size:1.18em}h3{font-size:1.02em}
 p{overflow-wrap:anywhere}
 
 /* ---------- ⑤ 공통 컴포넌트 ---------- */
-.card{background:var(--surface-2);border:1px solid var(--border-1);border-radius:var(--r);padding:14px;margin:0 0 12px}
-.hero{background:linear-gradient(160deg,var(--tint-warm-1),var(--tint-warm-2));position:relative;overflow:hidden}
+.card{background:var(--surface-2);border:1px solid var(--border-1);border-radius:var(--r-lg);padding:20px 22px;margin:0 0 18px;box-shadow:var(--elev-1)}
+.card+.card{margin-top:0}
+.hero{background:linear-gradient(160deg,var(--tint-warm-1),var(--tint-warm-2));position:relative;overflow:hidden;border-radius:var(--r-lg)}
 /* 추천 계획 검색 — 실행 버튼을 누르면 조건에 맞춘 코스가 아래 카드로 나온다 */
 .reco-panel .row.between b{font-size:1.02em}
 .reco-card{border:2px solid var(--accent)}
@@ -99,8 +100,9 @@ p{overflow-wrap:anywhere}
 .row{display:flex;gap:8px;align-items:center;min-width:0}
 .wrap{flex-wrap:wrap}.between{justify-content:space-between}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.btn{border:0;border-radius:var(--r-sm);padding:11px 14px;min-height:var(--tap);background:var(--accent);color:var(--on-pine);font-weight:700;text-align:center}
-.btn.ghost{background:transparent;border:1px solid var(--border-1);color:var(--text-1);font-weight:500}
+.btn{border:0;border-radius:var(--r);padding:12px 20px;min-height:var(--tap);background:var(--accent);color:var(--on-pine);font-weight:700;text-align:center;letter-spacing:-.01em}
+.btn.soft{background:var(--surface-sunken);border:1px solid var(--border-1);color:var(--text-1);font-weight:600;min-height:var(--tap);text-align:center;letter-spacing:-.01em}
+.btn.ghost{background:transparent;border:1px solid var(--border-1);color:var(--text-1);font-weight:600;min-height:var(--tap);text-align:center;letter-spacing:-.01em}
 .btn.warn{background:var(--accent2)}.btn.small{padding:8px 11px;font-size:.88em;min-height:38px}.btn.block{width:100%}
 .btn:disabled,.btn[disabled]{opacity:.5;cursor:not-allowed}
 .progress{height:10px;background:var(--border-2);border-radius:99px;overflow:hidden}.progress>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--gold));border-radius:99px}
@@ -116,15 +118,15 @@ p{overflow-wrap:anywhere}
 
 /* ---------- ⑥ 하단 탭 (모바일) — 데스크톱에서는 ⑪에서 사이드 내비로 재배치 ----------
    선택 상태는 '색'이 아니라 ▲ 표시줄 + 굵기 + 아이콘 채움으로 알린다 (색약·야외 광택 대응). */
-.tabbar{grid-area:nav;position:sticky;bottom:0;display:flex;gap:2px;background:var(--surface-2);border-top:1px solid var(--border-1);z-index:600;padding:4px 6px calc(4px + var(--safe-b))}
-.tabbar a{position:relative;flex:1;min-width:0;text-align:center;text-decoration:none;font-size:.72em;padding:8px 2px 6px;color:var(--text-3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:var(--tabbar-h);border-radius:12px;-webkit-tap-highlight-color:transparent}
+.tabbar{grid-area:nav;position:sticky;bottom:0;display:flex;gap:3px;background:var(--surface-2);border-top:1px solid var(--border-1);z-index:600;padding:6px 8px calc(6px + var(--safe-b))}
+.tabbar a{position:relative;flex:1;min-width:0;text-align:center;text-decoration:none;font-size:.74em;padding:10px 4px 6px;color:var(--text-3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:var(--tabbar-h);border-radius:var(--r-lg);-webkit-tap-highlight-color:transparent}
 /* 레일 전용 항목(계획·상점)은 모바일 하단 탭에 넣지 않는다 — 엄지로 닿는 5칸을 지키고, 넓은 화면에서만 메뉴로 노출 */
 .tabbar a.rail-only{display:none}
-.tabbar a span{display:block;line-height:1.2;opacity:.62}
-.tabbar a .ic{width:1.6em;height:1.6em;stroke-width:1.55}
-.tabbar a span.tab-label{opacity:1;font-size:1em;font-weight:600;letter-spacing:.01em}
-.tabbar a:before{content:"";position:absolute;top:2px;left:50%;width:20px;height:3px;margin-left:-10px;border-radius:99px;background:transparent;transition:background var(--dur-2,240ms) var(--ease,linear)}
-.tabbar a.on{color:var(--text-1);font-weight:700;background:transparent}
+.tabbar a span{display:block;line-height:1.2;opacity:.6}
+.tabbar a .ic{width:1.7em;height:1.7em;stroke-width:1.5}
+.tabbar a span.tab-label{opacity:1;font-size:1em;font-weight:600;letter-spacing:-.005em}
+.tabbar a:before{content:"";position:absolute;top:6px;left:50%;width:26px;height:4px;margin-left:-13px;border-radius:99px;background:transparent;transition:background var(--dur-2) var(--ease)}
+.tabbar a.on{color:var(--text-1);font-weight:700;background:var(--surface-sunken)}
 .tabbar a.on span{opacity:1}
 .tabbar a.on .ic{stroke-width:1.9}
 .tabbar a.on:before{background:var(--accent)}
@@ -477,13 +479,13 @@ table.cmp td:nth-child(2),table.cmp td:nth-child(3),table.cmp th:nth-child(2),ta
   --pine-soft-2:#F6E3DE;--pine-line-2:#E6BFB8;--pine-3:#C33A3A;--pine-hover:#9C1717;
   --clay-2:#7A3125;--gold-ink:#54401F;--gold-line-2:#D9C49A;
   --danger-soft:#FAEDE9;--danger-line:#EBD2CA;--breath-1:#F7E4DF;
-  /* 모서리·여백 */
-  --r:18px;--r-sm:12px;--r-lg:26px;
-  --s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:22px;--s6:30px;
+  /* 모서리·여백 — 앱다운 두께감: 모서리를 조금 더 둥글게, 여백을 넉넉하게 */
+  --r:20px;--r-sm:14px;--r-lg:32px;
+  --s1:6px;--s2:10px;--s3:14px;--s4:20px;--s5:28px;--s6:38px;
   --topbar-h:70px;              /* 스티키 오디오 바가 붙을 자리 (topbar 패딩 11+48+11) */
-  /* 그림자 2종만 */
-  --elev-1:0 1px 2px rgba(var(--shade),.05),0 8px 18px -14px rgba(var(--shade),.18);
-  --elev-2:0 2px 6px rgba(var(--shade),.05),0 20px 44px -26px rgba(var(--shade),.28);
+  /* 그림자 2종만 — 문서 같은 선 중첩 대신 부드러운 입체감만 */
+  --elev-1:0 1px 3px rgba(var(--shade),.06),0 6px 16px -8px rgba(var(--shade),.10);
+  --elev-2:0 2px 8px rgba(var(--shade),.06),0 16px 32px -20px rgba(var(--shade),.16);
   --ring:0 0 0 3px rgba(var(--pine-rgb),.3);
   /* 움직임 */
   --ease:cubic-bezier(.22,.72,.24,1);--dur-1:150ms;--dur-2:240ms;--dur-3:420ms;
@@ -740,12 +742,12 @@ input[type=search]::-webkit-search-cancel-button,input[type=search]::-webkit-sea
 .tlist{gap:var(--s2)}
 .titem{
   display:flex;gap:var(--s3);align-items:center;background:var(--surface-2);border:1px solid var(--border-1);
-  border-radius:var(--r);padding:var(--s3) 14px;text-decoration:none;position:relative;
-  transition:border-color var(--dur-1) var(--ease),background var(--dur-1) var(--ease),transform var(--dur-1) var(--ease);-webkit-tap-highlight-color:transparent
+  border-radius:var(--r-lg);padding:var(--s4) 16px;text-decoration:none;position:relative;
+  transition:border-color var(--dur-1) var(--ease),background var(--dur-1) var(--ease),transform var(--dur-1) var(--ease);-webkit-tap-highlight-color:transparent;box-shadow:var(--elev-1)
 }
-.titem:after{content:"";position:absolute;right:14px;top:50%;width:7px;height:7px;border-right:1.7px solid var(--text-3);border-top:1.7px solid var(--text-3);transform:translateY(-50%) rotate(45deg);opacity:.55;border-radius:1px}
+.titem:after{content:"";position:absolute;right:16px;top:50%;width:7px;height:7px;border-right:1.7px solid var(--text-3);border-top:1.7px solid var(--text-3);transform:translateY(-50%) rotate(45deg);opacity:.45;border-radius:1px}
 .titem:hover{border-color:var(--pine-line);background:var(--surface-2)}
-.titem:active{transform:scale(.995)}
+.titem:active{transform:scale(.985);background:var(--pine-soft);border-color:var(--pine-line)}
 .titem .meta{flex:1;min-width:0;padding-right:16px}
 .titem .meta>b{display:block;font-size:1.02em;font-weight:700;letter-spacing:-.015em;overflow-wrap:anywhere}
 .titem .sub{white-space:normal;overflow:visible;text-overflow:clip}
@@ -760,9 +762,9 @@ input[type=search]::-webkit-search-cancel-button,input[type=search]::-webkit-sea
 .seal.lg{flex-basis:56px;width:56px;height:56px;font-size:1.35em;border-radius:15px}
 .seal.gold{background:var(--gold);color:var(--on-gold)}
 .badges{gap:var(--s2)}
-.badge{text-align:left;background:var(--surface-2);border:1px solid var(--border-1);border-radius:var(--r);padding:13px 14px;font-size:.88em;min-width:0;display:flex;flex-direction:column;gap:4px}
-.badge .ic{width:1.3em;height:1.3em;color:var(--text-3)}
-.badge b{font-size:1.02em}
+.badge{text-align:left;background:var(--surface-2);border:1px solid var(--border-1);border-radius:var(--r-lg);padding:16px 18px;font-size:.92em;min-width:0;display:flex;flex-direction:column;gap:5px;box-shadow:var(--elev-1)}
+.badge .ic{width:1.4em;height:1.4em;color:var(--text-3)}
+.badge b{font-size:1.05em;font-weight:700}
 .badge .progress{margin-top:auto}
 .badge.done{border-color:var(--gold-line);background:linear-gradient(180deg,var(--tint-gold-1),var(--tint-gold-2))}
 .badge.done .ic{color:var(--gold)}
@@ -803,15 +805,15 @@ input[type=search]::-webkit-search-cancel-button,input[type=search]::-webkit-sea
 .today p{margin:0;color:var(--text-2);font-size:.95em;line-height:1.65}
 .moods{grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s2);margin:var(--s3) 0 0}
 .mood{
-  position:relative;min-height:84px;padding:11px 6px 10px;border:1px solid var(--border-1);border-radius:16px;
-  background:var(--surface-3);color:var(--text-1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
-  font-size:.9em;transition:border-color var(--dur-1) var(--ease),background var(--dur-1) var(--ease),box-shadow var(--dur-1) var(--ease),transform var(--dur-1) var(--ease)
+  position:relative;min-height:96px;padding:14px 8px 12px;border:1px solid var(--border-1);border-radius:var(--r-lg);
+  background:var(--surface-2);color:var(--text-1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  font-size:.92em;transition:border-color var(--dur-1) var(--ease),background var(--dur-1) var(--ease),box-shadow var(--dur-1) var(--ease),transform var(--dur-1) var(--ease);box-shadow:var(--elev-1)
 }
-.mood span{display:grid;place-items:center;width:30px;height:30px;font-size:1.42em;line-height:1}
-.mood b{font-size:.94em;font-weight:700;line-height:1.3}
+.mood span{display:grid;place-items:center;width:34px;height:34px;font-size:1.6em;line-height:1}
+.mood b{font-size:1em;font-weight:700;line-height:1.3}
 .mood i{display:none}
 .mood:hover{border-color:var(--pine-line);background:var(--surface-2)}
-.mood:active{transform:scale(.985)}
+.mood:active{transform:scale(.97)}
 .mood:focus-visible{outline:none;box-shadow:var(--ring)}
 .mood.on{border-color:var(--pine);background:var(--pine-soft);box-shadow:inset 0 0 0 1px var(--pine)}
 .mood.on:after{content:"";position:absolute;top:7px;right:7px;width:7px;height:7px;border-radius:50%;background:var(--pine)}
@@ -830,8 +832,9 @@ input[type=search]::-webkit-search-cancel-button,input[type=search]::-webkit-sea
 /* ---------- ⑮-11 가로 스크롤 레일 (발견 영역을 세로에서 줄이다) ---------- */
 .rail{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(184px,1fr);gap:var(--s2);overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 0 10px;margin:0 calc(var(--pad-x) * -1);padding-inline:var(--pad-x);scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .rail::-webkit-scrollbar{display:none}
-.rail-item{scroll-snap-align:start;position:relative;display:flex;flex-direction:column;gap:6px;min-width:0;background:var(--surface-2);border:1px solid var(--border-1);border-radius:var(--r);padding:13px 14px;text-decoration:none;color:inherit;transition:border-color var(--dur-1) var(--ease),box-shadow var(--dur-1) var(--ease)}
-.rail-item:hover{border-color:var(--pine-line);box-shadow:var(--elev-1)}
+.rail-item{scroll-snap-align:start;position:relative;display:flex;flex-direction:column;gap:7px;min-width:0;background:var(--surface-2);border:1px solid var(--border-1);border-radius:var(--r-lg);padding:16px 18px;text-decoration:none;color:inherit;transition:border-color var(--dur-1) var(--ease),box-shadow var(--dur-1) var(--ease),transform var(--dur-1) var(--ease);box-shadow:var(--elev-1)}
+.rail-item:hover{border-color:var(--pine-line);box-shadow:var(--elev-2)}
+.rail-item:active{transform:scale(.98)}
 .rail-item b{font-size:1.04em;letter-spacing:-.015em}
 .rail-item .sub{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .rail-item .rail-foot{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:auto;font-size:.84em;color:var(--text-3)}

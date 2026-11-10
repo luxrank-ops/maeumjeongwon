@@ -593,12 +593,12 @@
 
   // ---------- 마음 처방전 ----------
   const MOODS = [
-    { icon: '😮‍💨', label: '지쳤어요', themes: ['quiet', 'autumn'], line: '오늘은 아무것도 하지 않아도 괜찮아요. 숲길을 천천히 걸어 보세요.' },
-    { icon: '🌀', label: '마음이 복잡해요', themes: ['quiet', 'hike'], line: '걸음에 숨을 맞추다 보면 생각이 조금씩 가라앉아요.' },
-    { icon: '✨', label: '설레요', themes: ['photo', 'sea'], line: '설레는 마음 그대로, 예쁜 풍경을 담으러 떠나 볼까요?' },
-    { icon: '🙏', label: '바라는 게 있어요', themes: ['wish', 'energy'], line: '바람을 마음속으로 또박또박 정리해 보는 시간을 가져 보세요.' },
-    { icon: '🍂', label: '쓸쓸해요', themes: ['legend', 'city'], line: '오래된 이야기가 깃든 곳에서 잠시 이야기 친구를 만나 보세요.' },
-    { icon: '🌼', label: '감사해요', themes: ['family', 'history'], line: '고마운 사람과 함께 걷기 좋은 곳을 골랐어요.' }
+    { icon: 'mood-tired', label: '지쳤어요', themes: ['quiet', 'autumn'], line: '오늘은 아무것도 하지 않아도 괜찮아요. 숲길을 천천히 걸어 보세요.' },
+    { icon: 'mood-complex', label: '마음이 복잡해요', themes: ['quiet', 'hike'], line: '걸음에 숨을 맞추다 보면 생각이 조금씩 가라앉아요.' },
+    { icon: 'mood-excited', label: '설레요', themes: ['photo', 'sea'], line: '설레는 마음 그대로, 예쁜 풍경을 담으러 떠나 볼까요?' },
+    { icon: 'mood-wish', label: '바라는 게 있어요', themes: ['wish', 'energy'], line: '바람을 마음속으로 또박또박 정리해 보는 시간을 가져 보세요.' },
+    { icon: 'mood-lonely', label: '쓸쓸해요', themes: ['legend', 'city'], line: '오래된 이야기가 깃든 곳에서 잠시 이야기 친구를 만나 보세요.' },
+    { icon: 'mood-grateful', label: '감사해요', themes: ['family', 'history'], line: '고마운 사람과 함께 걷기 좋은 곳을 골랐어요.' }
   ];
   function prescribe(mi, shift) {
     const m = MOODS[mi]; const pool = TEMPLES.filter(t => t.themes.some(th => m.themes.includes(th)));
@@ -1065,7 +1065,7 @@
         <a class="text-link" href="#/mind">마음 리포트${ic('chevron')}</a>
       </div>
       <div class="moods" role="group" aria-label="오늘의 마음 고르기">
-        ${MOODS.map((m, i) => `<button class="mood ${i === mi ? 'on' : ''}" data-mood="${i}" aria-pressed="${i === mi ? 'true' : 'false'}"><span aria-hidden="true">${m.icon}</span><b>${esc(m.label)}</b></button>`).join('')}
+        ${MOODS.map((m, i) => `<button class="mood ${i === mi ? 'on' : ''}" data-mood="${i}" aria-pressed="${i === mi ? 'true' : 'false'}">${ic(m.icon)}<b>${esc(m.label)}</b></button>`).join('')}
       </div>
       <div class="prescription">
         <div class="rx-head"><span class="section-kicker">${ic('quote')} 오늘의 처방</span><button class="btn text small" data-act="reshuffle">${ic('refresh')} 다른 사찰</button></div>
@@ -1187,10 +1187,7 @@
     ${onboard}
     ${returning ? '' : pilgrimCard}
     ${consentCard()}
-    ${ritualCard}
     ${railCard}
-    ${plannerCard}
-    ${toolsCard}
     ${readCard}
     <p class="notice">🙏 전설·기도 이야기는 '전해지는 이야기'로 소개하며, 효험을 보장하지 않습니다. 무리한 산행·야간 방문은 삼가고 사찰 예절을 지켜 주세요.</p>`;
   }
