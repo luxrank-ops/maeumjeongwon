@@ -495,15 +495,17 @@
     return { ok: res.ok, status: res.status, body };
   }
 
-  // 상단 '로그인' 칩: 회원이면 닉네임, 아니면 로그인 화면으로 보낸다
+  // 상단 '로그인' 칩: 회원이면 닉네임(관리자는 🛡 표시), 아니면 로그인 화면으로 보낸다
   function updateMemberChip() {
     const c = document.getElementById('memberChip');
     if (!c) return;
     const m = ME.member;
-    c.innerHTML = ic('user') + `<span>${m ? esc(m.nickname) : '로그인'}</span>`;
+    const admin = !!(m && m.role === 'admin');
+    c.innerHTML = ic('user') + `<span>${m ? esc(m.nickname) : '로그인'}</span>${admin ? '<span class="tag admin">관리자</span>' : ''}`;
     c.setAttribute('href', m ? '#/account' : '#/account/login');
-    c.setAttribute('aria-label', m ? `${m.nickname} 님 · 내 정보` : '로그인하거나 회원가입');
+    c.setAttribute('aria-label', m ? `${m.nickname} 님${admin ? ' · 관리자 모드' : ''} · 내 정보` : '로그인하거나 회원가입');
     c.classList.toggle('on', !!m);
+    c.classList.toggle('admin', admin);
   }
   // 로그인·가입·로그아웃 결과를 세션에 반영한다. next 가 null 이면 익명 세션으로 돌아간다.
   async function applySession(next) {
@@ -2390,7 +2392,9 @@
         authModalState.onSuccess = null;
         await applySession({ uid: r.body.uid, token: r.body.token, member: r.body.member });
         closeModal();
-        toast(`${r.body.member.nickname}님, 어서 오세요 🙏 모든 주요 기능이 열렸어요!`);
+        toast(r.body.member.role === 'admin'
+          ? `${r.body.member.nickname}님, 관리자 모드로 들어오셨어요 🛡️`
+          : `${r.body.member.nickname}님, 어서 오세요 🙏 모든 주요 기능이 열렸어요!`);
         if (nextHash && location.hash !== nextHash) location.hash = nextHash;
         else render();
         if (typeof cb === 'function') cb();

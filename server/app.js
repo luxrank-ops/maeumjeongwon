@@ -105,8 +105,10 @@ function createApp(opts = {}) {
   const adKeys = opts.adKeys || (async () => null);
   // 회원·게시판 DB는 처음 쓸 때 연다 (opts.dbPath 로 테스트에서 ':memory:' 지정)
   const getDb = opts.getDb || lazyDatabase(opts.dbPath);
-  const accounts = createAccounts({ getDb, now });
-  const board = createBoard({ getDb, now });
+  // 관리자 모드: ADMIN_EMAILS/ADMIN_PASSWORD (또는 opts 주입)로 관리자 계정을 맞춰 두고,
+  // 관리자에게는 게시판의 모든 글·댓글 삭제 권한을 준다.
+  const accounts = createAccounts({ getDb, now, adminEmails: opts.adminEmails, adminPassword: opts.adminPassword });
+  const board = createBoard({ getDb, now, isAdmin: uid => accounts.isAdmin(uid) });
 
   const app = express();
   app.disable('x-powered-by');

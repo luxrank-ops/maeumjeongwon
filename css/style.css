@@ -108,7 +108,7 @@ p{overflow-wrap:anywhere}
 .progress{height:10px;background:var(--border-2);border-radius:99px;overflow:hidden}.progress>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--gold));border-radius:99px}
 .tag{display:inline-block;font-size:.78em;padding:3px 8px;border-radius:99px;background:var(--surface-sunken);color:var(--text-2);margin:2px 3px 2px 0}
 /* 골드 배지의 글자는 --gold-ink — --gold 는 '이루었다' 선·면에 쓰고, 글자 대비(4.5:1)는 잉크가 맡는다 */
-.tag.v{background:var(--clay-soft);color:var(--clay)}.tag.ok{background:var(--gold-soft);color:var(--gold-ink)}
+.tag.v{background:var(--clay-soft);color:var(--clay)}.tag.ok{background:var(--gold-soft);color:var(--gold-ink)}.tag.admin{background:var(--pine-soft);color:var(--pine-ink)}
 /* 화면 상단 보조 행동 — 제목 옆에 버튼을 몰아넣지 않고 한 줄로 정리한다 (좁은 화면에서도 줄바꿈만 된다) */
 .screen-actions{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
 .notice{font-size:.82em;color:var(--text-3);background:var(--surface-3);border-radius:10px;padding:9px 10px}
@@ -696,6 +696,7 @@ h3{font-size:1em;font-weight:700;font-family:var(--font-ui)}
 .tag{display:inline-flex;align-items:center;gap:4px;font-size:.8em;font-weight:600;padding:3px 8px;border-radius:8px;background:var(--surface-sunken);color:var(--text-2);border:1px solid transparent;line-height:1.5}
 .tag.v{background:var(--clay-soft);color:var(--clay);border-color:var(--clay-line)}
 .tag.ok{background:var(--gold-soft);color:var(--gold);border-color:var(--gold-line)}
+.tag.admin{background:var(--pine-soft);color:var(--pine-ink);border-color:var(--pine-line)}
 .tag.lock{background:transparent;border:1px dashed var(--gold-line-2);color:var(--gold)}
 .tag .ic{width:1em;height:1em}
 .state{display:inline-flex;align-items:center;gap:6px;font-size:.86em;font-weight:600;color:var(--text-3)}

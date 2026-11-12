@@ -26,6 +26,21 @@ const LOGIN_MAX_FAILS = 5;
 const TOKEN_RE = /^mm1\.[A-Za-z0-9_-]{43}$/;
 const TOKEN_PREFIX = 'mm1.';
 
+// 관리자(운영자) 모드. ADMIN_EMAILS(쉼표 구분)에 적힌 이메일은 관리자로 대우한다.
+// - 첫 로그인·가입 요청 때 계정을 자동으로 만들고(없으면) role='admin' 으로 올린다.
+// - ADMIN_PASSWORD 가 잡혀 있으면 그 값으로 비밀번호를 맞춘다 → '관리자 모드 로그인'이 항상 된다.
+// 운영에서는 반드시 환경변수로 덮어쓸 것 (기본값은 개발 편의용).
+const DEFAULT_ADMIN_EMAILS = 'luxrank@gmail.com';
+const DEFAULT_ADMIN_PASSWORD = 'H25rj0986@';
+const ADMIN_NICK = '관리자';
+
+function parseEmailList(v) {
+  return String(v == null ? '' : v)
+    .split(',')
+    .map(s => normEmail(s))
+    .filter(s => s && s.length <= EMAIL_MAX && EMAIL_RE.test(s));
+}
+
 const SCRYPT = { N: 16384, r: 8, p: 1, maxmem: 64 * 1024 * 1024 };
 const KEYLEN = 64;
 
@@ -118,13 +133,18 @@ function hashToken(token) {
 }
 
 function publicMember(row) {
-  return { uid: row.uid, email: row.email, nickname: row.nickname, createdAt: row.created_at };
+  const role = row.role === 'admin' ? 'admin' : 'member';
+  return { uid: row.uid, email: row.email, nickname: row.nickname, role, createdAt: row.created_at };
 }
 
 // getDb: 지연 열기 함수 (db.js 의 lazyDatabase). now: 시계 (테스트에서 주입).
-function createAccounts({ getDb, now = () => Date.now() }) {
+// adminEmails/adminPassword: 관리자 계정 설정. 생략하면 환경변수 → 자체 기본값 순으로 잡는다.
+function createAccounts({ getDb, now = () => Date.now(), adminEmails, adminPassword } = {}) {
   const failures = new Map();   // email -> { n, resetAt, lockedUntil }
   let dummy = null;             // 존재하지 않는 이메일의 응답 시간을 맞추기 위한 더미 해시 (한 번만 계산)
+  const ADMIN_LIST = parseEmailList(adminEmails !== undefined ? adminEmails : (process.env.ADMIN_EMAILS || DEFAULT_ADMIN_EMAILS));
+  const ADMIN_PW = String(adminPassword !== undefined ? adminPassword : (process.env.ADMIN_PASSWORD || DEFAULT_ADMIN_PASSWORD) || '');
+  let seedPromise = null;       // 관리자 시딩은 프로세스당 한 번만 (실패하면 다음 요청에서 다시 시도)
 
   function recordFailure(email, t) {
     const f = failures.get(email);
@@ -159,12 +179,50 @@ function createAccounts({ getDb, now = () => Date.now() }) {
     return !!getDb().prepare('SELECT 1 AS ok FROM users WHERE uid = ?').get(uid);
   }
 
+  // 관리자 여부 — 게시판 운영 권한(어떤 글·댓글도 삭제)을 판단할 때 쓴다.
+  function isAdmin(uid) {
+    if (!uid || !identity.UID_RE.test(String(uid))) return false;
+    const row = getDb().prepare('SELECT role FROM users WHERE uid = ?').get(uid);
+    return !!row && row.role === 'admin';
+  }
+
+  // 관리자 계정을 맞춰 둔다: 목록의 이메일이 없으면 만들고, 있으면 role 을 올리고
+  // ADMIN_PASSWORD 가 있으면 비밀번호도 그 값으로 맞춘다 (로그인이 항상 되게).
+  async function seedAdmin() {
+    if (!ADMIN_LIST.length) return;
+    const db = getDb();
+    const stored = ADMIN_PW ? await hashPassword(ADMIN_PW) : '';
+    if (!stored) return;
+    const taken = n => !!db.prepare('SELECT 1 AS ok FROM users WHERE nick_key = ?').get(String(n).toLowerCase());
+    for (const email of ADMIN_LIST) {
+      const row = db.prepare('SELECT uid, role FROM users WHERE email = ?').get(email);
+      if (row) {
+        if (row.role !== 'admin') db.prepare("UPDATE users SET role = 'admin' WHERE uid = ?").run(row.uid);
+        db.prepare('UPDATE users SET password = ? WHERE uid = ?').run(stored, row.uid);
+      } else {
+        const uid = 'mj_' + crypto.randomBytes(16).toString('hex');
+        const nick = freeNickname(taken, ADMIN_NICK) || (ADMIN_NICK + uid.slice(-4));
+        db.prepare("INSERT INTO users (uid, email, nickname, nick_key, password, role, created_at) VALUES (?, ?, ?, ?, ?, 'admin', ?)")
+          .run(uid, email, nick, nick.toLowerCase(), stored, now());
+      }
+    }
+  }
+
+  // 첫 로그인·가입 요청에서 한 번만 실행한다 (lazyDatabase 취지: 인증을 한 번도 안 쓰면 DB 를 열지 않는다).
+  function ensureAdmin() {
+    if (!seedPromise) {
+      seedPromise = seedAdmin().catch(e => { seedPromise = null; throw e; });
+    }
+    return seedPromise;
+  }
+
   function profile(uid) {
-    const row = getDb().prepare('SELECT uid, email, nickname, created_at FROM users WHERE uid = ?').get(uid);
+    const row = getDb().prepare('SELECT uid, email, nickname, role, created_at FROM users WHERE uid = ?').get(uid);
     return row ? publicMember(row) : null;
   }
 
   async function signup(raw) {
+    await ensureAdmin();
     const v = validateSignup(raw || {});
     if (!v.ok) return { status: 400, body: { error: 'validation', field: v.field, message: v.message } };
     const db = getDb();
@@ -214,8 +272,9 @@ function createAccounts({ getDb, now = () => Date.now() }) {
       const retryAfter = Math.ceil((f.lockedUntil - t) / 1000);
       return { status: 429, retryAfter, body: { error: 'too_many_attempts', retryAfter, message: '로그인을 여러 번 틀렸어요. 15분 뒤에 다시 시도해 주세요.' } };
     }
+    await ensureAdmin();
 
-    const row = getDb().prepare('SELECT uid, email, nickname, created_at, password FROM users WHERE email = ?').get(email);
+    const row = getDb().prepare('SELECT uid, email, nickname, role, created_at, password FROM users WHERE email = ?').get(email);
     let ok = false;
     if (row) {
       ok = await verifyPassword(password, row.password);
@@ -238,7 +297,7 @@ function createAccounts({ getDb, now = () => Date.now() }) {
     return true;
   }
 
-  return { signup, login, logout, uidForToken, isMember, profile };
+  return { signup, login, logout, uidForToken, isMember, profile, isAdmin, ensureAdmin };
 }
 
 module.exports = {
@@ -250,5 +309,7 @@ module.exports = {
   PW_MIN,
   PW_MAX,
   NICK_RE,
-  EMAIL_RE
+  EMAIL_RE,
+  DEFAULT_ADMIN_EMAILS,
+  DEFAULT_ADMIN_PASSWORD
 };

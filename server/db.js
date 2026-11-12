@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS users (
   nickname    TEXT NOT NULL,
   nick_key    TEXT NOT NULL UNIQUE,
   password    TEXT NOT NULL,
+  role        TEXT NOT NULL DEFAULT 'member',
   created_at  INTEGER NOT NULL
 );
 CREATE TABLE IF NOT EXISTS sessions (
@@ -87,7 +88,17 @@ function openDatabase(file) {
   db.exec('PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 3000;');
   if (target !== ':memory:') db.exec('PRAGMA journal_mode = WAL;');
   db.exec(SCHEMA);
+  migrate(db);
   return db;
+}
+
+// 예전 DB(스키마 갱신 전에 만든 파일)에는 없는 칸을 얹는다. CREATE TABLE IF NOT EXISTS 는
+// 이미 있는 테이블에는 아무 일도 하지 않으므로 칸 추가는 여기서 챙긴다.
+function migrate(db) {
+  const cols = db.prepare('PRAGMA table_info(users)').all().map(c => c.name);
+  if (!cols.includes('role')) {
+    db.exec("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'member'");
+  }
 }
 
 // 지연 열기: 회원·게시판 요청이 한 번도 없으면 파일을 만들지 않는다 (테스트·정적 서빙에서 불필요한 파일 방지).

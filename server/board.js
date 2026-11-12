@@ -5,10 +5,11 @@
 // 권한 규칙
 //  - 읽기: 누구나 (로그인하지 않아도 볼 수 있다)
 //  - 쓰기(글·댓글): 회원만. 익명 세션으로는 쓸 수 없다 (호출부가 req.memberUid 로 판단)
-//  - 수정·삭제: 작성자 본인만. 다른 사람 글은 403
+//  - 수정: 작성자 본인만. 다른 사람 글은 403
+//  - 삭제: 작성자 본인 또는 관리자(운영자 권한, auth.isAdmin). 관리자 댓글 삭제도 여기서 판단한다.
 //  - 본문은 저장할 때 HTML 로 해석하지 않는다 — 화면에서 항상 이스케이프해서 그린다.
 //
-// 아직 없는 것: 신고·운영자 삭제·욕설 필터. 글이 쌓이기 전에 운영 규칙과 함께 붙이는 것을 권장한다.
+// 아직 없는 것: 신고·욕설 필터. 글이 쌓이기 전에 운영 규칙과 함께 붙이는 것을 권장한다.
 
 const CATEGORIES = [
   { id: 'free', label: '자유 이야기', hint: '일상과 마음 이야기' },
@@ -53,8 +54,9 @@ function parsePage(v) {
   return Number.isFinite(n) && n >= 1 ? Math.min(n, 100000) : 1;
 }
 
-function createBoard({ getDb, now = () => Date.now() }) {
+function createBoard({ getDb, now = () => Date.now(), isAdmin = () => false }) {
   const db = () => getDb();
+  const adminOf = uid => { try { return !!(uid && isAdmin(uid)); } catch (e) { return false; } };
 
   function tx(fn) {
     const d = db();
@@ -69,13 +71,15 @@ function createBoard({ getDb, now = () => Date.now() }) {
     }
   }
 
-  function mapPost(row, viewer, { full = false } = {}) {
+  // canDelete: 작성자 본인이거나 관리자이면 지울 수 있다 (화면의 '지우기' 버튼 표시 근거).
+  function mapPost(row, viewer, { full = false, viewerAdmin = false } = {}) {
     const out = {
       id: row.id,
       category: row.category,
       categoryLabel: CAT_LABEL[row.category] || row.category,
       title: row.title,
       nickname: row.nickname || '탈퇴한 회원',
+      authorAdmin: row.author_role === 'admin',
       views: row.views,
       commentCount: row.comment_count || 0,
       createdAt: row.created_at,
@@ -83,6 +87,7 @@ function createBoard({ getDb, now = () => Date.now() }) {
       edited: row.updated_at > row.created_at,
       mine: !!viewer && row.author_uid === viewer
     };
+    out.canDelete = out.mine || viewerAdmin;
     if (full) out.body = row.body;
     else out.preview = row.preview;
     return out;
@@ -112,9 +117,10 @@ function createBoard({ getDb, now = () => Date.now() }) {
     const total = db().prepare(`SELECT COUNT(*) AS n FROM posts p ${w}`).get(...args).n;
     const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
     const p = Math.min(parsePage(page), pages);
+    const viewerAdmin = adminOf(viewer);
     const rows = db().prepare(`
       SELECT p.id, p.author_uid, p.category, p.title, substr(p.body, 1, ${PREVIEW_LEN}) AS preview,
-             p.views, p.created_at, p.updated_at, u.nickname,
+             p.views, p.created_at, p.updated_at, u.nickname, u.role AS author_role,
              (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) AS comment_count
       FROM posts p LEFT JOIN users u ON u.uid = p.author_uid
       ${w}
@@ -123,7 +129,7 @@ function createBoard({ getDb, now = () => Date.now() }) {
     return {
       status: 200,
       body: {
-        items: rows.map(r => mapPost(r, viewer)),
+        items: rows.map(r => mapPost(r, viewer, { viewerAdmin })),
         total,
         page: p,
         pageSize: PAGE_SIZE,
@@ -134,7 +140,7 @@ function createBoard({ getDb, now = () => Date.now() }) {
 
   function findPost(id) {
     return db().prepare(`
-      SELECT p.*, u.nickname,
+      SELECT p.*, u.nickname, u.role AS author_role,
              (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) AS comment_count
       FROM posts p LEFT JOIN users u ON u.uid = p.author_uid
       WHERE p.id = ?`).get(id) || null;
@@ -148,7 +154,7 @@ function createBoard({ getDb, now = () => Date.now() }) {
       db().prepare('UPDATE posts SET views = views + 1 WHERE id = ?').run(id);
       row.views += 1;
     }
-    return { status: 200, body: mapPost(row, viewer, { full: true }) };
+    return { status: 200, body: mapPost(row, viewer, { full: true, viewerAdmin: adminOf(viewer) }) };
   }
 
   function create(uid, raw) {
@@ -174,7 +180,7 @@ function createBoard({ getDb, now = () => Date.now() }) {
   function remove(id, uid) {
     const row = findPost(id);
     if (!row) return { status: 404, body: { error: 'not_found' } };
-    if (row.author_uid !== uid) return { status: 403, body: { error: 'forbidden', message: '작성자만 지울 수 있어요.' } };
+    if (row.author_uid !== uid && !adminOf(uid)) return { status: 403, body: { error: 'forbidden', message: '작성자만 지울 수 있어요.' } };
     tx(d => {
       d.prepare('DELETE FROM comments WHERE post_id = ?').run(id);
       d.prepare('DELETE FROM posts WHERE id = ?').run(id);
@@ -184,20 +190,26 @@ function createBoard({ getDb, now = () => Date.now() }) {
 
   function listComments(postId, viewer) {
     if (!findPost(postId)) return { status: 404, body: { error: 'not_found' } };
+    const viewerAdmin = adminOf(viewer);
     const rows = db().prepare(`
-      SELECT c.id, c.author_uid, c.body, c.created_at, u.nickname
+      SELECT c.id, c.author_uid, c.body, c.created_at, u.nickname, u.role AS author_role
       FROM comments c LEFT JOIN users u ON u.uid = c.author_uid
       WHERE c.post_id = ? ORDER BY c.id ASC`).all(postId);
     return {
       status: 200,
       body: {
-        items: rows.map(r => ({
-          id: r.id,
-          body: r.body,
-          nickname: r.nickname || '탈퇴한 회원',
-          createdAt: r.created_at,
-          mine: !!viewer && r.author_uid === viewer
-        }))
+        items: rows.map(r => {
+          const mine = !!viewer && r.author_uid === viewer;
+          return {
+            id: r.id,
+            body: r.body,
+            nickname: r.nickname || '탈퇴한 회원',
+            authorAdmin: r.author_role === 'admin',
+            createdAt: r.created_at,
+            mine,
+            canDelete: mine || viewerAdmin
+          };
+        })
       }
     };
   }
@@ -214,7 +226,7 @@ function createBoard({ getDb, now = () => Date.now() }) {
   function removeComment(commentId, uid) {
     const row = db().prepare('SELECT id, author_uid FROM comments WHERE id = ?').get(commentId);
     if (!row) return { status: 404, body: { error: 'not_found' } };
-    if (row.author_uid !== uid) return { status: 403, body: { error: 'forbidden', message: '작성자만 지울 수 있어요.' } };
+    if (row.author_uid !== uid && !adminOf(uid)) return { status: 403, body: { error: 'forbidden', message: '작성자만 지울 수 있어요.' } };
     db().prepare('DELETE FROM comments WHERE id = ?').run(commentId);
     return { status: 200, body: { ok: true } };
   }

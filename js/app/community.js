@@ -240,9 +240,10 @@
         <div class="card cm-profile">
           <div class="row between">
             <b class="cm-nick">${esc(m.nickname)}</b>
-            <span class="tag ok">회원</span>
+            ${m.role === 'admin' ? '<span class="tag admin">관리자 모드</span>' : '<span class="tag ok">회원</span>'}
           </div>
           <p class="sub">${esc(m.email)}<br>${fmtDay(m.createdAt)} 가입</p>
+          ${m.role === 'admin' ? '<p class="sub">운영 권한이 켜져 있어요. 게시판의 모든 글과 댓글을 지울 수 있습니다.</p>' : ''}
           <div class="cm-stats">
             <div><b>${Number(m.posts) || 0}</b><span>쓴 글</span></div>
             <div><b>${Number(m.comments) || 0}</b><span>댓글</span></div>
@@ -262,7 +263,7 @@
         <span class="cm-row-top"><span class="tag">${esc(p.categoryLabel)}</span>${p.mine ? '<span class="tag ok">내 글</span>' : ''}</span>
         <b class="cm-row-title">${esc(p.title)}</b>
         <span class="cm-row-preview">${esc(p.preview || '')}</span>
-        <span class="cm-row-meta">${esc(p.nickname)} · ${fmtDay(p.createdAt)} · 댓글 ${p.commentCount} · 조회 ${p.views}</span>
+        <span class="cm-row-meta">${p.authorAdmin ? '<span class="tag admin">관리자</span> ' : ''}${esc(p.nickname)} · ${fmtDay(p.createdAt)} · 댓글 ${p.commentCount} · 조회 ${p.views}</span>
       </a></li>`;
     }
 
@@ -332,9 +333,9 @@
       const comments = P.comments || [];
       const list = comments.length
         ? `<ul class="cm-clist">${comments.map(c => `<li class="cm-c">
-            <div class="row between"><b>${esc(c.nickname)}</b><span class="sub">${fmtWhen(c.createdAt)}</span></div>
+            <div class="row between"><b>${c.authorAdmin ? '<span class="tag admin">관리자</span> ' : ''}${esc(c.nickname)}</b><span class="sub">${fmtWhen(c.createdAt)}</span></div>
             <p>${esc(c.body)}</p>
-            ${c.mine ? `<button class="btn text small" type="button" data-cm="comment-del" data-id="${c.id}">지우기</button>` : ''}
+            ${c.mine || c.canDelete ? `<button class="btn text small" type="button" data-cm="comment-del" data-id="${c.id}">지우기</button>` : ''}
           </li>`).join('')}</ul>`
         : '<p class="sub">아직 댓글이 없어요. 첫 댓글을 남겨 보세요.</p>';
       const writeBox = member
@@ -345,11 +346,11 @@
         <article class="card cm-post">
           <div class="row between"><span class="tag">${esc(p.categoryLabel)}</span>${p.mine ? '<span class="tag ok">내 글</span>' : ''}</div>
           <h1 class="cm-post-title">${esc(p.title)}</h1>
-          <p class="cm-post-meta">${esc(p.nickname)} · ${fmtWhen(p.createdAt)}${p.edited ? ' · 고침' : ''} · 조회 ${p.views}</p>
+          <p class="cm-post-meta">${p.authorAdmin ? '<span class="tag admin">관리자</span> ' : ''}${esc(p.nickname)} · ${fmtWhen(p.createdAt)}${p.edited ? ' · 고침' : ''} · 조회 ${p.views}</p>
           <div class="cm-body">${esc(p.body)}</div>
-          ${p.mine ? `<div class="btn-group cm-post-actions">
-            <a class="btn ghost small" href="#/board/${id}/edit">${ic('pencil')} 고치기</a>
-            <button class="btn danger small" type="button" data-cm="post-del" data-id="${id}">지우기</button>
+          ${p.mine || p.canDelete ? `<div class="btn-group cm-post-actions">
+            ${p.mine ? `<a class="btn ghost small" href="#/board/${id}/edit">${ic('pencil')} 고치기</a>` : ''}
+            <button class="btn danger small" type="button" data-cm="post-del" data-id="${id}">${p.mine ? '지우기' : '지우기(운영)'}</button>
           </div>` : ''}
         </article>
         <section class="cm-comments" aria-label="댓글">
@@ -439,7 +440,9 @@
         return;
       }
       await applySession({ uid: r.body.uid, token: r.body.token, member: r.body.member });
-      toast(`${r.body.member.nickname}님, 어서 오세요 🙏`);
+      toast(r.body.member.role === 'admin'
+        ? `${r.body.member.nickname}님, 관리자 모드로 들어오셨어요 🛡️`
+        : `${r.body.member.nickname}님, 어서 오세요 🙏`);
       afterAuth();
     }
 

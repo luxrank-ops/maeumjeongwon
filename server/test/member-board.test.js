@@ -467,3 +467,97 @@ test('18. 익명 세션(X-MJ-UID·/api/session)은 회원 권한을 얻지 못�
     await s.close();
   }
 });
+
+// ---------- 관리자(운영자) 모드 ----------
+
+const ADMIN_EMAIL = 'luxrank@gmail.com';
+const ADMIN_PW_SET = 'H25rj0986@';
+
+test('19. 관리자: 정해진 이메일·비밀번호로 로그인되고 role=admin·닉네임 관리자다', async () => {
+  const s = await startServer();
+  try {
+    // 계정이 없어도 첫 로그인에서 자동으로 만들어져야 한다 (시딩).
+    const r = await s.call('POST', '/api/auth/login', { body: { email: ADMIN_EMAIL, password: ADMIN_PW_SET } });
+    assert.equal(r.status, 200, JSON.stringify(r.body));
+    assert.match(r.body.token, /^mm1\./);
+    assert.equal(r.body.member.email, ADMIN_EMAIL);
+    assert.equal(r.body.member.role, 'admin');
+    assert.equal(r.body.member.nickname, '관리자');
+
+    // /api/me 에도 관리자 역할이 실린다.
+    const me = await s.call('GET', '/api/me', { token: r.body.token });
+    assert.equal(me.body.member.role, 'admin');
+
+    // 관리자 이메일로 새로 가입하는 것은 막힌다 (계정 선점).
+    const dup = await s.call('POST', '/api/auth/signup', { body: { email: ADMIN_EMAIL, password: 'wxyz9876', nickname: '가로채기' } });
+    assert.equal(dup.status, 409);
+
+    // 다시 로그인해도 된다 (시딩이 두 번 돌아도 안전).
+    const again = await s.call('POST', '/api/auth/login', { body: { email: ADMIN_EMAIL, password: ADMIN_PW_SET } });
+    assert.equal(again.status, 200);
+  } finally {
+    await s.close();
+  }
+});
+
+test('20. 관리자: 예전에 가입된 일반 계정이 관리자 이메일이면 role 이 admin 으로 올라가고 비밀번호가 맞춰진다', async () => {
+  // 관리자 기능이 생기기 전에 가입한 계정 상황: DB 에 일반 회원을 직접 넣고 시작한다.
+  const { openDatabase } = require('../db');
+  const { hashPassword } = require('../auth');
+  const db = openDatabase(':memory:');
+  const stored = await hashPassword('firstpw123');
+  db.prepare('INSERT INTO users (uid, email, nickname, nick_key, password, role, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    .run('mj_' + 'b'.repeat(32), 'boss@example.com', '보스', '보스', stored, 'member', T0);
+  const s = await startServer({ getDb: () => db, adminEmails: 'boss@example.com', adminPassword: 'bosspw123' });
+  try {
+    // 옛 비밀번호는 더 이상 맞지 않고(설정값으로 맞춰졌으므로), 설정 비밀번호로 로그인된다.
+    const old = await s.call('POST', '/api/auth/login', { body: { email: 'boss@example.com', password: 'firstpw123' } });
+    assert.equal(old.status, 401);
+    const r = await s.call('POST', '/api/auth/login', { body: { email: 'boss@example.com', password: 'bosspw123' } });
+    assert.equal(r.status, 200, JSON.stringify(r.body));
+    assert.equal(r.body.member.role, 'admin');
+    assert.equal(r.body.member.nickname, '보스');      // 기존 닉네임은 그대로 둔다
+
+    // 일반 회원은 여전히 member 역할이다.
+    const u = await s.call('POST', '/api/auth/signup', { body: { email: 'plain@example.com', password: OK_PW, nickname: '일반인' } });
+    assert.equal(u.body.member.role, 'member');
+  } finally {
+    await s.close();
+    db.close();
+  }
+});
+
+test('21. 운영자 삭제: 관리자는 다른 회원의 글·댓글을 지울 수 있고 canDelete 가 내려온다', async () => {
+  const s = await startServer();
+  try {
+    const a = await signup(s, 'writer@example.com', '글쓴이');
+    const { body: { id } } = await s.call('POST', '/api/board/posts', { token: a.token, body: { category: 'free', title: '운영 점검 대상', body: '살펴 주세요' } });
+    const c = await s.call('POST', `/api/board/posts/${id}/comments`, { token: a.token, body: { body: '댓글입니다' } });
+    assert.equal(c.status, 201);
+
+    const admin = await s.call('POST', '/api/auth/login', { body: { email: ADMIN_EMAIL, password: ADMIN_PW_SET } });
+    assert.equal(admin.status, 200);
+
+    // 관리자 시점: 글·댓글에 canDelete 와 작성자 관리자 표시가 내려온다.
+    const view = await s.call('GET', `/api/board/posts/${id}`, { token: admin.body.token });
+    assert.equal(view.body.mine, false);
+    assert.equal(view.body.canDelete, true);
+    assert.equal(view.body.authorAdmin, false);
+    const cl = await s.call('GET', `/api/board/posts/${id}/comments`, { token: admin.body.token });
+    assert.equal(cl.body.items[0].canDelete, true);
+
+    // 관리자가 삭제 → 200
+    assert.equal((await s.call('DELETE', `/api/board/comments/${c.body.id}`, { token: admin.body.token })).status, 200);
+    assert.equal((await s.call('DELETE', `/api/board/posts/${id}`, { token: admin.body.token })).status, 200);
+    assert.equal((await s.call('GET', `/api/board/posts/${id}`)).status, 404);
+
+    // 관리자가 쓴 글에는 authorAdmin 배지가 붙는다.
+    const notice = await s.call('POST', '/api/board/posts', { token: admin.body.token, body: { category: 'free', title: '운영 공지', body: '공지 본문' } });
+    const nview = await s.call('GET', `/api/board/posts/${notice.body.id}`, { token: a.token });
+    assert.equal(nview.body.authorAdmin, true);
+    // 일반 회원 시점에서는 관리자 글도 canDelete=false 다.
+    assert.equal(nview.body.canDelete, false);
+  } finally {
+    await s.close();
+  }
+});
