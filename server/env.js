@@ -28,6 +28,8 @@ const DEFAULTS = {
   MJ_DEV_ENTITLEMENT: '0',
   REVENUECAT_WEBHOOK_AUTH: 'Bearer mj-rc-webhook-secret-2026',
   ADMOB_AD_UNIT_IDS: 'ca-app-pub-3940256099942544/5224354917,reward_story_24h,reward_lamp_3d,reward_fortune_detail',
+  ADMIN_EMAILS: 'luxrank@gmail.com',
+  ADMIN_PASSWORD: 'H25rj0986@',
   GITHUB_REPO: 'luxrank-ops/maeumjeongwon',
   GITHUB_BRANCH: 'main',
   GIT_COMMITTER_NAME: 'Maeumjeongwon Bot',
