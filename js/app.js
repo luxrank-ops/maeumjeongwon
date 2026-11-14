@@ -414,31 +414,44 @@
     const map = { seoul: ['서울', '경기', '인천'], busan: ['부산', '경남', '울산'], daegu: ['대구', '경북'], gangwon: ['강원'], jeonnam: ['전남', '광주', '전북'], other: null };
     return map[region] || null;
   }
+  const ONBOARD_COMPANION = { solo: { quiet: 2, hike: 1, legend: 1 }, family: { family: 3, history: 1, autumn: 1 }, couple: { photo: 2, sea: 2, autumn: 1 }, group: { history: 2, wish: 1, energy: 1 } };
+  // 관심(필수)·지역·동행을 점수로 합쳐 늘 3곳
   function onboardingRecommend() {
     const themes = onboardingInterestToThemes(onboardingChoices[0]);
     const sidos = onboardingRegionToSido(onboardingChoices[1]);
-    let pool = TEMPLES.filter(t => t.themes.some(th => themes.includes(th)));
-    if (sidos) {
-      const near = pool.filter(t => sidos.includes(t.sido));
-      if (near.length >= 2) pool = near;
-    }
+    const comp = ONBOARD_COMPANION[onboardingChoices[2]] || {};
     const seed = Number(today().replace(/-/g, ''));
-    return pool.slice(0, 10).sort((a, b) => ((seed + a.name.length) % 7) - ((seed + b.name.length) % 7)).slice(0, 3);
+    const jitter = t => { let h = seed; for (const ch of t.id) h = (h * 31 + ch.charCodeAt(0)) % 1000003; return (h % 97) / 97; };
+    const score = t => {
+      const hit = t.themes.filter(th => themes.includes(th)).length;
+      if (!hit) return -1;
+      return hit * 3 + (sidos && sidos.includes(t.sido) ? 6 : 0) + t.themes.reduce((n, th) => n + (comp[th] || 0), 0) + jitter(t);
+    };
+    return TEMPLES.map(t => ({ t, v: score(t) })).filter(x => x.v >= 0).sort((a, b) => b.v - a.v).slice(0, 3).map(x => x.t);
   }
   function viewOnboarding() {
     const step = ONBOARD_STEPS[onboardingStep];
     if (!step) return '';
     const chosen = onboardingChoices[onboardingStep];
     const isLast = onboardingStep === ONBOARD_STEPS.length - 1;
+    const off = chosen == null ? ' disabled' : '';
     return `<div class="onboard-card">
       <div class="onboard-progress">${ONBOARD_STEPS.map((_, i) => `<span class="${i <= onboardingStep ? 'on' : ''}"></span>`).join('')}</div>
-      <h2>${esc(step.q)}</h2>
-      <div class="onboard-opts">${step.opts.map(o => `<button class="onboard-opt ${chosen === o.k ? 'on' : ''}" data-act="onboard-pick" data-key="${o.k}" data-step="${onboardingStep}">${esc(o.label)}</button>`).join('')}</div>
+      <h2 id="onboardQ">${esc(step.q)}</h2>
+      <div class="onboard-opts" role="group" aria-labelledby="onboardQ">${step.opts.map(o => `<button type="button" class="onboard-opt ${chosen === o.k ? 'on' : ''}" aria-pressed="${chosen === o.k}" data-act="onboard-pick" data-key="${o.k}">${esc(o.label)}</button>`).join('')}</div>
       <div class="onboard-nav">
-        ${onboardingStep > 0 ? '<button class="btn ghost" data-act="onboard-back">이전</button>' : ''}
-        ${isLast ? '<button class="btn" data-act="onboard-done" disabled>절로가 시작하기</button>' : '<button class="btn" data-act="onboard-next" disabled>다음</button>'}
+        ${onboardingStep > 0 ? '<button type="button" class="btn ghost" data-act="onboard-back">이전</button>' : ''}
+        ${isLast ? `<button type="button" class="btn" data-act="onboard-done"${off}>추천 받기</button>` : `<button type="button" class="btn" data-act="onboard-next"${off}>다음</button>`}
       </div>
     </div>`;
+  }
+  // 시트 안쪽만 다시 그린다 (✕ 유지)
+  function paintOnboarding(html, focusSel) {
+    const body = document.getElementById('onboardBody');
+    if (!body) return;
+    body.innerHTML = html;
+    const f = focusSel && typeof body.querySelector === 'function' ? body.querySelector(focusSel) : null;
+    if (f && typeof f.focus === 'function') f.focus({ preventScroll: true });
   }
   function viewOnboardingResult() {
     const picks = onboardingRecommend();
@@ -2535,37 +2548,38 @@
     }
     /* 선택 그룹(.choices) — 옵션 5개 이하를 드롭다운 대신 펼쳐 둔 자리 (⑯-3).
      * 상태는 aria-pressed + 체크 표시 + 테두리로 함께 알리고, 폼 값은 hidden input 으로 넘긴다. */
+    // 그룹·스텝퍼 밖의 버튼은 삼키지 않고 data-act 로 흘려보낸다
     if (el.dataset.choice != null) {
-      const group = el.closest('.choices');
-      if (group) {
-        group.querySelectorAll('.choice').forEach(c => c.setAttribute('aria-pressed', String(c === el)));
-        const hidden = group.querySelector('input[type=hidden]');
+      const choiceGroup = el.closest('.choices');
+      if (choiceGroup) {
+        choiceGroup.querySelectorAll('.choice').forEach(c => c.setAttribute('aria-pressed', String(c === el)));
+        const hidden = choiceGroup.querySelector('input[type=hidden]');
         if (hidden) {
           hidden.value = el.dataset.choice;
           hidden.dispatchEvent(new Event('change', { bubbles: true }));   // 폼의 change 처리(초안 저장 등)를 그대로 태운다
         }
+        return;
       }
-      return;
     }
     /* 스텝퍼(.stepper) — 수량은 목록이 아니라 −/+ 로 (⑯-4) */
     if (el.dataset.step != null) {
-      const box = el.closest('[data-stepper]');
-      if (box) {
-        const hidden = box.querySelector('input[type=hidden]');
-        const min = box.dataset.min ? +box.dataset.min : 1;
-        const max = box.dataset.max ? +box.dataset.max : 99;
+      const stepBox = el.closest('[data-stepper]');
+      if (stepBox) {
+        const hidden = stepBox.querySelector('input[type=hidden]');
+        const min = stepBox.dataset.min ? +stepBox.dataset.min : 1;
+        const max = stepBox.dataset.max ? +stepBox.dataset.max : 99;
         const now = hidden ? (parseInt(hidden.value, 10) || min) : min;
         const next = Math.min(max, Math.max(min, now + (+el.dataset.step)));
         if (hidden) {
           hidden.value = String(next);
           hidden.dispatchEvent(new Event('change', { bubbles: true }));
         }
-        const out = box.querySelector('.step-value');
-        if (out) out.textContent = next + (box.dataset.unit || '');
-        const minus = box.querySelector('[data-step="-1"]'); if (minus) minus.disabled = next <= min;
-        const plus = box.querySelector('[data-step="1"]'); if (plus) plus.disabled = next >= max;
+        const out = stepBox.querySelector('.step-value');
+        if (out) out.textContent = next + (stepBox.dataset.unit || '');
+        const minus = stepBox.querySelector('[data-step="-1"]'); if (minus) minus.disabled = next <= min;
+        const plus = stepBox.querySelector('[data-step="1"]'); if (plus) plus.disabled = next >= max;
+        return;
       }
-      return;
     }
     if (el.dataset.f != null) {
       if (!isMember() && el.dataset.f === 'visited') {
@@ -2655,33 +2669,30 @@
     }
     else if (act === 'start-onboarding') {
       onboardingStep = 0; onboardingChoices = {};
-      openModal(`<div class="sheet onboard-sheet">${viewOnboarding()}</div>`);
+      openModal(`<div class="sheet onboard-sheet"><div id="onboardBody" aria-live="polite">${viewOnboarding()}</div></div>`);
     }
     else if (act === 'onboard-pick') {
-      const step = +el.dataset.step; const key = el.dataset.key;
-      onboardingChoices[step] = key;
-      document.querySelectorAll('.onboard-opt').forEach(o => o.classList.toggle('on', o.dataset.key === key && +o.dataset.step === step));
-      const nextBtn = document.querySelector('[data-act="onboard-next"],[data-act="onboard-done"]');
-      if (nextBtn) nextBtn.disabled = false;
+      const key = el.dataset.key;
+      if (!ONBOARD_STEPS[onboardingStep].opts.some(o => o.k === key)) return;
+      onboardingChoices[onboardingStep] = key;
+      paintOnboarding(viewOnboarding(), `.onboard-opt[data-key="${key}"]`);
     }
     else if (act === 'onboard-back') {
       onboardingStep = Math.max(0, onboardingStep - 1);
-      const sheet = document.querySelector('.onboard-sheet');
-      if (sheet) sheet.innerHTML = viewOnboarding();
+      paintOnboarding(viewOnboarding(), '.onboard-opt.on');
     }
     else if (act === 'onboard-next') {
       if (onboardingChoices[onboardingStep] == null) { toast('항목을 골라 주세요.'); return; }
-      onboardingStep++;
-      const sheet = document.querySelector('.onboard-sheet');
-      if (sheet) sheet.innerHTML = viewOnboarding();
+      onboardingStep = Math.min(ONBOARD_STEPS.length - 1, onboardingStep + 1);
+      paintOnboarding(viewOnboarding(), '.onboard-opt');
     }
     else if (act === 'onboard-done') {
       if (onboardingChoices[onboardingStep] == null) { toast('항목을 골라 주세요.'); return; }
-      const sheet = document.querySelector('.onboard-sheet');
-      if (sheet) sheet.innerHTML = viewOnboardingResult();
+      // 결과를 보면 완료 — 추천 사찰로 바로 가도 안내 카드가 다시 뜨지 않게
+      S.onboarded = true; S.onboardPrefs = { interest: onboardingChoices[0], region: onboardingChoices[1], companion: onboardingChoices[2] }; save();
+      paintOnboarding(viewOnboardingResult(), '.titem');
     }
     else if (act === 'onboard-enter') {
-      S.onboarded = true; S.onboardPrefs = { interest: onboardingChoices[0], region: onboardingChoices[1], companion: onboardingChoices[2] }; save();
       closeModal(); render(); toast('절로가에 오신 것을 환영해요 🪷');
     }
     else if (act === 'paywall') openPaywall(el.dataset.feat);

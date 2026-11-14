@@ -292,6 +292,10 @@ function loadApp(opts = {}) {
           if (p === '[data-f]' && el.dataset.f != null) return el;
           if (p === '[data-go]' && el.dataset.go) return el;
           if (p === '[data-map-view]' && el.dataset.mapView != null) return el;
+          // 실제 브라우저의 closest 와 같게 — 속성 선택자가 하나라도 맞으면 그 요소가 잡힌다.
+          // (이걸 빼 두면 data-step 을 가진 data-act 버튼이 스텝퍼에 먹히는 회귀를 놓친다)
+          if (p === '[data-choice]' && el.dataset.choice != null) return el;
+          if (p === '[data-step]' && el.dataset.step != null) return el;
           if (p === 'a[href^="#/"]' && el.tagName === 'A' && String(el.getAttribute('href') || '').startsWith('#/')) return el;
         }
         return null;
@@ -719,4 +723,71 @@ test('서비스 워커: 코드·스타일은 네트워크 우선, 잘못된 형�
   assert.match(sw, /fetch\(req\)\s*\n?\s*\.then\(res => \{[\s\S]{0,200}?cacheable\(req, res\)/,
     '코드 요청은 네트워크 응답을 먼저 쓰고, 형식이 맞을 때만 캐시한다');
   assert.match(sw, /javascript|ecmascript/i, '스크립트 응답의 Content-Type 을 확인해야 함');
+});
+
+
+test('3문항 맞춤 추천: 회원은 보기를 골라 세 단계를 지나 추천 3곳을 받는다 (스텝퍼가 클릭을 가로채지 않음)', () => {
+  const store = { 'maeumjeongwon.ent.v1': JSON.stringify({ member: { id: 'm_onboard', name: '순례자' } }) };
+  const { go, modal, clickEl, window } = loadApp({ store });
+  const home = go('#/home');
+  assert.match(home, /data-act="start-onboarding"/, '처음 온 회원의 홈에는 3문항 추천 입구가 있다');
+
+  const btn = (act, data = {}) => { const b = new El('button'); b.dataset.act = act; Object.assign(b.dataset, data); return b; };
+  clickEl(btn('start-onboarding'));
+  assert.equal(modal.classList.contains('hidden'), false);
+  assert.match(modal.innerHTML, /id="onboardBody"/, '단계는 시트 안쪽만 다시 그린다 (✕ 손잡이 유지)');
+  assert.match(modal.innerHTML, /어떤 것이 궁금하세요\?/);
+  assert.doesNotMatch(modal.innerHTML, /class="onboard-opt[^"]*"[^>]*data-step=/, '보기 버튼에 스텝퍼용 data-step 을 쓰지 않는다');
+  assert.match(modal.innerHTML, /data-act="onboard-next" disabled/, '고르기 전에는 다음이 잠겨 있다');
+
+  const body = window.document.getElementById('onboardBody');
+  // 예전 마크업(data-step)을 그대로 가진 버튼도 data-act 로 처리돼야 한다 — 스텝퍼는 [data-stepper] 안에서만
+  clickEl(btn('onboard-pick', { key: 'history', step: '0', q: '0' }));
+  assert.match(body.innerHTML, /class="onboard-opt on" aria-pressed="true" data-act="onboard-pick" data-key="history"/, '고른 보기가 선택 상태로 보인다');
+  assert.match(body.innerHTML, /data-act="onboard-next">다음/, '고르면 다음이 열린다');
+
+  clickEl(btn('onboard-next'));
+  assert.match(body.innerHTML, /어디에 계세요\?/);
+  clickEl(btn('onboard-pick', { key: 'seoul', q: '1' }));
+  clickEl(btn('onboard-back'));
+  assert.match(body.innerHTML, /data-key="history"/);
+  assert.match(body.innerHTML, /data-act="onboard-next">다음/, '이전으로 돌아와도 이미 고른 단계는 다음이 열려 있다');
+  clickEl(btn('onboard-next'));
+  assert.match(body.innerHTML, /class="onboard-opt on"[^>]*data-key="seoul"/, '앞 단계 답도 기억한다');
+  clickEl(btn('onboard-next'));
+  assert.match(body.innerHTML, /어떤 분과 함께하세요\?/);
+  clickEl(btn('onboard-pick', { key: 'history', q: '2' }));
+  assert.match(body.innerHTML, /data-act="onboard-done" disabled/, '그 단계의 보기가 아닌 값은 받지 않는다');
+  clickEl(btn('onboard-pick', { key: 'family', q: '2' }));
+  clickEl(btn('onboard-done'));
+
+  assert.match(body.innerHTML, /역사·이야기에 어울리는 사찰 3곳/);
+  const picks = body.innerHTML.match(/class="titem[^"]*" href="#\/temple\/[^"]+"/g) || [];
+  assert.equal(picks.length, 3, '추천은 늘 3곳');
+  const saved = JSON.parse(window.localStorage.getItem('maeumjeongwon.v1'));
+  assert.equal(saved.onboarded, true, '결과를 보면 완료로 저장한다');
+  assert.deepEqual(saved.onboardPrefs, { interest: 'history', region: 'seoul', companion: 'family' });
+
+  clickEl(btn('onboard-enter'));
+  assert.equal(modal.classList.contains('hidden'), true);
+  assert.doesNotMatch(go('#/home'), /data-act="start-onboarding"/, '마친 뒤에는 홈 안내 카드가 사라진다');
+});
+
+test('3문항 맞춤 추천: 표본이 얇은 조합(사진 × 서울·강원 등)도 추천 3곳을 채운다', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'js', 'app.js'), 'utf8');
+  assert.doesNotMatch(src, /near\.length >= 2/, '가까운 곳이 2곳뿐이면 2곳만 보여 주던 옛 규칙');
+  const store = { 'maeumjeongwon.ent.v1': JSON.stringify({ member: { id: 'm_onboard2', name: '순례자' } }) };
+  const { go, clickEl, window } = loadApp({ store });
+  go('#/home');
+  const btn = (act, data = {}) => { const b = new El('button'); b.dataset.act = act; Object.assign(b.dataset, data); return b; };
+  for (const [interest, region, comp] of [['photo', 'seoul', 'solo'], ['photo', 'gangwon', 'couple'], ['history', 'gangwon', 'group'], ['healing', 'other', 'solo']]) {
+    clickEl(btn('start-onboarding'));
+    const body = window.document.getElementById('onboardBody');
+    clickEl(btn('onboard-pick', { key: interest, q: '0' })); clickEl(btn('onboard-next'));
+    clickEl(btn('onboard-pick', { key: region, q: '1' })); clickEl(btn('onboard-next'));
+    clickEl(btn('onboard-pick', { key: comp, q: '2' })); clickEl(btn('onboard-done'));
+    const picks = body.innerHTML.match(/class="titem[^"]*" href="#\/temple\/[^"]+"/g) || [];
+    assert.equal(picks.length, 3, `${interest}/${region}/${comp} 조합도 3곳`);
+    assert.equal(new Set(picks).size, 3, '같은 사찰을 두 번 추천하지 않는다');
+  }
 });
