@@ -6,6 +6,7 @@ const path = require('path');
 const { listStories } = require('../server/content/stories');
 const { listTemples } = require('../server/content/temples');
 const { publicStory } = require('../server/content/project');
+const site = require('../config/site');
 
 const DEFAULT_OUT = path.join(__dirname, '..', 'seo-out');
 // 정적 페이지가 부르는 자산의 캐시 버전 — index.html·js/lib/loader.js(VERSION)·sw.js(CACHE_NAME)와 함께 올린다.
@@ -15,13 +16,30 @@ const ADS_PUB_RE = /^pub-\d{16}$/;
 const ADS_SLOT_RE = /^\d{6,}$/;
 const ADS_CERT_ID = 'f08c47fec0942fa0';   // Google 공식 인증 기관 ID
 
-// GA_MEASUREMENT_ID가 없으면 null → 분석 관련 출력이 전혀 생기지 않는다
+// 측정 ID는 환경변수 우선, 없으면 config/site.js 의 이 사이트 속성 ID.
+// (배포 환경변수를 아직 넣지 못한 배포에서도 정적 SEO 페이지가 GA4로 잡히게 한다)
 const GA_ID_RE = /^G-[A-Z0-9]{4,}$/;
-function gaConfig(env = process.env) {
-  const id = (env.GA_MEASUREMENT_ID || '').trim();
+function gaConfig(env = process.env, fallback = site.GA_MEASUREMENT_ID) {
+  const id = (env.GA_MEASUREMENT_ID || fallback || '').trim();
   if (!id) return null;
   if (!GA_ID_RE.test(id)) throw new Error('GA_MEASUREMENT_ID는 G-영문대문자와숫자 형식이어야 해요. 예: G-ABCDEF1234');
   return id;
+}
+
+// 정식 주소 결정: Cloud Run 미리보기(*.run.app)·개발 주소가 SITE_URL 로 들어와 있으면
+// 그 값이 sitemap·robots·canonical 에 박혀 검색엔진이 엉뚱한 도메인을 수집한다.
+// 그래서 정식 도메인만 받아들이고 나머지는 config/site.js 의 주소를 쓴다.
+function siteUrl(env = process.env) {
+  const raw = String(env.SITE_URL || '').trim().replace(/\/+$/, '');
+  if (!raw) return site.SITE_URL;
+  if (!/^https?:\/\//i.test(raw)) return site.SITE_URL;
+  try {
+    const host = new URL(raw).hostname;
+    if (/\.run\.app$/i.test(host) || host === 'localhost' || host === '127.0.0.1') return site.SITE_URL;
+    return raw;
+  } catch (e) {
+    return site.SITE_URL;
+  }
 }
 
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -136,9 +154,9 @@ ${stId ? `<p><a class="btn small" href="/story/${encodeURIComponent(stId)}/">�
 
 function buildSeo(outDir = DEFAULT_OUT, opts = {}) {
   const env = opts.env || process.env;
-  const base = String(opts.siteUrl || env.SITE_URL || 'https://maeumjeongwon.example').replace(/\/+$/, '');
+  const base = String(opts.siteUrl || siteUrl(env)).replace(/\/+$/, '');
   const ads = adsConfig(env);   // 잘못된 값이면 여기서 멈춘다
-  const ga = gaConfig(env);     // 잘못된 측정 ID면 빌드 중단
+  const ga = opts.ga === false ? null : gaConfig(env, opts.gaId || site.GA_MEASUREMENT_ID);   // 잘못된 측정 ID면 빌드 중단
 
   fs.mkdirSync(outDir, { recursive: true });
   const write = (rel, content) => {
@@ -175,6 +193,9 @@ function buildSeo(outDir = DEFAULT_OUT, opts = {}) {
   write('sitemap.xml', sitemap);
   write('robots.txt', `User-agent: *\nAllow: /\nSitemap: ${base}/sitemap.xml\n`);
 
+  // 구글 서치콘솔·네이버 서치어드바이저 소유확인 파일 (루트에서 그대로 내려야 확인된다)
+  for (const [name, body] of Object.entries(site.VERIFICATION_FILES)) write(name, body + '\n');
+
   const publicStories = stories.map(publicStory);
   write('stories-public.json', JSON.stringify(publicStories, null, 2));
 
@@ -188,6 +209,7 @@ if (require.main === module) {
 
 module.exports = {
   ASSET_V,
+  siteUrl,
   ADS_PUB_RE,
   ADS_SLOT_RE,
   ADS_CERT_ID,

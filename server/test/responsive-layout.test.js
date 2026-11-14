@@ -115,7 +115,8 @@ test('9. 정적 SEO 페이지도 유동 폭·노치 대응으로 빌드된다', 
       for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
         const full = path.join(dir, ent.name);
         if (ent.isDirectory()) walk(full);
-        else if (ent.name.endsWith('.html')) files.push(full);
+        // 소유확인 파일(google*.html, naver*.html)은 레이아웃이 없는 평문 파일이라 검사 대상이 아니다
+        else if (ent.name.endsWith('.html') && !/^(?:google|naver)[0-9a-z]+\.html$/i.test(ent.name)) files.push(full);
       }
     })(out);
     assert.ok(files.length > 0);
