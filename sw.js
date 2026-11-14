@@ -10,6 +10,7 @@ const PRECACHE_URLS = [
   '/js/data-temples.js?v=20261114dc',
   '/js/config.js?v=20261009analytics',
   '/js/analytics.js?v=20261009analytics',
+  '/js/coupang-partners.js?v=20261114cq',
   '/js/app.js?v=20261114dc',
   '/pwa-192x192.png',
   '/pwa-512x512.png',
