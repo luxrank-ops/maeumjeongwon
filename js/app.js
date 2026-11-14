@@ -1103,7 +1103,9 @@
      * 이 앱이 첫 화면에서 시켜야 할 일은 하나다 — '마음을 고르고, 그 사찰로 향한다'.
      * 그래서 ① 오늘 ② 마음 처방전(주 행동) ③ 매일의 리추얼 ④ 내 순례(결과) ⑤ 지금 가기 좋은 곳
      * ⑥ 여행 계획 ⑦ 쉬는 도구 ⑧ 읽을거리·상점 순. 등급·염주·상점·플러스는 1등석이 아니라
-     * 결과와 부수 요소 자리에 둔다. 상업 요소는 맨 아래 한 장으로 모아 순례 흐름을 끊지 않는다. */
+     * 결과와 부수 요소 자리에 둔다. 상업 요소는 맨 아래 한 장으로 모아 순례 흐름을 끊지 않는다.
+     * 예외(2026-11-14 사용자 요청): 쿠팡 파트너스 '사찰 나들이 · 마음챙김 준비물'은 맨 아래에 두니 스크롤을
+     * 한참 내려야 해서 아무도 찾지 못했다 — 히어로·빠른 실행 바·바로가기 아래(체크인 위)로 올린다. */
     updateStreak();
     const done = ritualDoneToday(), verse = getDailyVerse(), streak = S.streak || 0;
 
@@ -1298,8 +1300,10 @@
       <p class="sub" id="promoCopyStatus" role="status" aria-live="polite"></p>
     </section>`;
 
-    /* 사찰 추천 레일 아래 — 사찰 나들이 준비물(쿠팡 파트너스).
-       앱 규칙: 상업 요소는 순례 흐름을 끊지 않게 아래쪽 카드로 모아 둔다. 대가성 문구는 블록 안에 상시 표시. */
+    /* 상단 — 사찰 나들이 준비물(쿠팡 파트너스).
+       원칙은 '상업 요소는 흐름의 끝에'였지만, 2026-11-14 사용자 요청으로 위로 올렸다: 아래쪽(사찰 추천 레일 뒤)에
+       두니 스크롤을 많이 내려야 해서 못 찾았다. 자리는 히어로·빠른 실행 바·바로가기 타일·도구함 바로 아래.
+       대가성 문구(공정위)는 블록 안에 상시 표시한다. */
     const cqHome = (window.MJCoupang && window.MJCoupang.homeHtml) ? window.MJCoupang.homeHtml() : '';
 
     return `
@@ -1308,6 +1312,7 @@
     ${quickBar}
     ${featTiles}
     ${toolsDrop}
+    ${cqHome}
     ${todayHead}
     ${returning ? pilgrimCard + moodCard : moodCard}
     ${onboard}
@@ -1316,7 +1321,6 @@
     ${portBars}
     ${dexCard}
     ${railCard}
-    ${cqHome}
     ${readCard}
     ${promoCard}
     <p class="notice">🙏 전설·기도 이야기는 '전해지는 이야기'로 소개하며, 효험을 보장하지 않습니다. 무리한 산행·야간 방문은 삼가고 사찰 예절을 지켜 주세요.</p>

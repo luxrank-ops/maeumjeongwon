@@ -1,5 +1,5 @@
 /* 절로가 PWA Service Worker — 오프라인 캐시 및 산사 통신 음영 지역 대응 */
-const CACHE_NAME = 'maeumjeongwon-v13';
+const CACHE_NAME = 'maeumjeongwon-v14';
 // 첫 설치에서 받는 것 = 첫 화면을 그리는 데 실제로 필요한 것만.
 const PRECACHE_URLS = [
   '/',
@@ -11,7 +11,7 @@ const PRECACHE_URLS = [
   '/js/config.js?v=20261009analytics',
   '/js/analytics.js?v=20261009analytics',
   '/js/coupang-partners.js?v=20261114cq4',
-  '/js/app.js?v=20261114dc',
+  '/js/app.js?v=20261114top1',
   '/pwa-192x192.png',
   '/pwa-512x512.png',
   '/apple-touch-icon.png'
