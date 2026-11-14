@@ -156,7 +156,8 @@ test('6. 첫 화면·정적 페이지가 부르는 자산에는 캐시 버전이
       for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
         const full = path.join(dir, ent.name);
         if (ent.isDirectory()) walk(full);
-        else if (ent.name.endsWith('.html')) files.push(full);
+        // 글·네이버 소유확인 파일(google*.html, naver*.html)은 자산을 부르지 않는 평문 파일
+        else if (ent.name.endsWith('.html') && !/^(?:google|naver)[0-9a-z]+\.html$/i.test(ent.name)) files.push(full);
       }
     })(out);
     assert.ok(files.length > 0, 'SEO 페이지가 만들어졌다');
