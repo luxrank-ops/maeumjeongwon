@@ -10,9 +10,20 @@ python3 -m http.server 8642      # 또는: npx serve -l 8642 .
 ```
 GPS 인증은 브라우저 보안상 `localhost` 또는 HTTPS에서만 동작합니다. 지도 타일(OpenStreetMap)은 인터넷 연결이 필요합니다.
 
-## 배포 (Vercel)
+## 배포 (Cloudflare Workers) — 지금의 실사용 주소
 
-**GitHub Pages(`luxrank-ops.github.io/maeumjeongwon`)는 정적 미러입니다** — 서버가 없어서 회원가입·게시판·AI 상담이 동작하지 않습니다. 그래서 `index.html` 이 그 주소로 들어온 방문자를 서버가 있는 실제 배포로 즉시 보냅니다(해시 유지). 실사용 주소는 `https://maeumjeongwon.vercel.app` 입니다.
+실제 서비스는 **`https://maeumjeongwon.luxrank.workers.dev`** (Cloudflare Worker `maeumjeongwon`, 계정 `b95a6c54…`, D1 `maeumjeongwon`). `main` 에 푸시하면 Cloudflare Workers Builds 가 `npm run build` → `npx wrangler deploy` 로 자동 배포합니다.
+
+- **정적 자산**: `npm run build` 가 `seo-out`(사찰·스토리 SEO 페이지, sitemap, robots, 소유확인 파일)을 만들고 `tools/build-worker.js` 가 루트 자산과 합쳐 `dist/` 를 만든다. `wrangler.jsonc` 의 `assets` 가 그 폴더를 올린다(끝 슬래시 없는 `/temple/x` 는 `worker/index.js` 가 `/temple/x/index.html` 로 찾아 준다).
+- **API**: `worker/api.js` 가 `server/app.js`(Express)와 같은 경로·같은 응답을 낸다. 회원·게시판 규칙은 `server/auth.js`·`server/board.js` 를 그대로 쓰고, 저장소만 `worker/db.js` 의 D1 어댑터를 거친다(`await` 기반이라 Node 의 `node:sqlite` 테스트와 같은 코드가 돈다).
+- **콘텐츠**: Worker 에는 `fs` 가 없어서 `tools/build-worker.js` 가 `server/content/*` 로 뽑은 `worker/generated/content.json` 을 쓴다(커밋하지 않음).
+- **DB**: D1 테이블은 첫 DB 접근 때 `worker/db.js` 의 `ensureSchema` 가 만든다(`users`·`sessions`·`posts`·`comments`·`mj_state`·`mj_events`·`mj_ssv`).
+- **시크릿**: `SESSION_SECRET`·`ADMIN_PASSWORD`·`REVENUECAT_WEBHOOK_AUTH`(필요 시 `GEMINI_API_KEY`)는 대시보드의 암호화된 Secret 으로만 둔다. 나머지 환경변수는 `wrangler.jsonc` 의 `vars`.
+- 로컬 확인: `npm run build && npm run dev:worker` (`.dev.vars` 에 로컬 시크릿).
+
+## 배포 (Vercel · 이전 배포)
+
+**GitHub Pages(`luxrank-ops.github.io/maeumjeongwon`)는 정적 미러입니다** — 서버가 없어서 회원가입·게시판·AI 상담이 동작하지 않습니다. 그래서 `index.html` 이 그 주소로 들어온 방문자를 서버가 있는 실제 배포로 즉시 보냅니다(해시 유지). 2026-11-14 이전까지의 실사용 주소는 `https://maeumjeongwon.vercel.app` 이었고, 지금도 그 주소로 열립니다.
 
 Vercel 의 Express 빌드는 `server.js` 가 **실제로 참조하는 파일만** 함수 번들에 넣습니다. 그래서 `express.static()` 이 내려주는 `css/`·`vendor/`·`sw.js`·`manifest.webmanifest` 는 `vercel.json` 의 `functions["server.js"].includeFiles` 에 적어 주지 않으면 운영에서 404(정확히는 SPA 되돌림 HTML)가 됩니다 — 스타일이 사라지고 서비스워커·PWA 아이콘이 죽는 원인입니다. `includeFiles` 는 문자열 글롭 하나여야 하고, `builds` 는 쓰지 않습니다(zero-config 빌드가 꺼집니다). 없는 자산은 `index.html` 대신 404 + `no-cache` 로 응답합니다. 가드: `server/test/delivery.test.js` 7·8
 
