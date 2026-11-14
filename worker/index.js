@@ -64,7 +64,11 @@ export default {
       if (ASSET_EXT_RE.test(path)) {
         return new Response('not_found', {
           status: 404,
-          headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache' }
+          headers: {
+            'Content-Type': 'text/plain; charset=utf-8',
+            'Cache-Control': 'no-cache',
+            'X-Content-Type-Options': 'nosniff'
+          }
         });
       }
       // 3) SPA 되돌림 — 앱 셸(index.html). 해시 라우팅이라 서버 경로는 없어도 된다.
