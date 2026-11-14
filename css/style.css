@@ -975,7 +975,8 @@ input[type=search]::-webkit-search-cancel-button,input[type=search]::-webkit-sea
 .onboard-progress span{background:var(--border-1)}
 .onboard-progress span.on{background:var(--pine)}
 .onboard-opt{border:1px solid var(--border-1);background:var(--surface-2);border-radius:12px;padding:11px 15px;font-weight:600}
-.onboard-opt.on{border-color:var(--pine);background:var(--pine-soft);color:var(--pine-ink);font-weight:700}
+.onboard-opt.on{border-color:var(--pine);background:var(--pine-soft);color:var(--pine-ink);font-weight:800;box-shadow:inset 0 0 0 1px var(--pine)}
+.has-close .onboard-progress{margin-right:52px}
 .chapter p{line-height:1.85;font-size:1.02em;color:var(--text-1)}
 .chapter .first-letter{font-family:var(--font-display);font-size:1.05em;color:var(--clay)}
 
