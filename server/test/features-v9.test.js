@@ -20,7 +20,7 @@ test('1. PWA 표준 준수 — manifest.webmanifest 필수 항목 및 아이콘 
   assert.ok(manifest.short_name, 'short_name이 있어야 함');
   assert.ok(manifest.short_name.length <= 12, 'short_name은 12자 이하여야 함 (PWA 가이드라인)');
   assert.ok(manifest.name, 'name이 정의되어 있어야 함');
-  assert.equal(manifest.theme_color, '#FAF7F2', '한지(주사 테마) 색상이어야 함');
+  assert.equal(manifest.theme_color, '#FFFFFF', '흰 상단 바(단청 대시보드) 색상이어야 함');
 
   const icons = manifest.icons || [];
   assert.ok(icons.length >= 3, '최소 192, 512, maskable 아이콘이 정의되어 있어야 함');

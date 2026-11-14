@@ -3,7 +3,7 @@
 /* 사경첩(寫經帖) 테마 가드 — 2026-11 '주사 한 색' 전환
  *
  * 이 파일이 지키는 약속은 네 가지다.
- *   ① 색은 하나 — 강조는 주사(#B71C1C) 하나뿐이고, 배경은 한지, 글은 먹이다
+ *   ① 색은 하나 — 강조는 하나뿐이다 (2026-11 단청 대시보드: 남색 #1A2C6B · 청회색 바탕 · 남색 글)
  *   ② 사경 — 격자 위에 앉은 글, 붓글씨 타이핑, 인장(seal) 보내기
  *   ③ 가입은 두 칸 — 이메일·비밀번호. 닉네임은 서버가 만든다
  *   ④ 리포트는 쌓인 만큼만 말한다 — 1~2장은 격려, 3장부터 결(꺾은선·낱말)
@@ -53,11 +53,12 @@ const token = (src, name) => {
 
 // ---------- ① 색은 하나 ----------
 
-test('① 주사 한 색 — 강조는 #B71C1C, 배경은 한지, 글은 먹', () => {
-  assert.equal(token(LIGHT, '--pine'), '#b71c1c', '주 행동은 주사(朱砂) 하나');
-  assert.equal(token(LIGHT, '--paper'), '#faf7f2', '배경은 한지색');
-  assert.equal(token(LIGHT, '--ink'), '#1a1a1a', '본문 글자는 먹색');
-  // 보조 두 색은 '다른 색'이 아니라 같은 붉은 계열의 어둡고 누런 쪽이다
+// 2026-11 '단청 대시보드'로 색값만 갈아 끼웠다 — 강조 하나(주 행동)·보조 둘(도장·이루었다)이라는 구조는 그대로다.
+test('① 강조 한 색 — 주 행동은 남색 #1A2C6B, 바탕은 청회색, 글은 남색 먹 (단청 대시보드)', () => {
+  assert.equal(token(LIGHT, '--pine'), '#1a2c6b', '주 행동은 남색 하나');
+  assert.equal(token(LIGHT, '--paper'), '#eef2f8', '배경은 청회색');
+  assert.equal(token(LIGHT, '--ink'), '#0f1b3d', '본문 글자는 남색 먹');
+  // 보조 두 색(주황 도장 · 노랑 이루었다)은 따뜻한 쪽에 둔다 — 남색 주 행동과 섞이지 않게
   for (const name of ['--clay', '--gold']) {
     const hex = token(LIGHT, name);
     const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
@@ -68,12 +69,14 @@ test('① 주사 한 색 — 강조는 #B71C1C, 배경은 한지, 글은 먹', (
   assert.ok(token(DARK, '--pine').length === 7, '저조도 주사 토큰');
 });
 
-test('① 테마 표기(manifest·meta·PWA)가 한지색으로 함께 움직인다', () => {
+test('① 테마 표기(manifest·meta·PWA)가 흰 상단 바·청회색 바탕으로 함께 움직인다', () => {
   const manifest = JSON.parse(read('manifest.webmanifest'));
-  assert.equal(manifest.theme_color.toUpperCase(), '#FAF7F2');
-  assert.equal(manifest.background_color.toUpperCase(), '#FAF7F2');
-  assert.match(shell, /<meta name="theme-color" content="#FAF7F2"/);
-  assert.match(app, /const THEME_BAR = \{ light: '#FAF7F2', dark: '#14100F' \}/);
+  assert.equal(manifest.theme_color.toUpperCase(), '#FFFFFF', '상태바 = 흰 상단 바');
+  assert.equal(manifest.background_color.toUpperCase(), '#EEF2F8', '스플래시 = 화면 바탕');
+  assert.match(shell, /<meta name="theme-color" content="#FFFFFF"/);
+  assert.match(app, /const THEME_BAR = \{ light: '#FFFFFF', dark: '#131B2E' \}/);
+  // 사경첩(주사 #B71C1C · 한지 #FAF7F2) 잔재가 화면 코드에 남아 있으면 안 된다
+  assert.equal(/B71C1C|FAF7F2/i.test(css + shell + app + features), false, '사경첩 팔레트 잔재');
   // 옛 팔레트(한지 #f6f1e7 · 소나무 #33604a)가 화면 코드에 남아 있으면 안 된다
   assert.equal(/f6f1e7|33604a/i.test(css + shell + app + features), false, '옛 팔레트 잔재');
 });

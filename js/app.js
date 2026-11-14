@@ -1042,9 +1042,19 @@
     const ownRecords = (S.visits || []).filter(x => !x.sample).length + (S.journal || []).filter(x => !x.sample).length;
     const returning = ownRecords >= 3;
 
+    /* 단청 대시보드 (2026-11) — 첫 줄에 '오늘·누적' 숫자 배지와 굵은 제목을 나란히 둔다.
+       숫자는 이 기기에 남긴 내 기록만 센다(표본 제외 · visited()/streak). 근거: docs/design-dancheong.md */
     const mainTitleHero = `<section class="card main-title-hero" aria-labelledby="mainTitle">
+      <div class="hero-top">
+        <a class="stat-badge" href="#/missions" aria-label="연속 리추얼 ${streak}일 · 누적 도장 ${v.size}곳 — 순례 현황 보기">
+          <span><i class="k"><i class="live" aria-hidden="true"></i>연속</i><b class="v num">${streak}<small>일</small></b></span>
+          <span><i class="k">${ic('stamp', 'sm')}도장</i><b class="v num">${v.size}<small>곳</small></b></span>
+        </a>
+        <div class="hero-copy">
       <div class="main-title-kicker">${ic('lotus')} 오늘의 마음을 따라 사찰로</div>
       <h1 id="mainTitle" class="main-title"><span class="main-title__brand">마음정원사 <span class="main-title__sep">:</span> 절로가</span><br><span class="main-title__call">춘학아~절에 가자~^^</span></h1>
+        </div>
+      </div>
       <p class="main-title__desc">기분을 고르고 사찰 이야기를 읽으며 <b>나만의 순례 기록</b>을 이어가는 마음정원입니다.</p>
       ${!isMember() ? `<div class="main-title-auth-bar">
         <span class="sub">${ic('sparkle')} <b>맛보기 체험 중</b> · 기분 체크인·3분 호흡·마음 쉼터·사찰 기본 탐색은 바로 체험하고, <b>방문 인증·108 염주·수첩·여행 계획·AI 상담·도슨트</b> 등 주요 기능은 회원가입·로그인 후 이용하세요.</span>
@@ -1092,19 +1102,6 @@
       <div class="btn-group"><button class="btn ghost" data-act="start-onboarding">3문항으로 맞춤 추천</button><a class="btn text" style="text-decoration:none" href="#/explore">전체 사찰 둘러보기</a></div>
     </section>` : '';
 
-    const ritualCard = `<section class="card ritual-card">
-      <div class="section-heading">
-        <div><span class="section-kicker">${ic('wind')} 매일의 리추얼</span><h2>오늘의 한 구절</h2></div>
-        ${streak > 0 ? `<span class="tag ok">${ic('check')} ${streak}일째</span>` : '<span class="tag">이어도 되고, 멈춰도 돼요</span>'}
-      </div>
-      <blockquote class="verse">"${esc(verse.text)}"<span class="verse-src">— ${esc(verse.src)}</span></blockquote>
-      <div class="btn-group">
-        <button class="btn ${done ? 'ghost' : ''}" data-act="daily-ritual" ${done ? 'disabled' : ''}>${done ? ic('check') + ' 오늘 했어요' : ic('lotus') + ' 108 염주·기도'}</button>
-        <button class="btn ghost" data-act="daily-breathing">${ic('circle')} 3분 호흡</button>
-      </div>
-      ${S.streakFreezes > 0 ? `<p class="sub ritual-foot">하루쯤 쉬어도 스트릭은 프리즈 ${S.streakFreezes}개가 지켜 드려요.</p>` : ''}
-    </section>`;
-
     const pilgrimCard = `<section class="card pilgrim-card">
       <div class="section-heading">
         <div><span class="section-kicker">${ic('stamp')} 내 순례</span><h2>${g.cur ? esc(g.cur.name) : '첫 도장을 기다리는 중'}</h2></div>
@@ -1143,33 +1140,6 @@
       </div>
     </section>`;
 
-    const plannerCard = `<section class="card planner-card">
-      <div class="section-heading">
-        <div><span class="section-kicker">${ic('calendar')} 여행 계획</span><h2>${tripN ? `내 계획 ${tripN}건` : '사찰 순례 코스 짜기'}</h2></div>
-        <a class="text-link" href="#/planner">전체 보기${ic('chevron')}</a>
-      </div>
-      <p class="sub">당일치기부터 1박 2일까지 — 경유 사찰·동선·직선거리·준비물을 한 장으로 정리해요.</p>
-      <div class="btn-group">
-        <a class="btn" href="#/planner/new" style="text-decoration:none">${ic('plus')} 새 계획 짜기</a>
-        <a class="btn ghost" href="#/planner" style="text-decoration:none">${ic('sparkle')} 추천 코스 받기</a>
-      </div>
-    </section>`;
-
-    const toolsCard = `<section class="card tools-card">
-      <div class="tools">
-        <div class="tool">
-          <div class="tool-head"><span class="tool-ic">${ic('wind')}</span><h3>마음 쉼터</h3></div>
-          <p>범종·풍경·목탁·계곡물 소리와 함께 잠깐 멈추기.</p>
-          <button class="btn ghost small" data-act="meditation-open">${ic('play')} 들어보기</button>
-        </div>
-        <div class="tool">
-          <div class="tool-head"><span class="tool-ic">${ic('sparkle')}</span><h3>AI 참배 안내</h3></div>
-          <p>예절·동선·사찰 이야기를 물으면 이 앱의 자료로 답해요.</p>
-          <button class="btn ghost small" data-act="ai-counsel">물어보기${ic('chevron')}</button>
-        </div>
-      </div>
-    </section>`;
-
     const story = STORIES[0];
     const readCard = `<section class="card read-card">
       <div class="section-heading"><div><span class="section-kicker">${ic('file')} 읽을거리 · 내려받기</span><h2>${story ? '이번 주 심화 스토리' : '이번 주 발자취'}</h2></div><a class="text-link" href="#/store">상점${ic('chevron')}</a></div>
@@ -1182,16 +1152,91 @@
       </ul>
     </section>`;
 
+    /* ---------- 단청 대시보드 조각 (2026-11) ----------
+       ① 공지 띠(흐르는 글) ② 단골 사찰 빠른 실행 바 ③ 큰 기능 타일 2장 ④ 펼치는 도구함
+       ⑤ 권역 띠(펼치면 사찰 목록) ⑥ 사찰 도감 노란 카드 ⑦ 떠 있는 상담 버튼.
+       새 데이터는 만들지 않는다 — 이미 있는 처방·방문·사찰 표를 다른 모양으로 보여 줄 뿐이다. */
+    const tickerItems = [
+      `오늘의 한 구절 · "${verse.text}"`,
+      `${String(season.name).replace(/\s*\(.*\)$/, '')} · ${season.advice}`,
+      `오늘의 처방 · ${MOODS[mi].label} → ${t.name}`,
+      '전해지는 이야기는 효험을 보장하지 않아요 · 무리한 산행·야간 방문은 삼가 주세요'
+    ].map((x, i) => `${i + 1}. ${esc(x)}`).join(' &nbsp;///&nbsp; ');
+    const ticker = `<div class="ticker" role="region" aria-label="오늘의 안내">
+      <div class="ticker-track"><div class="ticker-move"><span>${tickerItems}</span><span aria-hidden="true">${tickerItems}</span></div></div>
+      <a class="ticker-add" href="#/board" aria-label="게시판에 순례 이야기 남기기">${ic('plus')}</a>
+    </div>`;
+
+    const lastOwn = S.visits.filter(x => !x.sample).slice(-1)[0];
+    const pin = (lastOwn && byId[lastOwn.tid]) || t;
+    const quickBar = `<section class="qbar" aria-labelledby="qbarTitle">
+      <div class="qbar-head"><b id="qbarTitle">${ic('star', 'fill')} 내 단골 사찰 빠른 실행 바</b><small>${lastOwn ? '최근 방문한 곳' : '오늘의 처방 사찰'}</small></div>
+      <div class="qbar-row">
+        <a class="qbar-pin" href="#/temple/${pin.id}">${ic('star', 'fill lg')}<b>${esc(pin.name)}<small>${esc(pin.sido)} ${esc(pin.sgg)}</small></b></a>
+        <a class="qchip" href="#/temple/${pin.id}">이야기</a>
+        <button type="button" class="qchip" data-act="nav-hub" data-id="${pin.id}">길찾기</button>
+        <a class="qchip" href="#/map">지도</a>
+        <button type="button" class="qchip" data-act="plan-pick" data-id="${pin.id}">계획</button>
+        <button type="button" class="qchip blue" data-act="daily-breathing">${ic('wind', 'sm')}호흡</button>
+        <button type="button" class="qchip orange" data-act="daily-ritual" ${done ? 'disabled' : ''}>${ic('lotus', 'sm')}${done ? '염주 ✓' : '염주'}</button>
+      </div>
+    </section>`;
+
+    const featTiles = `<div class="feat-grid">
+      <a class="feat" href="#/planner"><span class="tile t-orange">${ic('calendar')}</span><b>여행 계획</b><small>${tripN ? `내 계획 ${tripN}건 · 동선 자동 정리` : '경유 사찰·동선 자동 정리'}</small></a>
+      <a class="feat" href="#/journal"><span class="tile t-green">${ic('pencil')}</span><b>사찰 수첩</b><small>날짜별 기록 · 방문 발자국</small></a>
+    </div>`;
+
+    const toolsDrop = `<details class="card drop">
+      <summary><span class="tile t-blue">${ic('sparkle')}</span><span class="drop-copy"><b>마음 도구함 · AI 참배 안내</b><small>질문 → 예절·동선 안내 → 마음 쉼터 소리 → 3분 호흡</small></span><span class="drop-caret" aria-hidden="true">${ic('chevron')}</span></summary>
+      <ul class="tool-list">
+        <li><button type="button" data-act="ai-counsel">${ic('chat')}<span><b>AI 참배 안내</b><span class="sub">예절·동선·사찰 이야기를 물어보세요</span></span><span class="tail">${ic('chevron')}</span></button></li>
+        <li><button type="button" data-act="meditation-open">${ic('headphones')}<span><b>마음 쉼터</b><span class="sub">범종·풍경·목탁·계곡물 소리</span></span><span class="tail">${ic('chevron')}</span></button></li>
+        <li><button type="button" data-act="daily-breathing">${ic('wind')}<span><b>3분 호흡</b><span class="sub">들이쉬고 내쉬기, 잠깐 멈추기</span></span><span class="tail">${ic('chevron')}</span></button></li>
+        <li><button type="button" data-act="cert-open">${ic('file')}<span><b>디지털 완주증</b><span class="sub">도장 ${v.size}곳 · 이 기기 기록으로 발급</span></span><span class="tail">${ic('chevron')}</span></button></li>
+      </ul>
+    </details>`;
+
+    const REGION_BARS = [
+      { name: '영남권', sub: '경상·부산·대구', sidos: ['경남', '경북', '대구', '부산', '울산'] },
+      { name: '호남권', sub: '전라·제주', sidos: ['전남', '전북', '광주', '제주'] },
+      { name: '수도권', sub: '서울·경기·강원', sidos: ['서울', '경기', '인천', '강원'] },
+      { name: '충청권', sub: '충남·충북', sidos: ['충남', '충북', '대전', '세종'] }
+    ];
+    const portBars = `<div class="port-bars">${REGION_BARS.map((r, i) => {
+      const list = TEMPLES.filter(x => r.sidos.includes(x.sido));
+      if (!list.length) return '';
+      return `<details class="pbar b${i + 1}">
+        <summary><b>${esc(r.name)} <small>${esc(r.sub)}</small><i class="caret" aria-hidden="true">▼</i></b><span class="pills">${list.slice(0, 4).map(x => `<i class="pill">${esc(x.name)}</i>`).join('')}</span></summary>
+        <div class="pbar-list">${list.map(x => `<a href="#/temple/${x.id}"><span class="seal ${v.has(x.id) ? '' : 'off'}" aria-hidden="true">${sealChar(x)}</span><span><b>${esc(x.name)}</b><small>${esc(x.sido)} ${esc(x.sgg)}</small></span></a>`).join('')}</div>
+      </details>`;
+    }).join('')}</div>`;
+
+    const dexCard = `<section class="card dex-card">
+      <div class="dex-head"><span class="tile t-yellow">${ic('book')}</span><div><h2>사찰 도감</h2><p class="sub">이야기 사찰 · 전통사찰 검색과 내 도장 모으기</p></div></div>
+      <p class="dex-count"><span class="num">수록 사찰 ${TEMPLES.length}곳</span> · <span class="num">전통사찰 991곳</span> · <span class="num">내 도장 ${v.size}곳</span></p>
+      <div class="btn-group"><a class="btn" href="#/dex">${ic('stamp')} 도감 열기</a><a class="btn ghost" href="#/explore/all">${ic('search')} 전통사찰 찾기</a></div>
+    </section>`;
+
+    const fab = `<div class="fab-wrap"><button type="button" class="fab" data-act="ai-counsel">${ic('sparkle')}<span>마음 상담<small>AI 참배 안내</small></span></button></div>`;
+
     return `
+    ${ticker}
     ${mainTitleHero}
+    ${quickBar}
+    ${featTiles}
+    ${toolsDrop}
     ${todayHead}
     ${returning ? pilgrimCard + moodCard : moodCard}
     ${onboard}
     ${returning ? '' : pilgrimCard}
     ${consentCard()}
+    ${portBars}
+    ${dexCard}
     ${railCard}
     ${readCard}
-    <p class="notice">🙏 전설·기도 이야기는 '전해지는 이야기'로 소개하며, 효험을 보장하지 않습니다. 무리한 산행·야간 방문은 삼가고 사찰 예절을 지켜 주세요.</p>`;
+    <p class="notice">🙏 전설·기도 이야기는 '전해지는 이야기'로 소개하며, 효험을 보장하지 않습니다. 무리한 산행·야간 방문은 삼가고 사찰 예절을 지켜 주세요.</p>
+    ${fab}`;
   }
 
   // 인사말은 시계(時計)만 본다 — 개인 정보를 읽지 않고도 '지금'을 말해 주는 가장 값싼 단서
@@ -2904,7 +2949,7 @@
    * 값은 앱 상태(S)와 섞지 않고 별도 키에 둔다 — 첫 페인트 전(<head> 의 인라인 스크립트)에도
    * 읽어야 하므로, 앱 상태 JSON 전체를 기다릴 수 없다. */
   const THEME_KEY = 'maeumjeongwon.theme.v1';
-  const THEME_BAR = { light: '#FAF7F2', dark: '#14100F' };
+  const THEME_BAR = { light: '#FFFFFF', dark: '#131B2E' };
   let themePref = '';
   try { themePref = localStorage.getItem(THEME_KEY) || ''; } catch (e) { themePref = ''; }
   const systemDark = () => !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);

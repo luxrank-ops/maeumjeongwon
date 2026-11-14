@@ -145,9 +145,9 @@ test('④ 하단 시트 · 입력 Clear — 손가락이 닿는 자리에 48dp',
 
 // ---------- ⑤ 안티 퍼펙트 질감 · 타이포 분리 ----------
 
-test('⑤ 한지 바탕에 32px 눈금 — 흰 화면(#FFFFFF) 대신 종이', () => {
-  assert.match(css, /--grid-line:rgba\(26,20,18,\.032\);--grid-step:32px/, '낮');
-  assert.match(css, /--grid-line:rgba\(242,237,231,\.04\);--grid-step:32px/, '저조도');
+test('⑤ 바탕에 32px 눈금 — 흰 화면(#FFFFFF) 대신 옅은 눈금 위의 청회색', () => {
+  assert.match(css, /--grid-line:rgba\(15,27,61,\.022\);--grid-step:32px/, '낮');
+  assert.match(css, /--grid-line:rgba\(238,242,250,\.03\);--grid-step:32px/, '저조도');
   const appRule = css.slice(css.indexOf('#app{'), css.indexOf('#app{') + 800);
   assert.match(appRule, /background-image:/);
   assert.match(appRule, /repeating-linear-gradient\(0deg,var\(--grid-line\) 0 1px,transparent 1px var\(--grid-step\)\)/);
@@ -157,12 +157,14 @@ test('⑤ 한지 바탕에 32px 눈금 — 흰 화면(#FFFFFF) 대신 종이', (
   assert.equal(/#FFFFFF/i.test(appRule), false, '완전한 흰색을 쓰지 않는다');
 });
 
-test('⑤ 시스템 라벨은 고딕, 콘텐츠의 목소리는 명조 — 두 목소리를 섞는다', () => {
+// 2026-11 단청 대시보드: 제목·워드마크는 굵은 고딕으로 옮기고, 명조는 경전 구절에만 남겼다
+test('⑤ 제목·라벨은 굵은 고딕, 경전 구절의 목소리는 명조 — 두 목소리를 섞는다', () => {
   assert.match(css, /--font-ui:"Apple SD Gothic Neo","Pretendard"/);
   assert.match(css, /--font-display:"NanumMyeongjo"/);
-  assert.match(css, /h1,h2,h3\{font-family:var\(--font-display\)/, '콘텐츠 제목은 명조');
+  assert.match(css, /h1,h2,h3\{font-family:var\(--font-ui\)/, '제목은 굵은 고딕');
+  assert.match(css, /h1\{font-size:clamp\([^}]*font-weight:900/, '화면 제목은 가장 굵게');
   assert.match(css, /h3\{font-size:1em;font-weight:700;font-family:var\(--font-ui\)\}/, '시스템 소제목은 고딕');
-  assert.match(css, /\.brand-copy>b\{font-family:var\(--font-display\)/, '브랜드 워드마크는 캘리그래피 계열');
+  assert.match(css, /\.brand-copy>b\{font-family:var\(--font-ui\);[^}]*font-weight:900/, '브랜드 워드마크는 굵은 고딕');
   assert.match(sagyeCss, /\.sagye-paper \.sagye-verse p\{font-family:var\(--font-display\);letter-spacing:\.01em\}/, '경전 구절은 명조');
 });
 
