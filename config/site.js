@@ -18,6 +18,7 @@ module.exports = {
   // 파일 이름·내용 모두 각 서비스가 발급한 값이라 임의로 바꾸면 확인이 실패한다.
   VERIFICATION_FILES: {
     'google968bd4b8f647180b.html': 'google-site-verification: google968bd4b8f647180b.html',
-    'naver08c0f6832a6e38593b56274b38caf6c9.html': 'naver-site-verification: naver08c0f6832a6e38593b56274b38caf6c9.html'
+    'naver08c0f6832a6e38593b56274b38caf6c9.html': 'naver-site-verification: naver08c0f6832a6e38593b56274b38caf6c9.html',
+    'naverabdc4ff28153e413f2c121f10ff83dea.html': 'naver-site-verification: naverabdc4ff28153e413f2c121f10ff83dea.html'
   }
 };
