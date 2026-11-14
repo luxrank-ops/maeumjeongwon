@@ -23,10 +23,10 @@ function walkHtml(dir) {
   return out;
 }
 
-test('1. GA_MEASUREMENT_ID가 없으면 정적 페이지에 분석 meta·body 속성·스크립트·설정 링크가 전혀 생기지 않는다', () => {
+test('1. 분석을 끄면(ga:false) 정적 페이지에 분석 meta·body 속성·스크립트·설정 링크가 전혀 생기지 않는다', () => {
   const out = tmpOut();
   try {
-    buildSeo(out, { siteUrl: 'https://example.test', env: {} });
+    buildSeo(out, { siteUrl: 'https://example.test', env: {}, ga: false });
     for (const f of walkHtml(out)) {
       const html = fs.readFileSync(f, 'utf-8');
       assert.equal(/mj-ga-id|data-mj-page|analytics\.js|data-mj-consent-open/.test(html), false, `분석 코드가 없어야 함: ${f}`);
@@ -80,7 +80,7 @@ test('5. 정적 사찰·스토리 페이지 개수만큼 빠짐없이 data-mj-pa
   const out = tmpOut();
   try {
     const res = buildSeo(out, { siteUrl: 'https://example.test', env: { GA_MEASUREMENT_ID: GA } });
-    const all = walkHtml(out);
+    const all = walkHtml(out).filter(f => !/\/(?:google|naver)[0-9a-z]+\.html$/i.test(f));
     assert.equal(all.length, res.temples + res.stories);
     for (const f of all) {
       const html = fs.readFileSync(f, 'utf-8');
@@ -99,6 +99,40 @@ test('6. 정적 SEO 페이지에는 사용자 자유 입력란(input, textarea)�
       const html = fs.readFileSync(f, 'utf-8');
       assert.equal(/<(input|textarea)\b/i.test(html), false, `정적 페이지에 입력란이 없어야 함: ${f}`);
     }
+  } finally {
+    fs.rmSync(out, { recursive: true, force: true });
+  }
+});
+
+test('7. 측정 ID를 넘기지 않아도 config/site.js 의 이 사이트 GA4 속성 ID가 기본으로 들어간다', () => {
+  const out = tmpOut();
+  try {
+    const res = buildSeo(out, { siteUrl: 'https://example.test', env: {} });
+    assert.equal(res.ga, true);
+    const html = fs.readFileSync(path.join(out, 'temple', 'bulguksa', 'index.html'), 'utf-8');
+    assert.ok(html.includes('<meta name="mj-ga-id" content="G-GK4GX2C0BW">'));
+  } finally {
+    fs.rmSync(out, { recursive: true, force: true });
+  }
+});
+
+test('8. 구글·네이버 소유확인 파일이 루트에 생성되고 robots.txt가 정식 도메인을 가리킨다', () => {
+  const out = tmpOut();
+  try {
+    buildSeo(out, { env: { SITE_URL: 'https://ais-pre-example-123.asia-east1.run.app' } });
+    assert.equal(
+      fs.readFileSync(path.join(out, 'google968bd4b8f647180b.html'), 'utf-8').trim(),
+      'google-site-verification: google968bd4b8f647180b.html'
+    );
+    assert.equal(
+      fs.readFileSync(path.join(out, 'naver08c0f6832a6e38593b56274b38caf6c9.html'), 'utf-8').trim(),
+      'naver-site-verification: naver08c0f6832a6e38593b56274b38caf6c9.html'
+    );
+    const robots = fs.readFileSync(path.join(out, 'robots.txt'), 'utf-8');
+    assert.ok(robots.includes('Sitemap: https://maeumjeongwon.vercel.app/sitemap.xml'), robots);
+    const sitemap = fs.readFileSync(path.join(out, 'sitemap.xml'), 'utf-8');
+    assert.equal(sitemap.includes('run.app'), false, 'Cloud Run 미리보기 주소가 사이트맵에 들어가면 안 됨');
+    assert.ok(sitemap.includes('<loc>https://maeumjeongwon.vercel.app/</loc>'));
   } finally {
     fs.rmSync(out, { recursive: true, force: true });
   }
