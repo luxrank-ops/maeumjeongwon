@@ -12,6 +12,9 @@
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
+    // .html 자동 리다이렉트(307)를 끈다 — Express 판처럼 /temple/x · /index.html · 소유확인 .html 을 200 으로 바로 내려야 한다.
+    // (끝 슬래시 없는 경로는 worker/index.js 가 /index.html 로 찾아 준다)
+    "html_handling": "none",
     "run_worker_first": true
   },
   "d1_databases": [

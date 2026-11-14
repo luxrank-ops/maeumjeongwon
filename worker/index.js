@@ -53,9 +53,10 @@ export default {
     // 1) 그대로 있는 파일
     let res = await env.ASSETS.fetch(request);
 
-    // 2) /temple/haeinsa 처럼 끝 슬래시 없이 들어온 정적 SEO 페이지
+    // 2) /temple/haeinsa 처럼 끝 슬래시 없이 들어온 정적 SEO 페이지, 그리고 '/' → /index.html
     if (res.status === 404 && !ASSET_EXT_RE.test(path)) {
-      const dirIndex = await asset(env, url, path.replace(/\/?$/, '/') + 'index.html');
+      const dirIndexPath = (path.endsWith('/') ? path : path + '/') + 'index.html';
+      const dirIndex = await asset(env, url, dirIndexPath);
       if (dirIndex.status === 200) return withHeaders(dirIndex, 'no-cache');
     }
 
