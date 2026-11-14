@@ -570,6 +570,61 @@
   const sealChar = t => t.name.replace(/\(.*\)/, '').trim().charAt(0);
   function toast(msg) { const el = document.getElementById('toast'); if (!el) return; el.textContent = msg; el.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('show'), 2600); }
   window.MJ_TOAST = toast;
+
+  /* ---------- 홍보글 복사 (홈 맨 아래 '📢 홍보글·링크 복사') ----------
+   * 앱을 소개할 때 쓰는 문구와 주소를 한 번에 복사한다. 새 데이터·새 화면을 만들지 않고
+   * 홈 맨 아래 한 칸에서만 연다(순례 흐름을 끊지 않게). 주소가 바뀌면 PROMO_URL 한 곳만 고친다. */
+  const PROMO_URL = 'https://maeumjeongwon.luxrank.workers.dev';
+  const PROMO_TEXT = [
+    '머리 복잡할 때, 조용한 절에 다녀오고 싶은 날 있으시죠? 🌿',
+    '',
+    '전국 991개 전통사찰을 한눈에 보고 마음을 쉬어가는 [마음정원(절로가)]이에요.',
+    '✔ 내 상황에 딱 맞는 3문항 맞춤 사찰 추천',
+    '✔ 사찰별 이야기·풍수 정보부터 사경첩·마음 상담까지 무료 이용!',
+    '',
+    '이번 주말 드라이브·산책 코스 찾으실 때 한번 들러 보세요 👇',
+    PROMO_URL
+  ].join('\n');
+
+  /* 복사: Clipboard API → (막히면) textarea + execCommand 순. 둘 다 막히면 문구를 화면에 띄워
+   * 길게 눌러 복사하게 한다(구형 WebView). 결과는 버튼 라벨과 role=status 로 알린다. */
+  function copyPromoText() {
+    const btn = document.querySelector('[data-act="copy-promo"]');
+    const status = document.getElementById('promoCopyStatus');
+    const label = '📢 홍보글·링크 복사';
+    const done = ok => {
+      if (btn) btn.textContent = ok ? '✅ 홍보글이 복사됐어요!' : '복사가 안 됐어요 · 다시 눌러 주세요';
+      if (status) {
+        status.textContent = ok
+          ? '카카오톡·밴드에 그대로 붙여넣으시면 됩니다.'
+          : '브라우저가 복사를 막았어요. 아래 문구를 길게 눌러 복사해 주세요.';
+        if (!ok && !status.querySelector('textarea')) {
+          const ta = document.createElement('textarea');
+          ta.value = PROMO_TEXT; ta.readOnly = true; ta.rows = 8;
+          ta.setAttribute('aria-label', '복사할 홍보 문구');
+          ta.style.cssText = 'width:100%;margin-top:8px;padding:10px;font:inherit;border:1px solid var(--border-1);border-radius:12px;background:var(--surface-1);color:var(--text-1)';
+          status.appendChild(ta);
+          try { ta.focus(); ta.select(); } catch (e) {}
+        }
+      }
+      setTimeout(() => { const b = document.querySelector('[data-act="copy-promo"]'); if (b) b.textContent = label; }, 3000);
+    };
+    const fallback = () => {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = PROMO_TEXT; ta.readOnly = true;
+        ta.style.cssText = 'position:fixed;top:0;left:-9999px';
+        document.body.appendChild(ta);
+        ta.select(); ta.setSelectionRange(0, PROMO_TEXT.length);
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        done(!!ok);
+      } catch (e) { done(false); }
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(PROMO_TEXT).then(() => done(true), fallback);
+    } else fallback();
+  }
   const fmtDist = m => m >= 1000 ? (m / 1000).toFixed(1) + 'km' : Math.round(m) + 'm';
   // GPS 반경·구간 거리용 지구 표면 거리 (미터). 호출부에서 /1000 하면 km.
   function haversine(lat1, lng1, lat2, lng2) {
@@ -1235,6 +1290,14 @@
 
     const fab = `<div class="fab-wrap"><button type="button" class="fab" data-act="ai-counsel">${ic('sparkle')}<span>마음 상담<small>AI 참배 안내</small></span></button></div>`;
 
+    /* 홍보글 복사 — 상업·도구 카드(상점·읽을거리) 다음, 안내 문구 앞에 한 칸으로만 둔다. */
+    const promoCard = `<section class="card promo-card">
+      <div class="section-heading"><div><span class="section-kicker">${ic('share')} 함께 나누기</span><h2>절로가 홍보글 복사</h2></div></div>
+      <p class="sub">버튼을 누르면 홍보 문구와 주소가 함께 복사돼요. 카톡·밴드에 그대로 붙여넣으세요.</p>
+      <button type="button" class="btn ghost block" data-act="copy-promo">📢 홍보글·링크 복사</button>
+      <p class="sub" id="promoCopyStatus" role="status" aria-live="polite"></p>
+    </section>`;
+
     return `
     ${ticker}
     ${mainTitleHero}
@@ -1250,6 +1313,7 @@
     ${dexCard}
     ${railCard}
     ${readCard}
+    ${promoCard}
     <p class="notice">🙏 전설·기도 이야기는 '전해지는 이야기'로 소개하며, 효험을 보장하지 않습니다. 무리한 산행·야간 방문은 삼가고 사찰 예절을 지켜 주세요.</p>
     ${fab}`;
   }
@@ -2604,6 +2668,7 @@
       box.focus();
       return;
     }
+    if (act === 'copy-promo') { copyPromoText(); return; }
     if (act === 'auth-tab') {
       authModalState.mode = el.dataset.tab === 'signup' ? 'signup' : 'login';
       openModal(authModalHTML());
