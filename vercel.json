@@ -4,5 +4,12 @@
     "server.js": {
       "includeFiles": "{css/**,vendor/**,js/**,seo-out/**,screenshots/**,*.js,*.html,*.png,*.webmanifest}"
     }
-  }
+  },
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "destination": "https://maeumjeongwon.luxrank.workers.dev/$1",
+      "permanent": true
+    }
+  ]
 }
