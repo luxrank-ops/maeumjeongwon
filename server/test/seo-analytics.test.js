@@ -129,10 +129,10 @@ test('8. 구글·네이버 소유확인 파일이 루트에 생성되고 robots.
       'naver-site-verification: naver08c0f6832a6e38593b56274b38caf6c9.html'
     );
     const robots = fs.readFileSync(path.join(out, 'robots.txt'), 'utf-8');
-    assert.ok(robots.includes('Sitemap: https://maeumjeongwon.vercel.app/sitemap.xml'), robots);
+    assert.ok(robots.includes('Sitemap: https://maeumjeongwon.luxrank.workers.dev/sitemap.xml'), robots);
     const sitemap = fs.readFileSync(path.join(out, 'sitemap.xml'), 'utf-8');
     assert.equal(sitemap.includes('run.app'), false, 'Cloud Run 미리보기 주소가 사이트맵에 들어가면 안 됨');
-    assert.ok(sitemap.includes('<loc>https://maeumjeongwon.vercel.app/</loc>'));
+    assert.ok(sitemap.includes('<loc>https://maeumjeongwon.luxrank.workers.dev/</loc>'));
   } finally {
     fs.rmSync(out, { recursive: true, force: true });
   }

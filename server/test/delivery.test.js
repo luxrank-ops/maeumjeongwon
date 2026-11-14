@@ -250,7 +250,7 @@ test('10. 정적 호스팅(GitHub Pages)으로 들어오면 서버가 있는 실
   assert.ok(redirect, 'index.html 이 정적 호스팅 감지 스크립트를 갖는다');
   const src = redirect[1];
   assert.match(src, /github/, 'GitHub Pages 호스트를 알아본다');
-  assert.match(src, /maeumjeongwon\.vercel\.app/, '서버가 있는 실제 배포로 보낸다');
+  assert.match(src, /maeumjeongwon\.luxrank\.workers\.dev/, '서버가 있는 실제 배포로 보낸다');
   assert.match(src, /location\.hash/, '해시(#/account/signup 등)를 잃지 않는다');
   // 스크립트가 없으면 회원가입 요청이 정적 404(HTML)로 떨어진다
   const app = fs.readFileSync(path.join(ROOT, 'js', 'app.js'), 'utf8');

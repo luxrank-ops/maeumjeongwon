@@ -4,8 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "node server.js",
-    "build": "node tools/build-seo.js",
+    "build": "node tools/build-seo.js && node tools/build-worker.js",
     "build:seo": "node tools/build-seo.js",
+    "build:worker": "node tools/build-worker.js",
+    "dev:worker": "wrangler dev",
+    "deploy:worker": "wrangler deploy",
     "build:mobile": "node tools/build-mobile.js",
     "test": "node --test server/test/*.test.js",
     "test:content": "node tools/content-smoke.js",
@@ -19,5 +22,8 @@
     "@google/genai": "^2.29.1",
     "compression": "^1.8.2",
     "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "wrangler": "^4.162.0"
   }
 }

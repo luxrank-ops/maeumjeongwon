@@ -8,8 +8,8 @@
  * 그래서 '이 사이트의 정식 주소'와 '이 사이트의 GA4 속성'을 여기 한 곳에 적어 둔다.
  */
 module.exports = {
-  // 정식 주소 (Vercel 운영 도메인)
-  SITE_URL: 'https://maeumjeongwon.vercel.app',
+  // 정식 주소 (Cloudflare Workers 운영 도메인 — 2026-11-14 Vercel 에서 이전)
+  SITE_URL: 'https://maeumjeongwon.luxrank.workers.dev',
 
   // GA4 속성 '절로가 (maeumjeongwon)' — 2026-11-14 생성, 스트림 '절로가 웹'(16339150224)
   GA_MEASUREMENT_ID: 'G-GK4GX2C0BW',
