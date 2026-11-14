@@ -119,8 +119,8 @@
       + '<h2 id="cqHomeTitle">마음챙김 준비물</h2></div><span class="tag">쿠팡</span></div>'
       + '<p class="sub">사찰 산책과 마음공부에 곁들이기 좋은 물건을 쿠팡에서 찾아볼 수 있어요.</p>'
       + '<div class="cq-themes">' + chips + '</div>'
-      + '<iframe class="cq-banner-frame" title="쿠팡 도서·음반 베스트" loading="lazy" referrerpolicy="unsafe-url"'
-      + ' src="' + esc(bannerUrl()) + '"></iframe>'
+      + '<iframe class="cq-widget" title="쿠팡 상품 검색" loading="lazy" referrerpolicy="unsafe-url"'
+      + ' src="' + esc(widgetUrl()) + '"></iframe>'
       + noteHtml()
       + '</section>';
   }
