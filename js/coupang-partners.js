@@ -76,6 +76,8 @@
     /* 홈 '사찰 나들이' 테마 4종 — 2×2 로 두고, 넓은 화면에서는 한 줄 */
     '.coupang-home .cq-themes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0 10px}',
     '@media(min-width:440px){.coupang-home .cq-themes{grid-template-columns:repeat(4,minmax(0,1fr))}}',
+    /* 검색 위젯은 좌은 폭에서 로그오 검색창이 두 줄로 잡혀 75px 로는 스크롤바가 생긴다 — 홈 블록만 110px */
+    '.coupang-home .cq-widget{height:110px;margin:0 0 8px}',
     '.coupang-home .cq-theme{display:flex;align-items:center;justify-content:center;gap:5px;min-height:46px;padding:8px 6px;',
     'border-radius:10px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.6);color:inherit;text-decoration:none;',
     'font-size:.76rem;font-weight:600;line-height:1.3;text-align:center;word-break:keep-all}'
