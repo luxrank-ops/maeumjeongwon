@@ -1298,6 +1298,10 @@
       <p class="sub" id="promoCopyStatus" role="status" aria-live="polite"></p>
     </section>`;
 
+    /* 사찰 추천 레일 아래 — 사찰 나들이 준비물(쿠팡 파트너스).
+       앱 규칙: 상업 요소는 순례 흐름을 끊지 않게 아래쪽 카드로 모아 둔다. 대가성 문구는 블록 안에 상시 표시. */
+    const cqHome = (window.MJCoupang && window.MJCoupang.homeHtml) ? window.MJCoupang.homeHtml() : '';
+
     return `
     ${ticker}
     ${mainTitleHero}
@@ -1312,6 +1316,7 @@
     ${portBars}
     ${dexCard}
     ${railCard}
+    ${cqHome}
     ${readCard}
     ${promoCard}
     <p class="notice">🙏 전설·기도 이야기는 '전해지는 이야기'로 소개하며, 효험을 보장하지 않습니다. 무리한 산행·야간 방문은 삼가고 사찰 예절을 지켜 주세요.</p>
