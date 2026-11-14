@@ -37,6 +37,10 @@ app.disable('x-powered-by');   // 바깥 래퍼 앱 — createApp 과 같은 헤
 app.get(['/sitemap.xml', '/robots.txt', '/ads.txt'], (req, res, next) =>
   sendIfExists(path.join(SEO_OUT, path.basename(req.path)), res, next));
 
+// 구글 서치콘솔·네이버 서치어드바이저 소유확인 파일 (빌드 때 seo-out에 생성된다)
+app.get(/^\/(google|naver)[0-9a-z]+\.html$/i, (req, res, next) =>
+  sendIfExists(path.join(SEO_OUT, path.basename(req.path)), res, next));
+
 // 정적 SEO 페이지(/temple/:id/, /story/:id/)가 빌드되어 있으면 우선 제공
 app.get(['/temple/:id', '/temple/:id/', '/story/:id', '/story/:id/'], (req, res, next) => {
   const kind = req.path.startsWith('/temple/') ? 'temple' : 'story';

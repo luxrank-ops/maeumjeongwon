@@ -118,12 +118,13 @@ function nicknameSeed(email) {
 }
 
 // 이미 쓰는 이름이면 뒤에 숫자를 붙여 빈자리를 찾는다. 다 차면 '' (화면에서 직접 고르게 안내).
-function freeNickname(taken, seed) {
-  if (!taken(seed)) return seed;
+// taken 은 동기 함수(node:sqlite)일 수도 Promise 를 주는 함수(D1)일 수도 있어 await 로 받는다.
+async function freeNickname(taken, seed) {
+  if (!(await taken(seed))) return seed;
   for (let i = 0; i < 40; i++) {
     const n = String(2 + (i % 97));
     const cand = (seed.slice(0, 12 - n.length) + n);
-    if (NICK_RE.test(cand) && !taken(cand)) return cand;
+    if (NICK_RE.test(cand) && !(await taken(cand))) return cand;
   }
   return '';
 }
@@ -159,30 +160,30 @@ function createAccounts({ getDb, now = () => Date.now(), adminEmails, adminPassw
     }
   }
 
-  function issueSession(uid, t) {
+  async function issueSession(uid, t) {
     const token = TOKEN_PREFIX + crypto.randomBytes(32).toString('base64url');
-    getDb().prepare('INSERT INTO sessions (token_hash, uid, created_at, expires_at) VALUES (?, ?, ?, ?)')
+    await getDb().prepare('INSERT INTO sessions (token_hash, uid, created_at, expires_at) VALUES (?, ?, ?, ?)')
       .run(hashToken(token), uid, t, t + SESSION_MS);
     return token;
   }
 
   // 토큰 → 회원 uid. 없거나 만료되었으면 ''. (DB는 mm1. 토큰이 올 때만 건드린다)
-  function uidForToken(token) {
+  async function uidForToken(token) {
     if (typeof token !== 'string' || !TOKEN_RE.test(token)) return '';
-    const row = getDb().prepare('SELECT uid, expires_at FROM sessions WHERE token_hash = ?').get(hashToken(token));
+    const row = await getDb().prepare('SELECT uid, expires_at FROM sessions WHERE token_hash = ?').get(hashToken(token));
     if (!row || row.expires_at <= now()) return '';
     return row.uid;
   }
 
-  function isMember(uid) {
+  async function isMember(uid) {
     if (!identity.UID_RE.test(String(uid || ''))) return false;
-    return !!getDb().prepare('SELECT 1 AS ok FROM users WHERE uid = ?').get(uid);
+    return !!(await getDb().prepare('SELECT 1 AS ok FROM users WHERE uid = ?').get(uid));
   }
 
   // 관리자 여부 — 게시판 운영 권한(어떤 글·댓글도 삭제)을 판단할 때 쓴다.
-  function isAdmin(uid) {
+  async function isAdmin(uid) {
     if (!uid || !identity.UID_RE.test(String(uid))) return false;
-    const row = getDb().prepare('SELECT role FROM users WHERE uid = ?').get(uid);
+    const row = await getDb().prepare('SELECT role FROM users WHERE uid = ?').get(uid);
     return !!row && row.role === 'admin';
   }
 
@@ -193,16 +194,16 @@ function createAccounts({ getDb, now = () => Date.now(), adminEmails, adminPassw
     const db = getDb();
     const stored = ADMIN_PW ? await hashPassword(ADMIN_PW) : '';
     if (!stored) return;
-    const taken = n => !!db.prepare('SELECT 1 AS ok FROM users WHERE nick_key = ?').get(String(n).toLowerCase());
+    const taken = async n => !!(await db.prepare('SELECT 1 AS ok FROM users WHERE nick_key = ?').get(String(n).toLowerCase()));
     for (const email of ADMIN_LIST) {
-      const row = db.prepare('SELECT uid, role FROM users WHERE email = ?').get(email);
+      const row = await db.prepare('SELECT uid, role FROM users WHERE email = ?').get(email);
       if (row) {
-        if (row.role !== 'admin') db.prepare("UPDATE users SET role = 'admin' WHERE uid = ?").run(row.uid);
-        db.prepare('UPDATE users SET password = ? WHERE uid = ?').run(stored, row.uid);
+        if (row.role !== 'admin') await db.prepare("UPDATE users SET role = 'admin' WHERE uid = ?").run(row.uid);
+        await db.prepare('UPDATE users SET password = ? WHERE uid = ?').run(stored, row.uid);
       } else {
         const uid = 'mj_' + crypto.randomBytes(16).toString('hex');
-        const nick = freeNickname(taken, ADMIN_NICK) || (ADMIN_NICK + uid.slice(-4));
-        db.prepare("INSERT INTO users (uid, email, nickname, nick_key, password, role, created_at) VALUES (?, ?, ?, ?, ?, 'admin', ?)")
+        const nick = (await freeNickname(taken, ADMIN_NICK)) || (ADMIN_NICK + uid.slice(-4));
+        await db.prepare("INSERT INTO users (uid, email, nickname, nick_key, password, role, created_at) VALUES (?, ?, ?, ?, ?, 'admin', ?)")
           .run(uid, email, nick, nick.toLowerCase(), stored, now());
       }
     }
@@ -216,8 +217,8 @@ function createAccounts({ getDb, now = () => Date.now(), adminEmails, adminPassw
     return seedPromise;
   }
 
-  function profile(uid) {
-    const row = getDb().prepare('SELECT uid, email, nickname, role, created_at FROM users WHERE uid = ?').get(uid);
+  async function profile(uid) {
+    const row = await getDb().prepare('SELECT uid, email, nickname, role, created_at FROM users WHERE uid = ?').get(uid);
     return row ? publicMember(row) : null;
   }
 
@@ -228,18 +229,18 @@ function createAccounts({ getDb, now = () => Date.now(), adminEmails, adminPassw
     const db = getDb();
     const { email, password } = v.value;
 
-    if (db.prepare('SELECT 1 AS ok FROM users WHERE email = ?').get(email)) {
+    if (await db.prepare('SELECT 1 AS ok FROM users WHERE email = ?').get(email)) {
       return { status: 409, body: { error: 'email_taken', field: 'email', message: '이미 가입된 이메일이에요. 로그인해 주세요.' } };
     }
     // 닉네임을 안 적었으면 서버가 만들어 준다. 화면이 '닉네임을 지어 주세요'로 가입을 막지 않게.
-    const taken = n => !!db.prepare('SELECT 1 AS ok FROM users WHERE nick_key = ?').get(n.toLowerCase());
+    const taken = async n => !!(await db.prepare('SELECT 1 AS ok FROM users WHERE nick_key = ?').get(n.toLowerCase()));
     let nickname = v.value.nickname;
     if (!nickname) {
-      nickname = freeNickname(taken, nicknameSeed(email));
+      nickname = await freeNickname(taken, nicknameSeed(email));
       if (!nickname) {
         return { status: 409, body: { error: 'nickname_taken', field: 'nickname', message: '닉네임을 자동으로 정하지 못했어요. 사용할 이름을 적어 주세요.' } };
       }
-    } else if (taken(nickname)) {
+    } else if (await taken(nickname)) {
       return { status: 409, body: { error: 'nickname_taken', field: 'nickname', message: '이미 쓰고 있는 닉네임이에요.' } };
     }
 
@@ -247,7 +248,7 @@ function createAccounts({ getDb, now = () => Date.now(), adminEmails, adminPassw
     const stored = await hashPassword(password);
     const t = now();
     try {
-      db.prepare('INSERT INTO users (uid, email, nickname, nick_key, password, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+      await db.prepare('INSERT INTO users (uid, email, nickname, nick_key, password, created_at) VALUES (?, ?, ?, ?, ?, ?)')
         .run(uid, email, nickname, nickname.toLowerCase(), stored, t);
     } catch (e) {
       // 같은 순간 두 요청이 들어온 경우 — 유니크 제약이 최종 방어선
@@ -255,7 +256,7 @@ function createAccounts({ getDb, now = () => Date.now(), adminEmails, adminPassw
       if (/nick_key/.test(e.message)) return { status: 409, body: { error: 'nickname_taken', field: 'nickname', message: '이미 쓰고 있는 닉네임이에요.' } };
       throw e;
     }
-    const token = issueSession(uid, t);
+    const token = await issueSession(uid, t);
     return { status: 201, body: { uid, token, member: publicMember({ uid, email, nickname, created_at: t }) } };
   }
 
@@ -274,7 +275,7 @@ function createAccounts({ getDb, now = () => Date.now(), adminEmails, adminPassw
     }
     await ensureAdmin();
 
-    const row = getDb().prepare('SELECT uid, email, nickname, role, created_at, password FROM users WHERE email = ?').get(email);
+    const row = await getDb().prepare('SELECT uid, email, nickname, role, created_at, password FROM users WHERE email = ?').get(email);
     let ok = false;
     if (row) {
       ok = await verifyPassword(password, row.password);
@@ -287,13 +288,13 @@ function createAccounts({ getDb, now = () => Date.now(), adminEmails, adminPassw
       return { status: 401, body: { error: 'invalid_credentials', message: '이메일 또는 비밀번호가 올바르지 않아요.' } };
     }
     failures.delete(email);
-    const token = issueSession(row.uid, t);
+    const token = await issueSession(row.uid, t);
     return { status: 200, body: { uid: row.uid, token, member: publicMember(row) } };
   }
 
-  function logout(token) {
+  async function logout(token) {
     if (typeof token !== 'string' || !TOKEN_RE.test(token)) return false;
-    getDb().prepare('DELETE FROM sessions WHERE token_hash = ?').run(hashToken(token));
+    await getDb().prepare('DELETE FROM sessions WHERE token_hash = ?').run(hashToken(token));
     return true;
   }
 

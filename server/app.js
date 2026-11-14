@@ -117,7 +117,7 @@ function createApp(opts = {}) {
   app.use(express.json());
 
   // 세션 토큰 추출 미들웨어 (Bearer 토큰 검증 또는 테스트/하위호환 X-MJ-UID)
-  app.use((req, res, next) => {
+  app.use(async (req, res, next) => {
     const auth = req.get('Authorization') || '';
     req.memberUid = '';
     if (auth.startsWith('Bearer ')) {
@@ -125,7 +125,7 @@ function createApp(opts = {}) {
       let uid = identity.verify(secret, tok);
       // 회원 세션(mm1.…): 가입·로그인 후 받은 토큰. 회원 uid 는 계정의 uid 를 그대로 쓴다.
       if (!uid && tok.startsWith('mm1.')) {
-        req.memberUid = accounts.uidForToken(tok);
+        req.memberUid = await accounts.uidForToken(tok);
         uid = req.memberUid;
       }
       if (!uid && req.path.startsWith('/api/') && !TOKEN_OPEN_PATHS.has(req.path) && !req.path.startsWith('/api/ai/')) {
@@ -219,13 +219,13 @@ function createApp(opts = {}) {
     res.status(r.status).json(r.body);
   });
 
-  app.post('/api/auth/logout', (req, res) => {
-    accounts.logout(req.memberUid ? (req.get('Authorization') || '').slice(7).trim() : '');
+  app.post('/api/auth/logout', async (req, res) => {
+    await accounts.logout(req.memberUid ? (req.get('Authorization') || '').slice(7).trim() : '');
     res.json({ ok: true });
   });
 
   // 현재 사용자 상태 조회
-  app.get('/api/me', (req, res) => {
+  app.get('/api/me', async (req, res) => {
     const uid = req.uid;
     const t = now(), day = kstDay(t);
     const u = uid ? store.user(uid) : null;
@@ -237,10 +237,10 @@ function createApp(opts = {}) {
       }
     }
     const p = u ? u.plus : null;
-    const profile = req.memberUid ? accounts.profile(req.memberUid) : null;
+    const profile = req.memberUid ? await accounts.profile(req.memberUid) : null;
     res.json({
       uid: uid || null,
-      member: profile ? Object.assign(profile, board.counts(profile.uid)) : null,
+      member: profile ? Object.assign(profile, await board.counts(profile.uid)) : null,
       mode: { devAdReward, devEntitlement },
       plus: {
         active,
@@ -268,9 +268,9 @@ function createApp(opts = {}) {
     return false;
   };
 
-  app.get('/api/board/posts', (req, res) => {
+  app.get('/api/board/posts', async (req, res) => {
     const q = req.query || {};
-    const r = board.list({
+    const r = await board.list({
       category: str(q.category),
       q: str(q.q),
       page: str(q.page),
@@ -281,49 +281,49 @@ function createApp(opts = {}) {
     send(res, r);
   });
 
-  app.post('/api/board/posts', (req, res) => {
+  app.post('/api/board/posts', async (req, res) => {
     if (!needMember(req, res)) return;
-    send(res, board.create(req.memberUid, req.body));
+    send(res, await board.create(req.memberUid, req.body));
   });
 
-  app.get('/api/board/posts/:id', (req, res) => {
+  app.get('/api/board/posts/:id', async (req, res) => {
     const id = parseId(req.params.id);
     if (!id) return res.status(404).json({ error: 'not_found' });
-    send(res, board.get(id, req.memberUid));
+    send(res, await board.get(id, req.memberUid));
   });
 
-  app.patch('/api/board/posts/:id', (req, res) => {
-    if (!needMember(req, res)) return;
-    const id = parseId(req.params.id);
-    if (!id) return res.status(404).json({ error: 'not_found' });
-    send(res, board.update(id, req.memberUid, req.body));
-  });
-
-  app.delete('/api/board/posts/:id', (req, res) => {
+  app.patch('/api/board/posts/:id', async (req, res) => {
     if (!needMember(req, res)) return;
     const id = parseId(req.params.id);
     if (!id) return res.status(404).json({ error: 'not_found' });
-    send(res, board.remove(id, req.memberUid));
+    send(res, await board.update(id, req.memberUid, req.body));
   });
 
-  app.get('/api/board/posts/:id/comments', (req, res) => {
-    const id = parseId(req.params.id);
-    if (!id) return res.status(404).json({ error: 'not_found' });
-    send(res, board.listComments(id, req.memberUid));
-  });
-
-  app.post('/api/board/posts/:id/comments', (req, res) => {
+  app.delete('/api/board/posts/:id', async (req, res) => {
     if (!needMember(req, res)) return;
     const id = parseId(req.params.id);
     if (!id) return res.status(404).json({ error: 'not_found' });
-    send(res, board.addComment(id, req.memberUid, req.body));
+    send(res, await board.remove(id, req.memberUid));
   });
 
-  app.delete('/api/board/comments/:id', (req, res) => {
+  app.get('/api/board/posts/:id/comments', async (req, res) => {
+    const id = parseId(req.params.id);
+    if (!id) return res.status(404).json({ error: 'not_found' });
+    send(res, await board.listComments(id, req.memberUid));
+  });
+
+  app.post('/api/board/posts/:id/comments', async (req, res) => {
     if (!needMember(req, res)) return;
     const id = parseId(req.params.id);
     if (!id) return res.status(404).json({ error: 'not_found' });
-    send(res, board.removeComment(id, req.memberUid));
+    send(res, await board.addComment(id, req.memberUid, req.body));
+  });
+
+  app.delete('/api/board/comments/:id', async (req, res) => {
+    if (!needMember(req, res)) return;
+    const id = parseId(req.params.id);
+    if (!id) return res.status(404).json({ error: 'not_found' });
+    send(res, await board.removeComment(id, req.memberUid));
   });
 
   // Google AI Pro 설정 및 상태 조회

@@ -1,0 +1,49 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // 절로가(마음정원) — Cloudflare Workers 배포 설정
+  //   Worker  : worker/index.js  (/api/* 는 D1·Gemini 를 쓰는 Worker, 나머지는 Static Assets)
+  //   Assets  : dist/ (tools/build-worker.js 가 index.html·js·css·vendor·SEO 정적 페이지를 합쳐 만든다)
+  //   DB      : D1 (회원·게시판·플러스 상태)
+  //   주소    : https://maeumjeongwon.luxrank.workers.dev
+  "name": "maeumjeongwon",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    // .html 자동 리다이렉트(307)를 끈다 — Express 판처럼 /temple/x · /index.html · 소유확인 .html 을 200 으로 바로 내려야 한다.
+    // (끝 슬래시 없는 경로는 worker/index.js 가 /index.html 로 찾아 준다)
+    "html_handling": "none",
+    "run_worker_first": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "maeumjeongwon",
+      "database_id": "9ec2dbeb-57f8-467e-bfc0-6fcad6f61573"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "NODE_ENV": "production",
+    "SITE_URL": "https://maeumjeongwon.luxrank.workers.dev",
+    "APP_URL": "https://maeumjeongwon.luxrank.workers.dev",
+    "AI_TIER": "Google AI Pro",
+    "GEMINI_MODEL": "gemini-4-argon",
+    "GEMINI_FALLBACK_MODEL": "gemini-3.8-flash",
+    "GEMINI_THINKING_LEVEL": "HIGH",
+    "ADMIN_EMAILS": "luxrank@gmail.com",
+    "ADMOB_AD_UNIT_IDS": "ca-app-pub-3940256099942544/5224354917,reward_story_24h,reward_lamp_3d,reward_fortune_detail",
+    "ALLOW_DEV_AD_REWARD": "0",
+    "MJ_DEV_AD_REWARD": "0",
+    "ALLOW_DEV_ENTITLEMENT": "0",
+    "MJ_DEV_ENTITLEMENT": "0",
+    "GA_MEASUREMENT_ID": "G-GK4GX2C0BW",
+    "BUILD_MODE": "production"
+  }
+  // SESSION_SECRET · ADMIN_PASSWORD · REVENUECAT_WEBHOOK_AUTH · GEMINI_API_KEY 는
+  // 암호화된 Secret(wrangler secret put / 대시보드)으로만 둔다. 이 파일에 적지 않는다.
+}

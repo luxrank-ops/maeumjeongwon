@@ -156,7 +156,8 @@ test('6. 첫 화면·정적 페이지가 부르는 자산에는 캐시 버전이
       for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
         const full = path.join(dir, ent.name);
         if (ent.isDirectory()) walk(full);
-        else if (ent.name.endsWith('.html')) files.push(full);
+        // 글·네이버 소유확인 파일(google*.html, naver*.html)은 자산을 부르지 않는 평문 파일
+        else if (ent.name.endsWith('.html') && !/^(?:google|naver)[0-9a-z]+\.html$/i.test(ent.name)) files.push(full);
       }
     })(out);
     assert.ok(files.length > 0, 'SEO 페이지가 만들어졌다');
@@ -249,7 +250,7 @@ test('10. 정적 호스팅(GitHub Pages)으로 들어오면 서버가 있는 실
   assert.ok(redirect, 'index.html 이 정적 호스팅 감지 스크립트를 갖는다');
   const src = redirect[1];
   assert.match(src, /github/, 'GitHub Pages 호스트를 알아본다');
-  assert.match(src, /maeumjeongwon\.vercel\.app/, '서버가 있는 실제 배포로 보낸다');
+  assert.match(src, /maeumjeongwon\.luxrank\.workers\.dev/, '서버가 있는 실제 배포로 보낸다');
   assert.match(src, /location\.hash/, '해시(#/account/signup 등)를 잃지 않는다');
   // 스크립트가 없으면 회원가입 요청이 정적 404(HTML)로 떨어진다
   const app = fs.readFileSync(path.join(ROOT, 'js', 'app.js'), 'utf8');

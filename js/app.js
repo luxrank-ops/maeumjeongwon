@@ -745,6 +745,7 @@
     <section class="card"><h2>무료 vs 플러스</h2><table class="cmp"><tr><th>기능</th><th>무료</th><th>플러스</th></tr>
       ${PLUS_BENEFITS.map(b => `<tr><td>${b[0]}</td><td>${cell(b[1])}</td><td>${cell(b[2])}</td></tr>`).join('')}</table></section>
     <section class="card"><h2>구독이 부담스럽다면</h2><p>필요한 콘텐츠만 1회 결제로 살 수 있어요. 자동 갱신은 없어요.</p><a class="btn ghost block" style="text-align:center;text-decoration:none" href="#/store">🛍 콘텐츠 상점 보기</a></section>
+    <div class="coupang-slot" data-slot="healing-plus"></div>
     <p class="notice">🙏 절로가 앱은 신앙을 판매하지 않아요. 기도 안내·예절·출처는 언제나 무료이고, 소원 성취나 효험을 약속하는 상품(부적·기도 대행·소원권 등)은 만들지 않아요. 판매하는 것은 이 앱이 직접 만든 정보·이야기·도구뿐이에요.</p>`;
   }
 
@@ -753,6 +754,7 @@
     const kinds = [...new Set(STORE.map(x => x.kind))];
     return `<div class="screen-head"><h1>콘텐츠 상점 <span class="demo-ribbon">데모 · 실제 결제 없음</span></h1>
       <p class="sub">이 앱이 직접 만든 디지털 콘텐츠만 팔아요. 1회 결제이고 자동 갱신이 없어요.</p></div>
+      <div class="coupang-slot" data-slot="healing"></div>
       ${kinds.map(k => `<section class="card"><h2>${esc(k)}</h2><div class="tlist">${STORE.filter(x => x.kind === k).map(storeRow).join('')}</div></section>`).join('')}
       <section class="card"><h2>구매 전 꼭 읽어 주세요</h2><ul class="legal" style="padding-left:20px">
         <li>🧪 데모라서 누르면 바로 '보유'로 표시돼요. 실제 결제는 일어나지 않아요.</li>
@@ -2301,6 +2303,8 @@
     if (gateLabel) html = html + authGateBanner(gateLabel);
     $view.innerHTML = html;
     enhanceFields($view);
+    // 쿠팡 파트너스 추천 블록(대가성 문구 포함) — 슬롯이 있는 화면에서만 그린다
+    if (window.MJCoupang && window.MJCoupang.mountAll) window.MJCoupang.mountAll($view);
     // 첫 화면이 실제로 그려졌다 — 부트 셸(SCR-AUTH-001)을 걷어 낸다
     if (window.MJ_BOOT && window.MJ_BOOT.hide) window.MJ_BOOT.hide();   // 텍스트필드마다 Clear(×) — 마크업이 아니라 규칙으로 붙인다
     if (gateLabel) openAuthModal({ mode: 'login', feature: gateLabel, preserveIfOpen: true });

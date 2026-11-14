@@ -15,3 +15,9 @@ data/
 *.sqlite
 *.sqlite-wal
 *.sqlite-shm
+
+# Cloudflare
+dist/
+.wrangler/
+worker/generated/
+.dev.vars
