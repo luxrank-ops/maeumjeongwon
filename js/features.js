@@ -1168,7 +1168,7 @@
         <div class="sheet sagye-sheet">
           <div class="row between" style="align-items:flex-start">
             <div>
-              <span class="tag ok">${cfg.tier} · ${cfg.model}</span>
+              <span class="tag ok">${cfg.tier}</span>
               <h2 style="margin:6px 0 0">마음 사경</h2>
             </div>
             <button class="btn ghost small" data-act="close">닫기</button>
@@ -1286,6 +1286,14 @@
         ans.appendChild(empathy);
 
         typeInto(empathy, data.empathy || '', function () {
+          // 실제 Gemini 호출이 아니라 준비된 안내로 답했을 때는 그 사실을 한 줄로 밝힌다(모델명을 내세우지 않는다).
+          if (data.mode === 'curated') {
+            const note = document.createElement('p');
+            note.className = 'sub';
+            note.style.margin = '4px 0 0';
+            note.textContent = '지금은 AI 연결 전이라, 준비된 사찰·경전 안내로 답했어요.';
+            ans.appendChild(note);
+          }
           // 구절은 답이 다 앉은 뒤에 — 한 장이 완성되는 순서를 지킨다
           const verseBox = document.createElement('div');
           verseBox.className = 'sagye-verse';

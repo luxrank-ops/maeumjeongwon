@@ -29,7 +29,9 @@ const DEFAULTS = {
   REVENUECAT_WEBHOOK_AUTH: 'Bearer mj-rc-webhook-secret-2026',
   ADMOB_AD_UNIT_IDS: 'ca-app-pub-3940256099942544/5224354917,reward_story_24h,reward_lamp_3d,reward_fortune_detail',
   ADMIN_EMAILS: 'luxrank@gmail.com',
-  ADMIN_PASSWORD: 'H25rj0986@',
+  // 관리자 모드 비밀번호 — 기본값 없음. 설정한 환경에서만 관리자 로그인이 열린다(server/auth.js 참고).
+  // 값은 .env / .env.local / Secret 에만 두고, 이 파일·저장소에는 절대 적지 않는다.
+  ADMIN_PASSWORD: '',
   GITHUB_REPO: 'luxrank-ops/maeumjeongwon',
   GITHUB_BRANCH: 'main',
   GIT_COMMITTER_NAME: 'Maeumjeongwon Bot',

@@ -81,10 +81,10 @@ test('5. 정적 사찰·스토리 페이지 개수만큼 빠짐없이 data-mj-pa
   try {
     const res = buildSeo(out, { siteUrl: 'https://example.test', env: { GA_MEASUREMENT_ID: GA } });
     const all = walkHtml(out).filter(f => !/\/(?:google|naver)[0-9a-z]+\.html$/i.test(f));
-    assert.equal(all.length, res.temples + res.stories);
+    assert.equal(all.length, res.temples + res.stories + 2, '사찰·스토리 페이지 + 목록 허브 2장');
     for (const f of all) {
       const html = fs.readFileSync(f, 'utf-8');
-      assert.ok(/data-mj-page="(temple|story)"/.test(html));
+      assert.ok(/data-mj-page="(temple|story|temples|stories)"/.test(html), `data-mj-page 없음: ${f}`);
     }
   } finally {
     fs.rmSync(out, { recursive: true, force: true });
@@ -133,6 +133,41 @@ test('8. 구글·네이버 소유확인 파일이 루트에 생성되고 robots.
     const sitemap = fs.readFileSync(path.join(out, 'sitemap.xml'), 'utf-8');
     assert.equal(sitemap.includes('run.app'), false, 'Cloud Run 미리보기 주소가 사이트맵에 들어가면 안 됨');
     assert.ok(sitemap.includes('<loc>https://maeumjeongwon.luxrank.workers.dev/</loc>'));
+  } finally {
+    fs.rmSync(out, { recursive: true, force: true });
+  }
+});
+
+test('9. 색인 기본값: 사이트맵과 canonical 이 같은 주소를 가리키고, 목록 허브·robots meta 가 있다', () => {
+  const out = tmpOut();
+  try {
+    const res = buildSeo(out, { siteUrl: 'https://example.test', env: {} });
+    const sitemap = fs.readFileSync(path.join(out, 'sitemap.xml'), 'utf-8');
+    const locs = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]);
+
+    // 사찰·스토리·허브 페이지는 끝 슬래시 주소로 내려준다 — 사이트맵과 canonical 이 어긋나면
+    // 서치콘솔이 '표준 URL 불일치'로 보고 색인이 느려진다(2026-11 실제 상태였음).
+    assert.ok(locs.includes('https://example.test/temple/haeinsa/'), '사찰 페이지가 사이트맵에 있다');
+    assert.ok(locs.includes('https://example.test/temples/'), '전체 사찰 목록 허브가 사이트맵에 있다');
+    assert.ok(locs.includes('https://example.test/stories/'), '이야기 모음 허브가 사이트맵에 있다');
+    assert.equal(new Set(locs).size, locs.length, '사이트맵에 중복 URL 이 없어야 한다');
+    assert.equal(locs.length, res.urls, '사이트맵 URL 수와 빌드 결과가 같다');
+
+    for (const rel of ['temple/haeinsa/index.html', 'story/haeinsa-1/index.html', 'temples/index.html', 'stories/index.html']) {
+      const html = fs.readFileSync(path.join(out, rel), 'utf-8');
+      const canonical = /<link rel="canonical" href="([^"]+)"/.exec(html);
+      assert.ok(canonical, `${rel} 에 canonical 이 있다`);
+      assert.ok(locs.includes(canonical[1]), `${rel} 의 canonical 이 사이트맵 주소와 같다: ${canonical[1]}`);
+      assert.match(html, /<meta name="robots" content="index,follow/, `${rel} 에 색인 허용 meta`);
+      assert.equal((html.match(/<h1>/g) || []).length, 1, `${rel} 의 h1 은 하나`);
+      assert.ok(html.includes('href="/temples/"'), `${rel} 하단에서 목록 허브로 링크한다`);
+    }
+
+    // 허브는 모든 사찰·스토리로 가는 링크를 갖는다 — 크롤러가 사이트맵 없이도 걸어갈 수 있게.
+    const hub = fs.readFileSync(path.join(out, 'temples', 'index.html'), 'utf-8');
+    assert.ok((hub.match(/href="\/temple\//g) || []).length >= 60, '전체 사찰 링크');
+    const storiesHub = fs.readFileSync(path.join(out, 'stories', 'index.html'), 'utf-8');
+    assert.ok((storiesHub.match(/href="\/story\//g) || []).length >= 9, '전체 스토리 링크');
   } finally {
     fs.rmSync(out, { recursive: true, force: true });
   }
