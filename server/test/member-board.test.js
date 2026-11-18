@@ -509,6 +509,8 @@ test('19b. 관리자 모드: ADMIN_PASSWORD 를 주지 않으면 관리자 로�
   assert.equal(/DEFAULT_ADMIN_PASSWORD\s*=/.test(authSrc), false, 'auth.js 에 관리자 기본 비밀번호 상수가 남아 있으면 안 됨');
   assert.equal(/ADMIN_PASSWORD\s*:\s*'[^']+'/.test(envSrc), false, 'env.js 의 ADMIN_PASSWORD 기본값은 비어 있어야 함');
   assert.match(envSrc, /ADMIN_PASSWORD:\s*''/, 'env.js 는 빈 기본값을 둔다');
+  // 유출된 예전 비밀번호는 값이 아니라 SHA-256 해시로만 남긴다(값을 적으면 다시 유출된다).
+  assert.match(authSrc, /COMPROMISED_ADMIN_PW_SHA256 = '[0-9a-f]{64}'/, '유출 비밀번호는 해시로만 막는다');
 
   const s = await startServer({ adminEmails: ADMIN_EMAIL, adminPassword: '' });
   try {
