@@ -181,10 +181,11 @@ test('7. 없는 자산은 index.html 이 아니라 404 로 돌려준다 (HTML �
       assert.doesNotMatch(String(res.headers.get('content-type')), /text\/html/, `${p} 응답은 HTML 이 아니다`);
       assert.equal(res.headers.get('cache-control'), 'no-cache', `${p} 실패 응답은 캐시하지 않는다`);
     }
-    // 화면 경로는 그대로 SPA 되돌림 — 다만 HTML 이 1년 immutable 로 캐시되면 안 된다
+    // 화면 경로가 아닌 임의의 경로는 앱 셸을 내려주되 404 + noindex — 소프트 404 를 만들지 않는다.
     const page = await s.get('/account/signup');
-    assert.equal(page.status, 200);
+    assert.equal(page.status, 404);
     assert.match(String(page.headers.get('content-type')), /text\/html/);
+    assert.equal(page.headers.get('x-robots-tag'), 'noindex', '앱 셸 되돌림은 색인하지 않는다');
     assert.equal(page.headers.get('cache-control'), 'no-cache', '되돌림 HTML 은 항상 재검증');
   } finally {
     await s.close();

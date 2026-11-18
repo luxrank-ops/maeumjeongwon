@@ -76,6 +76,8 @@ function createCuratedFallback({ listTemples, findTemple, proModel }) {
       ok: true,
       tier: 'Google AI Pro',
       model: proModel,
+      // mode: 이 답이 실제 Gemini 호출인지('gemini'), 준비된 큐레이션 안내인지('curated')를 화면이 구분할 수 있게 남긴다.
+      mode: 'curated',
       empathy,
       verse,
       recommendations: recs,

@@ -11,6 +11,13 @@ import { listTemples, findTemple } from './content.js';
 
 let bound = null;
 
+// 마지막 Gemini 호출 상태 — /api/ai/config 가 키 없이도 "왜 폴백인지"를 보여 줄 수 있게 남긴다(키·프롬프트는 남기지 않는다).
+let lastCall = { at: 0, ok: false, model: '', error: '' };
+
+function noteCall(model, error) {
+  lastCall = { at: Date.now(), ok: !error, model, error: error || '' };
+}
+
 function curated(proModel) {
   if (!bound) {
     bound = createCuratedFallback({ listTemples, findTemple, proModel });
@@ -36,7 +43,12 @@ export function getAiConfig(env) {
     fallbackModel: s.flash,
     sdk: '@google/genai',
     status: 'active',
+    // mode: 지금 이 서버가 실제로 어느 길로 답하는지 — 'gemini' | 'curated'
+    mode: s.key ? 'gemini' : 'curated',
+    keyConfigured: Boolean(s.key),
+    keyEnv: 'GEMINI_API_KEY',
     paidKeyActive: Boolean(s.key),
+    lastCall,
     capabilities: [
       'MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API',
       'mindful_counsel',
@@ -69,17 +81,23 @@ const SYSTEM_INSTRUCTION = [
 
 async function callGemini(env, model, userContent) {
   const s = aiSettings(env);
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(s.key)}`;
+  // 키는 헤더로 보낸다 — URL(?key=)은 로그·리퍼러·CDN 기록에 남을 수 있다.
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'User-Agent': 'aistudio-build' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-goog-api-key': s.key,
+      'User-Agent': 'aistudio-build'
+    },
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
       contents: [{ role: 'user', parts: [{ text: userContent }] }],
       generationConfig: {
         responseMimeType: 'application/json',
         responseSchema: RESPONSE_SCHEMA,
-        thinkingConfig: { thinkingLevel: 'LOW' }
+        // v1beta generateContent 는 소문자 단계 이름을 받는다(low·medium·high).
+        thinkingConfig: { thinkingLevel: 'low' }
       }
     })
   });
@@ -112,10 +130,12 @@ export async function generateCounsel(env, { prompt, mood, templeId } = {}) {
   for (const modelName of [s.pro, s.flash]) {
     try {
       const parsed = await callGemini(env, modelName, userContent);
+      noteCall(modelName, '');
       return {
         ok: true,
         tier: s.tier,
         model: modelName,
+        mode: 'gemini',
         empathy: parsed.empathy || fallback.empathy,
         verse: parsed.verse && parsed.verse.text ? parsed.verse : fallback.verse,
         recommendations: fallback.recommendations,
@@ -123,7 +143,8 @@ export async function generateCounsel(env, { prompt, mood, templeId } = {}) {
         disclaimer: fallback.disclaimer
       };
     } catch (e) {
-      // 다음 폴백 모델 또는 큐레이션 엔진으로 넘어간다
+      // 다음 폴백 모델 또는 큐레이션 엔진으로 넘어간다. 이유는 lastCall 에 남겨 /api/ai/config 로 확인한다.
+      noteCall(modelName, e && e.message ? e.message : 'gemini_error');
     }
   }
 

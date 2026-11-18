@@ -470,6 +470,8 @@ function createApp(opts = {}) {
   // SPA 되돌림(fallback). 여기서 두 가지를 지킨다.
   //  · 자산(.css/.js/.webmanifest…)이 없으면 index.html 이 아니라 404 — HTML 을 CSS/JS 로 받으면
   //    브라우저가 파싱을 포기해 화면이 통째로 깨진다(2026-10 Vercel 배포에서 실제로 겪음).
+  //  · 화면 경로가 아닌 임의의 경로는 앱 셸을 내려주되 **404 + noindex** 로 답한다. 200 으로 답하면
+  //    검색엔진이 같은 내용의 페이지를 무한히 '소프트 404'로 쌓는다(Worker 판과 같은 규칙).
   //  · 되돌림 응답은 항상 no-cache — cachePolicy 가 붙인 '1년 immutable' 이 HTML 에 붙으면
   //    한 번 잘못된 응답이 캐시되면 그 URL 은 1년 동안 고쳐지지 않는다.
   app.get('*', (req, res) => {
@@ -479,7 +481,8 @@ function createApp(opts = {}) {
       res.setHeader('Cache-Control', 'no-cache');
       return res.status(404).type('text/plain; charset=utf-8').send('not_found');
     }
-    return res.sendFile(path.join(staticRoot, 'index.html'), noStore);
+    res.setHeader('X-Robots-Tag', 'noindex');
+    return res.status(404).sendFile(path.join(staticRoot, 'index.html'), noStore);
   });
 
   return app;

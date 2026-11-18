@@ -100,6 +100,7 @@ async function generateCounsel({ prompt, mood, templeId, apiKey } = {}) {
           ok: true,
           tier: 'Google AI Pro',
           model: modelName,
+          mode: 'gemini',
           empathy: parsed.empathy || fallback.empathy,
           verse: parsed.verse && parsed.verse.text ? parsed.verse : fallback.verse,
           recommendations: fallback.recommendations,
@@ -116,6 +117,7 @@ async function generateCounsel({ prompt, mood, templeId, apiKey } = {}) {
 }
 
 function getAiConfig() {
+  const keyOn = Boolean(process.env.API_KEY || process.env.GEMINI_API_KEY);
   return {
     ok: true,
     tier: 'Google AI Pro',
@@ -123,7 +125,11 @@ function getAiConfig() {
     fallbackModel: FALLBACK_FLASH_MODEL,
     sdk: '@google/genai',
     status: 'active',
-    paidKeyActive: Boolean(process.env.API_KEY || process.env.GEMINI_API_KEY),
+    // mode: 실제 Gemini 호출('gemini')인지 준비된 큐레이션 안내('curated')인지
+    mode: keyOn ? 'gemini' : 'curated',
+    keyConfigured: keyOn,
+    keyEnv: 'GEMINI_API_KEY',
+    paidKeyActive: keyOn,
     capabilities: [
       'MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API',
       'mindful_counsel',

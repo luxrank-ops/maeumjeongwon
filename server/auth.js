@@ -29,9 +29,15 @@ const TOKEN_PREFIX = 'mm1.';
 // 관리자(운영자) 모드. ADMIN_EMAILS(쉼표 구분)에 적힌 이메일은 관리자로 대우한다.
 // - 첫 로그인·가입 요청 때 계정을 자동으로 만들고(없으면) role='admin' 으로 올린다.
 // - ADMIN_PASSWORD 가 잡혀 있으면 그 값으로 비밀번호를 맞춘다 → '관리자 모드 로그인'이 항상 된다.
-// 운영에서는 반드시 환경변수로 덮어쓸 것 (기본값은 개발 편의용).
+//
+// ADMIN_PASSWORD 는 **기본값이 없다** (2026-11-18). 예전에는 개발 편의용 기본 비밀번호를 이 파일에
+// 적어 두었는데, 공개 저장소에 그대로 올라가 누구나 관리자로 들어올 수 있었다(GitGuardian 경고).
+// 지금은 환경변수/Secret 으로만 받는다:
+//   · ADMIN_PASSWORD 가 없으면 관리자 시딩을 하지 않고, 관리자 이메일의 비밀번호 로그인도 막는다
+//     (admin_login_disabled). 관리자 권한도 내려가지 않는다 → 남아 있던 기본 비밀번호 해시가 무력해진다.
+//   · 값을 설정하면 다음 인증 요청에서 시딩이 그 값으로 비밀번호를 다시 맞춘다(회전).
+// 배포: `npx wrangler secret put ADMIN_PASSWORD` (대시보드 Secret 도 같다).
 const DEFAULT_ADMIN_EMAILS = 'luxrank@gmail.com';
-const DEFAULT_ADMIN_PASSWORD = 'H25rj0986@';
 const ADMIN_NICK = '관리자';
 
 function parseEmailList(v) {
@@ -144,7 +150,9 @@ function createAccounts({ getDb, now = () => Date.now(), adminEmails, adminPassw
   const failures = new Map();   // email -> { n, resetAt, lockedUntil }
   let dummy = null;             // 존재하지 않는 이메일의 응답 시간을 맞추기 위한 더미 해시 (한 번만 계산)
   const ADMIN_LIST = parseEmailList(adminEmails !== undefined ? adminEmails : (process.env.ADMIN_EMAILS || DEFAULT_ADMIN_EMAILS));
-  const ADMIN_PW = String(adminPassword !== undefined ? adminPassword : (process.env.ADMIN_PASSWORD || DEFAULT_ADMIN_PASSWORD) || '');
+  // 기본값 없음 — 설정된 경우에만 관리자 모드가 열린다.
+  const ADMIN_PW = String(adminPassword !== undefined ? adminPassword : (process.env.ADMIN_PASSWORD || '') || '');
+  const adminModeOn = !!ADMIN_PW;
   let seedPromise = null;       // 관리자 시딩은 프로세스당 한 번만 (실패하면 다음 요청에서 다시 시도)
 
   function recordFailure(email, t) {
@@ -181,7 +189,9 @@ function createAccounts({ getDb, now = () => Date.now(), adminEmails, adminPassw
   }
 
   // 관리자 여부 — 게시판 운영 권한(어떤 글·댓글도 삭제)을 판단할 때 쓴다.
+  // ADMIN_PASSWORD 가 설정돼 있지 않으면 관리자 권한을 주지 않는다(기본 비밀번호 시절의 세션이 남아 있어도 무력).
   async function isAdmin(uid) {
+    if (!adminModeOn) return false;
     if (!uid || !identity.UID_RE.test(String(uid))) return false;
     const row = await getDb().prepare('SELECT role FROM users WHERE uid = ?').get(uid);
     return !!row && row.role === 'admin';
@@ -229,6 +239,10 @@ function createAccounts({ getDb, now = () => Date.now(), adminEmails, adminPassw
     const db = getDb();
     const { email, password } = v.value;
 
+    // 관리자 이메일은 계정 선점을 막는다 (관리자 모드가 꺼져 있어도 마찬가지).
+    if (ADMIN_LIST.includes(email)) {
+      return { status: 409, body: { error: 'email_taken', field: 'email', message: '사용할 수 없는 이메일이에요. 다른 이메일로 가입해 주세요.' } };
+    }
     if (await db.prepare('SELECT 1 AS ok FROM users WHERE email = ?').get(email)) {
       return { status: 409, body: { error: 'email_taken', field: 'email', message: '이미 가입된 이메일이에요. 로그인해 주세요.' } };
     }
@@ -268,6 +282,10 @@ function createAccounts({ getDb, now = () => Date.now(), adminEmails, adminPassw
       return { status: 400, body: { error: 'validation', message: '이메일과 비밀번호를 입력해 주세요.' } };
     }
     const t = now();
+    // 관리자 이메일은 ADMIN_PASSWORD 가 설정돼 있어야만 로그인된다(설정 전에는 기본 비밀번호 해시가 있어도 잠근다).
+    if (!adminModeOn && ADMIN_LIST.includes(email)) {
+      return { status: 403, body: { error: 'admin_login_disabled', message: '관리자 로그인은 ADMIN_PASSWORD 를 설정한 뒤에 사용할 수 있어요.' } };
+    }
     const f = failures.get(email);
     if (f && f.lockedUntil > t) {
       const retryAfter = Math.ceil((f.lockedUntil - t) / 1000);
@@ -298,7 +316,7 @@ function createAccounts({ getDb, now = () => Date.now(), adminEmails, adminPassw
     return true;
   }
 
-  return { signup, login, logout, uidForToken, isMember, profile, isAdmin, ensureAdmin };
+  return { signup, login, logout, uidForToken, isMember, profile, isAdmin, ensureAdmin, adminModeOn };
 }
 
 module.exports = {
@@ -311,6 +329,5 @@ module.exports = {
   PW_MAX,
   NICK_RE,
   EMAIL_RE,
-  DEFAULT_ADMIN_EMAILS,
-  DEFAULT_ADMIN_PASSWORD
+  DEFAULT_ADMIN_EMAILS
 };

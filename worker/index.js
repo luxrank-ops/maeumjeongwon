@@ -71,9 +71,16 @@ export default {
           }
         });
       }
-      // 3) SPA 되돌림 — 앱 셸(index.html). 해시 라우팅이라 서버 경로는 없어도 된다.
+      // 3) 없는 경로 — 앱 셸(index.html)은 그대로 내려주되 **404** 로 답한다.
+      //    해시 라우팅이라 서버 경로는 없어도 되지만, 200 으로 답하면 검색엔진이
+      //    같은 내용의 페이지를 무한히 '소프트 404'로 쌓는다(2026-11 /this-path-does-not-exist 가 200 이었다).
+      //    화면은 그대로 열리고(앱이 #/home 으로 돌린다), 크롤러에게만 noindex 로 분명히 말한다.
       const shell = await asset(env, url, '/index.html');
-      return withHeaders(shell, 'no-cache');
+      const headers = new Headers(shell.headers);
+      headers.set('Cache-Control', 'no-cache');
+      headers.set('X-Content-Type-Options', 'nosniff');
+      headers.set('X-Robots-Tag', 'noindex');
+      return new Response(shell.body, { status: 404, statusText: 'Not Found', headers });
     }
 
     return withHeaders(res, cacheControlFor(path, url.search));

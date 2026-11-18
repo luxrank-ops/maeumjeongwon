@@ -1,13 +1,13 @@
 /* 절로가 PWA Service Worker — 오프라인 캐시 및 산사 통신 음영 지역 대응 */
-const CACHE_NAME = 'maeumjeongwon-v14';
+const CACHE_NAME = 'maeumjeongwon-v15';
 // 첫 설치에서 받는 것 = 첫 화면을 그리는 데 실제로 필요한 것만.
 const PRECACHE_URLS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
-  '/css/style.css?v=20261114dc',
-  '/js/lib/loader.js?v=20261114dc',
-  '/js/data-temples.js?v=20261114dc',
+  '/css/style.css?v=20261118seo1',
+  '/js/lib/loader.js?v=20261118seo1',
+  '/js/data-temples.js?v=20261118seo1',
   '/js/config.js?v=20261009analytics',
   '/js/analytics.js?v=20261009analytics',
   '/js/coupang-partners.js?v=20261114cq4',
@@ -22,17 +22,17 @@ const PRECACHE_URLS = [
 const LAZY_URLS = [
   '/vendor/leaflet.css',
   '/vendor/leaflet.js',
-  '/css/sagye.css?v=20261114dc',
-  '/js/features.js?v=20261114dc',
-  '/js/data-prayer.js?v=20261114dc',
-  '/js/data-stories.js?v=20261114dc',
-  '/js/data-traditional.js?v=20261114dc',
-  '/js/data-fengshui.js?v=20261114dc',
-  '/js/planner-reco.js?v=20261114dc',
-  '/js/app/planner.js?v=20261114dc',
-  '/js/app/map.js?v=20261114dc',
-  '/js/app/community.js?v=20261114dc',
-  '/js/app/report.js?v=20261114dc'
+  '/css/sagye.css?v=20261118seo1',
+  '/js/features.js?v=20261118seo1',
+  '/js/data-prayer.js?v=20261118seo1',
+  '/js/data-stories.js?v=20261118seo1',
+  '/js/data-traditional.js?v=20261118seo1',
+  '/js/data-fengshui.js?v=20261118seo1',
+  '/js/planner-reco.js?v=20261118seo1',
+  '/js/app/planner.js?v=20261118seo1',
+  '/js/app/map.js?v=20261118seo1',
+  '/js/app/community.js?v=20261118seo1',
+  '/js/app/report.js?v=20261118seo1'
 ];
 
 /* 코드·스타일은 '지금 받아 본 응답'이 우선이다.

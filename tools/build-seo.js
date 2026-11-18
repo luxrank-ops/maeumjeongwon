@@ -10,7 +10,7 @@ const site = require('../config/site');
 
 const DEFAULT_OUT = path.join(__dirname, '..', 'seo-out');
 // 정적 페이지가 부르는 자산의 캐시 버전 — index.html·js/lib/loader.js(VERSION)·sw.js(CACHE_NAME)와 함께 올린다.
-const ASSET_V = '20261114dc';
+const ASSET_V = '20261118seo1';
 
 const ADS_PUB_RE = /^pub-\d{16}$/;
 const ADS_SLOT_RE = /^\d{6,}$/;
@@ -63,6 +63,7 @@ function adUnit(ads) {
 
 function page({ base, urlPath, title, desc, body, ld, ads = null, ga = null, track = null }) {
   const url = base + urlPath;
+  const ogImage = `${base}/pwa-512x512.png`;
   // 광고 칸이 실제로 들어갈 때만 로더 스크립트를 넣는다
   const adLoader = ads && ads.slot ? `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${esc(ads.client)}" crossorigin="anonymous"></script>\n` : '';
   const adBlock = ads && ads.slot ? adUnit(ads) : '';
@@ -82,10 +83,22 @@ function page({ base, urlPath, title, desc, body, ld, ads = null, ga = null, tra
 <meta name="theme-color" content="#FFFFFF" />
 <title>${esc(title)} — 절로가</title>
 <meta name="description" content="${esc(desc)}" />
+<!-- 색인 허용을 명시한다 — 검색엔진이 색인 여부를 추측하지 않게 한다 -->
+<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1" />
 <link rel="canonical" href="${esc(url)}" />
 <meta property="og:title" content="${esc(title)} — 절로가" />
 <meta property="og:description" content="${esc(desc)}" />
 <meta property="og:url" content="${esc(url)}" />
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="절로가" />
+<meta property="og:locale" content="ko_KR" />
+<meta property="og:image" content="${esc(ogImage)}" />
+<meta property="og:image:width" content="512" />
+<meta property="og:image:height" content="512" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="${esc(title)} — 절로가" />
+<meta name="twitter:description" content="${esc(desc)}" />
+<meta name="twitter:image" content="${esc(ogImage)}" />
 ${gaMeta}${jsonLd}${adLoader}${analyticsJs}<link rel="stylesheet" href="/css/style.css?v=${ASSET_V}" />
 </head>
 <body${bodyAttr}>
@@ -93,6 +106,7 @@ ${gaMeta}${jsonLd}${adLoader}${analyticsJs}<link rel="stylesheet" href="/css/sty
 ${body}
 ${adBlock}
 <footer style="margin-top:24px;padding-top:12px;border-top:1px solid #e3d8c4;font-size:.85em;color:#7a6f62">
+  <nav aria-label="사이트 지도" style="margin-bottom:6px"><a href="/temples/">전체 사찰 목록</a> · <a href="/stories/">사찰 이야기</a></nav>
   <a href="/#/home">🪷 절로가 앱으로 열기</a>${settingsLink}
 </footer>
 </main>
@@ -112,10 +126,24 @@ function storyPage(st, base, ga = null) {
 <p>${esc(pub.hook)}</p>
 <section class="card"><h2>${esc(c0.h)}</h2>${c0.body.map(p => `<p>${esc(p)}</p>`).join('')}</section>
 ${prev ? `<section class="card locked"><h2>${esc(prev.h)}</h2><p>${esc(prev.body[0] || '')}</p><p class="notice">🔒 나머지 장은 앱에서 이어서 읽을 수 있어요. <a href="/#/story/${encodeURIComponent(pub.id)}">앱에서 열기 →</a></p></section>` : ''}
+<p><a class="btn small" href="/stories/">다른 사찰 이야기 보기 →</a></p>
 </article>`;
   return page({
-    base, urlPath: `/story/${st.id}`, title, desc, body, ga, track: { page: 'story', item: st.id },
-    ld: { '@context': 'https://schema.org', '@type': 'Article', headline: pub.title, description: pub.hook },
+    base, urlPath: `/story/${st.id}/`, title, desc, body, ga, track: { page: 'story', item: st.id },
+    ld: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        { '@type': 'Article', headline: pub.title, description: pub.hook },
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: '절로가', item: `${base}/` },
+            { '@type': 'ListItem', position: 2, name: '사찰 이야기', item: `${base}/stories/` },
+            { '@type': 'ListItem', position: 3, name: pub.title, item: `${base}/story/${st.id}/` }
+          ]
+        }
+      ]
+    },
     ads: null
   });
 }
@@ -134,7 +162,7 @@ function assertNoLockedText(html, st) {
   }
 }
 
-function templePage(t, base, storyIds, ads, ga = null) {
+function templePage(t, base, storyIds, ads, ga = null, siblings = []) {
   const stId = storyIds[t.id];
   const title = `${t.name} (${t.sido} ${t.sgg})`;
   const desc = `${t.name} 기원·역사·전해지는 이야기와 방문 정보`;
@@ -145,10 +173,78 @@ function templePage(t, base, storyIds, ads, ga = null) {
 ${t.legend ? `<section class="card legend"><span class="lbl">전해지는 이야기</span><h2>${esc(t.legend.title)}</h2><p>${esc(t.legend.text)}</p></section>` : ''}
 ${stId ? `<p><a class="btn small" href="/story/${encodeURIComponent(stId)}/">📖 심화 스토리 읽기 →</a></p>` : ''}
 <p><a class="btn" href="/#/temple/${encodeURIComponent(t.id)}">앱에서 ${esc(t.name)} 상세·지도·순례 인증 보기 →</a></p>
+${siblings.length ? `<section class="card"><h2>${esc(t.sido)}의 다른 사찰</h2><ul>${siblings.map(s => `<li><a href="/temple/${encodeURIComponent(s.id)}/">${esc(s.name)}</a> <span class="sub">${esc(s.sgg || '')} ${esc(s.mountain || '')}</span></li>`).join('')}</ul></section>` : ''}
 </article>`;
   return page({
-    base, urlPath: `/temple/${t.id}`, title, desc, body, ads, ga, track: { page: 'temple', item: t.id },
-    ld: { '@context': 'https://schema.org', '@type': 'BuddhistTemple', name: t.name, address: t.addr }
+    base, urlPath: `/temple/${t.id}/`, title, desc, body, ads, ga, track: { page: 'temple', item: t.id },
+    ld: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        { '@type': 'BuddhistTemple', name: t.name, address: t.addr },
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: '절로가', item: `${base}/` },
+            { '@type': 'ListItem', position: 2, name: '전체 사찰 목록', item: `${base}/temples/` },
+            { '@type': 'ListItem', position: 3, name: t.name, item: `${base}/temple/${t.id}/` }
+          ]
+        }
+      ]
+    }
+  });
+}
+
+// 허브 페이지 — 정적 사찰·스토리 페이지는 서로를 거의 링크하지 않아 크롤러가 사이트맵에만 기대게 된다.
+// 목록 페이지 하나를 두고 모든 페이지의 하단 내비게이션에서 링크하면 크롤 경로가 생긴다.
+function templesHub(temples, base, ads, ga = null) {
+  const groups = new Map();
+  for (const t of temples) {
+    const key = t.sido || '기타';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(t);
+  }
+  const order = [...groups.keys()].sort((a, b) => groups.get(b).length - groups.get(a).length);
+  const body = `<article>
+<h1>전국 사찰 목록</h1>
+<p>기원·전해지는 이야기·방문 정보를 정리한 사찰 ${temples.length}곳입니다. 이름을 누르면 그 사찰의 이야기 페이지로 갑니다.</p>
+${order.map(sido => `<section class="card"><h2>${esc(sido)} <span class="sub">${groups.get(sido).length}곳</span></h2><ul>${groups.get(sido).map(t => `<li><a href="/temple/${encodeURIComponent(t.id)}/">${esc(t.name)}</a> <span class="sub">${esc(t.sgg || '')} ${esc(t.mountain || '')}</span></li>`).join('')}</ul></section>`).join('')}
+<p><a class="btn small" href="/stories/">사찰 이야기 모음 보기 →</a></p>
+</article>`;
+  return page({
+    base, urlPath: '/temples/', title: '전국 사찰 목록', desc: `전국 사찰 ${temples.length}곳의 기원·전설·방문 정보 목록`, body, ads, ga,
+    track: { page: 'temples', item: 'all' },
+    ld: {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: '전국 사찰 목록',
+      about: '한국 사찰',
+      hasPart: temples.map(t => ({ '@type': 'BuddhistTemple', name: t.name, url: `${base}/temple/${t.id}/` }))
+    }
+  });
+}
+
+function storiesHub(stories, base, ads, ga = null) {
+  const groups = new Map();
+  for (const st of stories) {
+    const key = st.series || '사찰 이야기';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(st);
+  }
+  const body = `<article>
+<h1>사찰 이야기 모음</h1>
+<p>전설·창건·스님 이야기를 편으로 나눠 읽습니다. 모두 ${stories.length}편입니다.</p>
+${[...groups.entries()].map(([series, list]) => `<section class="card"><h2>${esc(series)}</h2><ul>${list.map(st => `<li><a href="/story/${encodeURIComponent(st.id)}/">${esc(st.title)}</a> <span class="sub">${st.ep}편 · 약 ${st.minutes}분</span></li>`).join('')}</ul></section>`).join('')}
+<p><a class="btn small" href="/temples/">전체 사찰 목록 보기 →</a></p>
+</article>`;
+  return page({
+    base, urlPath: '/stories/', title: '사찰 이야기 모음', desc: `사찰 전설·창건 이야기 ${stories.length}편 모음`, body, ads, ga,
+    track: { page: 'stories', item: 'all' },
+    ld: {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: '사찰 이야기 모음',
+      hasPart: stories.map(st => ({ '@type': 'Article', headline: st.title, url: `${base}/story/${st.id}/` }))
+    }
   });
 }
 
@@ -183,9 +279,17 @@ function buildSeo(outDir = DEFAULT_OUT, opts = {}) {
   }
 
   for (const t of temples) {
-    write(`temple/${t.id}/index.html`, templePage(t, base, storyIds, ads, ga));  // 사찰 페이지만 광고 가능
+    // 같은 시·도의 사찰 몇 곳을 함께 링크한다 — 사이트맵만으로는 크롤러가 페이지 사이를 걷지 않는다.
+    const siblings = temples.filter(o => o.sido === t.sido && o.id !== t.id).slice(0, 6);
+    write(`temple/${t.id}/index.html`, templePage(t, base, storyIds, ads, ga, siblings));  // 사찰 페이지만 광고 가능
     urls.push(`${base}/temple/${t.id}/`);
   }
+
+  // 목록 허브 — 모든 정적 페이지 하단에서 링크된다(page() 의 footer).
+  write('temples/index.html', templesHub(temples, base, ads, ga));
+  urls.push(`${base}/temples/`);
+  write('stories/index.html', storiesHub(stories, base, null, ga));
+  urls.push(`${base}/stories/`);
 
   if (ads) write('ads.txt', adsTxt(ads));             // 도메인 루트에서 제공
 
@@ -199,12 +303,12 @@ function buildSeo(outDir = DEFAULT_OUT, opts = {}) {
   const publicStories = stories.map(publicStory);
   write('stories-public.json', JSON.stringify(publicStories, null, 2));
 
-  return { outDir, stories: stories.length, temples: temples.length, ads: !!ads, ga: !!ga };
+  return { outDir, stories: stories.length, temples: temples.length, urls: urls.length, ads: !!ads, ga: !!ga };
 }
 
 if (require.main === module) {
   const res = buildSeo();
-  console.log(`Built SEO pages in ${res.outDir} (${res.temples} temples, ${res.stories} stories, ads=${res.ads}, ga=${res.ga})`);
+  console.log(`Built SEO pages in ${res.outDir} (${res.temples} temples, ${res.stories} stories, ${res.urls} URLs, ads=${res.ads}, ga=${res.ga})`);
 }
 
 module.exports = {

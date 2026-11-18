@@ -471,10 +471,12 @@ test('18. 익명 세션(X-MJ-UID·/api/session)은 회원 권한을 얻지 못�
 // ---------- 관리자(운영자) 모드 ----------
 
 const ADMIN_EMAIL = 'luxrank@gmail.com';
-const ADMIN_PW_SET = 'H25rj0986@';
+// 테스트에서만 쓰는 관리자 비밀번호 — 코드에 기본값이 없으므로 서버를 띄울 때 주입한다.
+const ADMIN_PW_SET = 'test-admin-pw-9A';
+const ADMIN_OPTS = { adminEmails: ADMIN_EMAIL, adminPassword: ADMIN_PW_SET };
 
 test('19. 관리자: 정해진 이메일·비밀번호로 로그인되고 role=admin·닉네임 관리자다', async () => {
-  const s = await startServer();
+  const s = await startServer(ADMIN_OPTS);
   try {
     // 계정이 없어도 첫 로그인에서 자동으로 만들어져야 한다 (시딩).
     const r = await s.call('POST', '/api/auth/login', { body: { email: ADMIN_EMAIL, password: ADMIN_PW_SET } });
@@ -495,6 +497,35 @@ test('19. 관리자: 정해진 이메일·비밀번호로 로그인되고 role=a
     // 다시 로그인해도 된다 (시딩이 두 번 돌아도 안전).
     const again = await s.call('POST', '/api/auth/login', { body: { email: ADMIN_EMAIL, password: ADMIN_PW_SET } });
     assert.equal(again.status, 200);
+  } finally {
+    await s.close();
+  }
+});
+
+test('19b. 관리자 모드: ADMIN_PASSWORD 를 주지 않으면 관리자 로그인이 잠기고, 코드에 기본 비밀번호가 없다', async () => {
+  const authSrc = fs.readFileSync(path.join(__dirname, '..', 'auth.js'), 'utf-8');
+  const envSrc = fs.readFileSync(path.join(__dirname, '..', 'env.js'), 'utf-8');
+  // 관리자 기본 비밀번호 상수 자체를 되살리지 못하게 막는다(값을 여기 적으면 다시 유출된다).
+  assert.equal(/DEFAULT_ADMIN_PASSWORD\s*=/.test(authSrc), false, 'auth.js 에 관리자 기본 비밀번호 상수가 남아 있으면 안 됨');
+  assert.equal(/ADMIN_PASSWORD\s*:\s*'[^']+'/.test(envSrc), false, 'env.js 의 ADMIN_PASSWORD 기본값은 비어 있어야 함');
+  assert.match(envSrc, /ADMIN_PASSWORD:\s*''/, 'env.js 는 빈 기본값을 둔다');
+
+  const s = await startServer({ adminEmails: ADMIN_EMAIL, adminPassword: '' });
+  try {
+    // 설정이 없으면 로그인 자체를 잠근다 — 남아 있던 기본 비밀번호 해시로 들어올 수 없다.
+    const r = await s.call('POST', '/api/auth/login', { body: { email: ADMIN_EMAIL, password: 'whatever-1234' } });
+    assert.equal(r.status, 403, JSON.stringify(r.body));
+    assert.equal(r.body.error, 'admin_login_disabled');
+
+    // 계정을 만들지 않으므로 관리자 이메일을 선점할 수도 없다.
+    const su = await s.call('POST', '/api/auth/signup', { body: { email: ADMIN_EMAIL, password: OK_PW, nickname: '가로채기' } });
+    assert.equal(su.status, 409);
+
+    // 일반 회원 기능은 그대로 동작한다.
+    const u = await signup(s, 'normal@example.com', '보통회원');
+    assert.equal(u.member.role, 'member');
+    const post = await s.call('POST', '/api/board/posts', { token: u.token, body: { category: 'free', title: '제목', body: '본문' } });
+    assert.equal(post.status, 201);
   } finally {
     await s.close();
   }
@@ -528,7 +559,7 @@ test('20. 관리자: 예전에 가입된 일반 계정이 관리자 이메일이
 });
 
 test('21. 운영자 삭제: 관리자는 다른 회원의 글·댓글을 지울 수 있고 canDelete 가 내려온다', async () => {
-  const s = await startServer();
+  const s = await startServer(ADMIN_OPTS);
   try {
     const a = await signup(s, 'writer@example.com', '글쓴이');
     const { body: { id } } = await s.call('POST', '/api/board/posts', { token: a.token, body: { category: 'free', title: '운영 점검 대상', body: '살펴 주세요' } });
