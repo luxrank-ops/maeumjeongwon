@@ -287,12 +287,13 @@
      앱 셸은 해시 라우팅이라 정적 페이지를 링크하지 않는다. 이 블록만은 JS 없이도 남아야 한다. -->
 <footer id="siteIndex" aria-label="절로가 사이트 지도">
   <style>
-    #siteIndex{max-width:var(--shell,900px);margin:0 auto;padding:12px 16px calc(16px + env(safe-area-inset-bottom));font-size:13px;line-height:1.9;
-      color:#56607A;background:var(--surface-1,#fff);border-top:1px solid #E3E8F0}
+    /* 앱(#app) 폭과 견주지 않고 '본문 폭'에 맞춘 조용한 페이지 바닥글 — 앱 카드가 잘린 것처럼 보이지 않게 배경은 페이지 바탕 그대로 둔다. */
+    #siteIndex{width:min(100% - 32px, 780px);margin:0 auto;padding:10px 0 calc(18px + env(safe-area-inset-bottom));font-size:12.5px;line-height:1.9;
+      color:#56607A;background:transparent}
     #siteIndex a{color:#1A2C6B;text-decoration:none;margin-right:12px;white-space:nowrap}
     #siteIndex a:hover,#siteIndex a:focus-visible{text-decoration:underline}
     #siteIndex .sitemap-h{font-weight:700;color:#0F1B3D;margin-right:8px}
-    @media (prefers-color-scheme:dark){#siteIndex{color:#9AA6BD;background:#131B2E;border-top-color:#26314A}#siteIndex a{color:#7FA4FF}#siteIndex .sitemap-h{color:#EEF2FA}}
+    @media (prefers-color-scheme:dark){#siteIndex{color:#9AA6BD}#siteIndex a{color:#7FA4FF}#siteIndex .sitemap-h{color:#EEF2FA}}
   </style>
   <nav>
     <span class="sitemap-h">절로가</span>
