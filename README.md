@@ -25,7 +25,8 @@ GPS 인증은 브라우저 보안상 `localhost` 또는 HTTPS에서만 동작합
 
 ## 보안·색인 운영 메모 (2026-11-18)
 
-- **관리자 비밀번호**: 예전 `server/auth.js`·`server/env.js` 에 있던 기본 비밀번호(`DEFAULT_ADMIN_PASSWORD`)를 없앴다. 공개 저장소에 평문으로 올라가 있던 값이라, 코드에서 지우는 것과 별개로 **운영 Secret 을 새 값으로 회전**해야 실제로 닫힌다(기존 DB 해시는 그대로 남아 있다). 회전 전까지는 위 규칙대로 관리자 로그인이 잠겨 있다.
+- **관리자 비밀번호**: 예전 `server/auth.js`·`server/env.js` 에 있던 기본 비밀번호(`DEFAULT_ADMIN_PASSWORD`)를 없앴다. 공개 저장소에 평문으로 올라가 있던 값이라, 코드에서 지우는 것과 별개로 **운영 Secret 을 새 값으로 회전**해야 실제로 닫힌다(기존 DB 해시는 그대로 남아 있다).
+- **유출 값 차단**: 그 값은 저장소에 다시 적지 않고 SHA-256 해시(`COMPROMISED_ADMIN_PW_SHA256`)로만 두고, Secret 이 그 값 그대로면 관리자 모드를 열지 않는다(로그인 403 · 관리자 권한 없음 · 시딩 없음). 새 값으로 바꾸면 그때부터 정상이다. 값이 코드·문서·테스트에 다시 들어가지 않게 하는 가드도 있다.
 - **정적 SEO 페이지**: `sitemap.xml` 은 끝 슬래시 주소(`/temple/x/`·`/story/x/`·`/temples/`·`/stories/`)만 쓰고, 각 페이지의 `canonical` 도 같은 주소다. 목록 허브(`/temples/`·`/stories/`)는 모든 페이지 하단에서 링크되어 크롤 경로를 만든다(가드: `server/test/seo-analytics.test.js` 9).
 - **없는 경로**: 앱 셸은 그대로 내려주되 **404 + `X-Robots-Tag: noindex`** 로 응답한다(Express·Worker 공통). 200 으로 답하면 검색엔진이 같은 내용의 페이지를 무한히 '소프트 404'로 쌓는다.
 - 첫 화면 전송 예산(`npm run budget -- --check`)은 2026-11-14 이후 144KB/140KB 로 이미 초과 상태다(이번 작업과 무관, CI 는 `verify` 없이 `build` 까지만 돈다).

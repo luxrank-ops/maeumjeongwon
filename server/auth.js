@@ -39,6 +39,12 @@ const TOKEN_PREFIX = 'mm1.';
 // 배포: `npx wrangler secret put ADMIN_PASSWORD` (대시보드 Secret 도 같다).
 const DEFAULT_ADMIN_EMAILS = 'luxrank@gmail.com';
 const ADMIN_NICK = '관리자';
+// 공개 저장소에 노출된 예전 관리자 기본 비밀번호 — 값은 적지 않고 **SHA-256 해시만** 둔다(2026-11-18 유출분).
+// 이 값이 ADMIN_PASSWORD(Secret)에 그대로 남아 있으면 관리자 모드를 열지 않는다.
+//   · 노출된 비밀번호로는 로그인할 수 없고, 그 비밀번호로 만든 예전 세션도 관리자 권한이 없다
+//   · 새 값으로 Secret 을 바꾸면(회전) 그때부터 정상 동작한다
+const COMPROMISED_ADMIN_PW_SHA256 = 'ce5284d6222a131d93fcc652821696b8806566647c8da0b5f341fe4459ba4a11';
+
 
 function parseEmailList(v) {
   return String(v == null ? '' : v)
@@ -152,7 +158,9 @@ function createAccounts({ getDb, now = () => Date.now(), adminEmails, adminPassw
   const ADMIN_LIST = parseEmailList(adminEmails !== undefined ? adminEmails : (process.env.ADMIN_EMAILS || DEFAULT_ADMIN_EMAILS));
   // 기본값 없음 — 설정된 경우에만 관리자 모드가 열린다.
   const ADMIN_PW = String(adminPassword !== undefined ? adminPassword : (process.env.ADMIN_PASSWORD || '') || '');
-  const adminModeOn = !!ADMIN_PW;
+  // 유출된 예전 기본 비밀번호가 그대로 Secret 에 남아 있으면 관리자 모드를 열지 않는다(회전 전까지 잠금).
+  const adminPwCompromised = !!ADMIN_PW && crypto.createHash('sha256').update(ADMIN_PW).digest('hex') === COMPROMISED_ADMIN_PW_SHA256;
+  const adminModeOn = !!ADMIN_PW && !adminPwCompromised;
   let seedPromise = null;       // 관리자 시딩은 프로세스당 한 번만 (실패하면 다음 요청에서 다시 시도)
 
   function recordFailure(email, t) {
@@ -201,6 +209,7 @@ function createAccounts({ getDb, now = () => Date.now(), adminEmails, adminPassw
   // ADMIN_PASSWORD 가 있으면 비밀번호도 그 값으로 맞춘다 (로그인이 항상 되게).
   async function seedAdmin() {
     if (!ADMIN_LIST.length) return;
+    if (!adminModeOn) return;   // 비밀번호가 없거나 유출된 값이면 계정을 만들지도, 해시를 맞추지도 않는다
     const db = getDb();
     const stored = ADMIN_PW ? await hashPassword(ADMIN_PW) : '';
     if (!stored) return;
@@ -282,9 +291,12 @@ function createAccounts({ getDb, now = () => Date.now(), adminEmails, adminPassw
       return { status: 400, body: { error: 'validation', message: '이메일과 비밀번호를 입력해 주세요.' } };
     }
     const t = now();
-    // 관리자 이메일은 ADMIN_PASSWORD 가 설정돼 있어야만 로그인된다(설정 전에는 기본 비밀번호 해시가 있어도 잠근다).
+    // 관리자 이메일은 ADMIN_PASSWORD 가 설정돼 있고 유출된 값이 아닐 때만 로그인된다.
     if (!adminModeOn && ADMIN_LIST.includes(email)) {
-      return { status: 403, body: { error: 'admin_login_disabled', message: '관리자 로그인은 ADMIN_PASSWORD 를 설정한 뒤에 사용할 수 있어요.' } };
+      if (!ADMIN_PW) {
+        return { status: 403, body: { error: 'admin_login_disabled', message: '관리자 로그인은 ADMIN_PASSWORD 를 설정한 뒤에 사용할 수 있어요.' } };
+      }
+      return { status: 403, body: { error: 'admin_login_disabled', message: '관리자 비밀번호가 예전 값 그대로예요. 새 비밀번호로 바꾼 뒤에 로그인해 주세요.' } };
     }
     const f = failures.get(email);
     if (f && f.lockedUntil > t) {
