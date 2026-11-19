@@ -817,6 +817,8 @@ input[type=search]::-webkit-search-cancel-button,input[type=search]::-webkit-sea
 .today-date .state{margin-left:auto}
 .today h1{font-size:clamp(1.5em,1.1em + 1.9vw,2.02em);font-weight:900;line-height:1.26;letter-spacing:-.03em;margin:8px 0 4px}
 .today p{margin:0;color:var(--text-2);font-size:.95em;line-height:1.65}
+/* 홈의 핵심 행동은 마음 고르기 — 첫 화면에서 바로 눈에 띄되, 낮·저조도 테마 모두 토큰으로 대비를 유지한다. */
+.mood-card{border:2px solid var(--pine-line);border-left:6px solid var(--stripe-1);background:linear-gradient(140deg,var(--surface-2) 12%,var(--pine-soft) 100%);box-shadow:var(--elev-2)}
 .moods{grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s2);margin:var(--s3) 0 0}
 .mood{
   position:relative;min-height:96px;padding:14px 8px 12px;border:1px solid var(--border-1);border-radius:var(--r-lg);

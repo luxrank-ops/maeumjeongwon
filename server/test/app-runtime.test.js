@@ -373,6 +373,22 @@ test('첫 실행에서는 예시 방문·수첩 기록을 실제 기록처럼 �
   assert.doesNotMatch(missions, /예시 \d+건 포함/);
 });
 
+test('홈 상단에서 마음 체크인을 먼저 보여 주고 매일 기록을 안내한다', () => {
+  const { go } = loadApp({ store: {} });
+  const home = go('#/home');
+  const pos = marker => {
+    const i = home.indexOf(marker);
+    assert.notEqual(i, -1, `홈에 있어야 함: ${marker}`);
+    return i;
+  };
+
+  assert.ok(pos('class="card main-title-hero"') < pos('data-home-order='), '브랜드 소개 뒤 오늘 인사');
+  assert.ok(pos('data-home-order=') < pos('class="card mood-card"'), '오늘 인사 바로 뒤 마음 체크인');
+  assert.ok(pos('class="card mood-card"') < pos('class="qbar"'), '빠른 실행보다 먼저 체크인');
+  assert.ok(pos('class="card mood-card"') < pos('class="feat-grid"'), '바로가기 타일보다 먼저 체크인');
+  assert.match(home, /하루 한 번의 선택이 7일 마음 날씨에 쌓여요/);
+});
+
 test('방문 상세는 실용정보와 도착 행동을 이야기보다 먼저 보여 준다', () => {
   const { go } = loadApp();
   const html = go('#/temple/haeinsa');
@@ -547,15 +563,17 @@ test('탐색 검색 입력이 결과만 다시 그리고, 주소는 replaceState
   assert.match(view.innerHTML, /통도사/, '결과가 다시 그려져야 함');
 });
 
-test('홈 순서는 "내가 남긴 기록" 3건을 기준으로 바뀌고, 예시 기록은 세지 않는다', () => {
-  // 첫 실행에는 기록을 자동으로 넣지 않는다 → 처음 온 사용자에게 처방전이 먼저
+test('홈 순서는 기록 3건을 기준으로 개인화하되 마음 체크인은 항상 첫 행동으로 둔다', () => {
+  // 첫 실행에는 기록을 자동으로 넣지 않는다 → 마음 체크인 뒤 온보딩, 그 다음 내 순례
   const fresh = loadApp({ store: {} });
   const freshHtml = fresh.go('#/home');
   assert.ok(freshHtml.indexOf('오늘의 마음 처방전') < freshHtml.indexOf('내 순례'),
-    '처음 온 사용자에게는 마음 처방전이 먼저여야 함');
+    '처음 온 사용자에게는 마음 체크인이 먼저여야 함');
+  assert.ok(freshHtml.indexOf('취향에 맞춰 추천받기') < freshHtml.indexOf('내 순례'),
+    '처음 온 사용자에게는 선택 온보딩을 내 순례보다 먼저 노출');
   assert.match(freshHtml, /data-home-order="new"/);
 
-  // 사용자가 직접 남긴 기록이 3건 쌓이면 '내 순례'가 처방전 위로 올라온다
+  // 사용자가 직접 남긴 기록이 3건 쌓이면 마음 체크인은 유지하고 내 순례를 온보딩 앞으로 올린다
   const own = {
     visits: [{ tid: 'tongdosa', date: '2026-10-09', method: 'gps' }],
     journal: [
@@ -565,8 +583,10 @@ test('홈 순서는 "내가 남긴 기록" 3건을 기준으로 바뀌고, 예�
   };
   const returning = loadApp({ store: { 'maeumjeongwon.v1': JSON.stringify(own) } });
   const html = returning.go('#/home');
-  assert.ok(html.indexOf('내 순례') < html.indexOf('마음 처방전'),
-    '기록이 쌓인 사용자에게는 내 순례가 먼저여야 함');
+  assert.ok(html.indexOf('오늘의 마음 처방전') < html.indexOf('내 순례'),
+    '기록과 무관하게 마음 체크인은 최상단에 유지');
+  assert.ok(html.indexOf('내 순례') < html.indexOf('취향에 맞춰 추천받기'),
+    '기록이 쌓이면 내 순례를 온보딩 앞으로 올림');
   assert.match(html, /data-home-order="returning"/);
 });
 
@@ -718,7 +738,7 @@ test('로더: 스크립트는 왔지만 모듈이 없으면 실패로 보고, �
 
 test('서비스 워커: 코드·스타일은 네트워크 우선, 잘못된 형식은 캐시하지 않는다', () => {
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
-  assert.match(sw, /maeumjeongwon-v15/, '캐시 이름을 올려 구 캐시를 지운다');
+  assert.match(sw, /maeumjeongwon-v16/, '캐시 이름을 올려 구 캐시를 지운다');
   assert.match(sw, /CODE_RE/, '코드·스타일 판별식이 있어야 함');
   assert.match(sw, /fetch\(req\)\s*\n?\s*\.then\(res => \{[\s\S]{0,200}?cacheable\(req, res\)/,
     '코드 요청은 네트워크 응답을 먼저 쓰고, 형식이 맞을 때만 캐시한다');
