@@ -1100,11 +1100,11 @@
     const tripN = (S.trips || []).length;
 
     /* 배치 원칙 (2026-11-18)
-     * 홈의 첫 행동은 '오늘 마음 고르기'. 브랜드 소개와 오늘 인사 바로 다음에 체크인을 두고,
-     * 빠른 실행·도구·제휴 콘텐츠보다 먼저 보여 준다. 마음을 고르면 같은 카드에서 처방과 사찰 추천을 확인한다.
-     * 그 다음은 바로가기·도구·내 순례·탐색·읽을거리 순. 등급·염주·상업은 주 행동을 가로막지 않는 보조 요소다.
+     * 사용자가 요청한 첫 행동은 '마음 가기 좋은 곳' 발견. 브랜드 소개와 오늘 인사 바로 다음에 계절 추천 레일을 둔다.
+     * 마음 테마를 고르거나 사찰을 눌러 바로 둘러볼 수 있게 하고, 마음 체크인은 별도 기능으로 이어 둔다.
+     * 그 다음은 빠른 실행·도구·내 순례·탐색·읽을거리 순. 등급·염주·상업은 주 행동을 가로막지 않는 보조 요소다.
      * 예외(2026-11-14 사용자 요청): 쿠팡 파트너스 '사찰 나들이 · 마음챙김 준비물'은 찾기 어려운 맨 아래 대신
-     * 체크인 뒤의 빠른 실행·바로가기·도구 아래에 둔다. 대가성 문구(공정위)는 블록 안에 상시 표시한다. */
+     * 빠른 실행·바로가기·도구 아래에 둔다. 대가성 문구(공정위)는 블록 안에 상시 표시한다. */
     updateStreak();
     const done = ritualDoneToday(), verse = getDailyVerse(), streak = S.streak || 0;
 
@@ -1189,12 +1189,16 @@
       <div class="btn-group"><button class="btn ghost" data-act="cert-open">${ic('file')} 디지털 완주증</button><a class="btn ghost" href="#/journal" style="text-decoration:none">${ic('pencil')} 발자국 남기기</a></div>
     </section>`;
 
-    const railCard = `<section class="card rail-card">
+    const railCard = `<section class="card hero rail-card">
       <div class="section-heading">
-        <div><span class="section-kicker">${ic('leaf')} 지금 가기 좋은 곳</span><h2>${esc(String(season.name).replace(/\s*\(.*\)$/, ''))}</h2></div>
+        <div><span class="section-kicker">${ic('leaf')} 마음 가기 좋은 곳</span><h2>${esc(String(season.name).replace(/\s*\(.*\)$/, ''))}</h2></div>
         <a class="text-link" href="#/explore">사찰 탐색${ic('chevron')}</a>
       </div>
-      <p class="sub">${esc(season.advice)}</p>
+      <p class="sub">${esc(season.advice)} 마음에 드는 사찰을 눌러보고, 테마로 더 찾아보세요.</p>
+      <div class="theme-row">
+        <span class="theme-row-label">마음으로 고르기</span>
+        <div class="row wrap">${Object.entries(THEMES).slice(0, 5).map(([k, th]) => `<a class="chip" href="#/explore/theme/${k}">${esc(th.name)}</a>`).join('')}</div>
+      </div>
       <div class="rail">
         ${picks.map(x => {
           const got = v.has(x.id);
@@ -1205,10 +1209,6 @@
             <span class="rail-foot">${got ? `<span class="tag ok">${ic('check')} 방문</span>` : (x.themes[0] ? `<span class="tag">${esc(THEMES[x.themes[0]].name)}</span>` : '<span class="tag">이야기 있음</span>')}<span class="rail-go">${ic('chevron')}</span></span>
           </a>`;
         }).join('')}
-      </div>
-      <div class="theme-row">
-        <span class="theme-row-label">마음으로 고르기</span>
-        <div class="row wrap">${Object.entries(THEMES).slice(0, 5).map(([k, th]) => `<a class="chip" href="#/explore/theme/${k}">${esc(th.name)}</a>`).join('')}</div>
       </div>
     </section>`;
 
@@ -1310,18 +1310,17 @@
     ${ticker}
     ${mainTitleHero}
     ${todayHead}
-    ${moodCard}
+    ${railCard}
     ${quickBar}
     ${featTiles}
     ${toolsDrop}
     ${cqHome}
-    ${returning ? pilgrimCard : ''}
+    ${returning ? pilgrimCard + moodCard : moodCard}
     ${onboard}
     ${returning ? '' : pilgrimCard}
     ${consentCard()}
     ${portBars}
     ${dexCard}
-    ${railCard}
     ${readCard}
     ${promoCard}
     <p class="notice">🙏 전설·기도 이야기는 '전해지는 이야기'로 소개하며, 효험을 보장하지 않습니다. 무리한 산행·야간 방문은 삼가고 사찰 예절을 지켜 주세요.</p>

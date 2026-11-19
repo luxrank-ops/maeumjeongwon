@@ -135,12 +135,12 @@ test('8. 홈 순서 개인화는 내가 남긴 기록만 센다 — 데모 표�
   assert.match(appSource, /filter\(x => !x\.sample\)/, '내가 남긴 것만 센다');
   assert.match(appSource, /ownRecords >= 3/, '기준은 3건');
   assert.match(appSource, /data-home-order=/, '순서를 화면(CSS·분석)에서도 읽을 수 있게 태깅');
-  // 마음 체크인은 기록 수와 관계없이 홈의 핵심 첫 행동이다.
-  assert.match(appSource, /\$\{todayHead\}\s*\$\{moodCard\}\s*\$\{quickBar\}/);
+  // 마음 가기 좋은 곳 레일은 오늘 인사 바로 뒤에 오며, 마음 체크인과 별도다.
+  assert.match(appSource, /\$\{todayHead\}\s*\$\{railCard\}\s*\$\{quickBar\}/);
   // 첫 방문에는 온보딩을 내 순례보다 먼저, 기록이 쌓이면 내 순례를 온보딩 앞으로 둔다.
-  assert.match(appSource, /returning \? pilgrimCard : ''/);
+  assert.match(appSource, /returning \? pilgrimCard \+ moodCard : moodCard/);
   assert.match(appSource, /returning \? '' : pilgrimCard/);
-  assert.match(appSource, /\$\{returning \? pilgrimCard : ''\}\s*\$\{onboard\}\s*\$\{returning \? '' : pilgrimCard\}/);
+  assert.match(appSource, /\$\{returning \? pilgrimCard \+ moodCard : moodCard\}\s*\$\{onboard\}\s*\$\{returning \? '' : pilgrimCard\}/);
 });
 
 test('9. 저조도에서만 손대는 예외는 한 블록에 모아 둔다', () => {
