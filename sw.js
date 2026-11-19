@@ -1,17 +1,17 @@
 /* 절로가 PWA Service Worker — 오프라인 캐시 및 산사 통신 음영 지역 대응 */
-const CACHE_NAME = 'maeumjeongwon-v16';
+const CACHE_NAME = 'maeumjeongwon-v17';
 // 첫 설치에서 받는 것 = 첫 화면을 그리는 데 실제로 필요한 것만.
 const PRECACHE_URLS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
-  '/css/style.css?v=20261118mood1',
+  '/css/style.css?v=20261118places1',
   '/js/lib/loader.js?v=20261118seo1',
   '/js/data-temples.js?v=20261118seo1',
   '/js/config.js?v=20261009analytics',
   '/js/analytics.js?v=20261009analytics',
   '/js/coupang-partners.js?v=20261114cq4',
-  '/js/app.js?v=20261118mood1',
+  '/js/app.js?v=20261118places1',
   '/pwa-192x192.png',
   '/pwa-512x512.png',
   '/apple-touch-icon.png'
