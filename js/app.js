@@ -1099,13 +1099,12 @@
     const picks = seasonTemples.concat(popular.filter(x => !seasonTemples.some(s => s.id === x.id))).slice(0, 6);
     const tripN = (S.trips || []).length;
 
-    /* 배치 원칙 (2026-10 디자인 리뷰)
-     * 이 앱이 첫 화면에서 시켜야 할 일은 하나다 — '마음을 고르고, 그 사찰로 향한다'.
-     * 그래서 ① 오늘 ② 마음 처방전(주 행동) ③ 매일의 리추얼 ④ 내 순례(결과) ⑤ 지금 가기 좋은 곳
-     * ⑥ 여행 계획 ⑦ 쉬는 도구 ⑧ 읽을거리·상점 순. 등급·염주·상점·플러스는 1등석이 아니라
-     * 결과와 부수 요소 자리에 둔다. 상업 요소는 맨 아래 한 장으로 모아 순례 흐름을 끊지 않는다.
-     * 예외(2026-11-14 사용자 요청): 쿠팡 파트너스 '사찰 나들이 · 마음챙김 준비물'은 맨 아래에 두니 스크롤을
-     * 한참 내려야 해서 아무도 찾지 못했다 — 히어로·빠른 실행 바·바로가기 아래(체크인 위)로 올린다. */
+    /* 배치 원칙 (2026-11-18)
+     * 홈의 첫 행동은 '오늘 마음 고르기'. 브랜드 소개와 오늘 인사 바로 다음에 체크인을 두고,
+     * 빠른 실행·도구·제휴 콘텐츠보다 먼저 보여 준다. 마음을 고르면 같은 카드에서 처방과 사찰 추천을 확인한다.
+     * 그 다음은 바로가기·도구·내 순례·탐색·읽을거리 순. 등급·염주·상업은 주 행동을 가로막지 않는 보조 요소다.
+     * 예외(2026-11-14 사용자 요청): 쿠팡 파트너스 '사찰 나들이 · 마음챙김 준비물'은 찾기 어려운 맨 아래 대신
+     * 체크인 뒤의 빠른 실행·바로가기·도구 아래에 둔다. 대가성 문구(공정위)는 블록 안에 상시 표시한다. */
     updateStreak();
     const done = ritualDoneToday(), verse = getDailyVerse(), streak = S.streak || 0;
 
@@ -1143,11 +1142,12 @@
       <p>${returning ? '어디까지 왔는지 먼저 보고, 오늘의 마음을 골라 보세요.' : '기분을 고르면 어울리는 사찰 이야기와 걷는 순례길을 골라 드려요.'}</p>
     </header>`;
 
-    const moodCard = `<section class="card mood-card">
+    const moodCard = `<section class="card mood-card" aria-labelledby="moodTitle">
       <div class="section-heading">
-        <div><span class="section-kicker">${ic('lotus')} 마음 체크인</span><h2>오늘의 마음 처방전</h2></div>
+        <div><span class="section-kicker">${ic('lotus')} 오늘의 마음 체크인</span><h2 id="moodTitle">오늘의 마음 처방전</h2></div>
         <a class="text-link" href="#/mind">마음 리포트${ic('chevron')}</a>
       </div>
+      <p class="sub">가까운 마음을 골라 보세요. 어울리는 사찰이 바로 바뀌고, 하루 한 번의 선택이 7일 마음 날씨에 쌓여요.</p>
       <div class="moods" role="group" aria-label="오늘의 마음 고르기">
         ${MOODS.map((m, i) => `<button class="mood ${i === mi ? 'on' : ''}" data-mood="${i}" aria-pressed="${i === mi ? 'true' : 'false'}">${ic(m.icon)}<b>${esc(m.label)}</b></button>`).join('')}
       </div>
@@ -1309,12 +1309,13 @@
     return `
     ${ticker}
     ${mainTitleHero}
+    ${todayHead}
+    ${moodCard}
     ${quickBar}
     ${featTiles}
     ${toolsDrop}
     ${cqHome}
-    ${todayHead}
-    ${returning ? pilgrimCard + moodCard : moodCard}
+    ${returning ? pilgrimCard : ''}
     ${onboard}
     ${returning ? '' : pilgrimCard}
     ${consentCard()}
