@@ -1591,7 +1591,7 @@
 
     const tipsHtml = FENGSHUI_VISIT_TIPS.length ? `<section class="card">
       <h2 style="margin-top:0">🌿 사찰에서 마음을 여는 방문법</h2>
-      <p class="sub" style="margin:0 0 8px">풍생풍사TV가 소개한 사찰 방문법을 정리했어요. 개인의 견해·전해지는 이야기이며 효험을 보장하지 않아요.</p>
+      <p class="sub" style="margin:0 0 8px">사찰에서 마음을 가다듬는 방문법을 정리했어요. 개인의 견해·전해지는 이야기이며 효험을 보장하지 않아요.</p>
       <ul style="padding-left:18px;margin:0">${FENGSHUI_VISIT_TIPS.map(tp => `<li style="margin-bottom:8px"><b>${esc(tp.title)}</b><br><span class="sub">${esc(tp.text)}</span></li>`).join('')}</ul>
     </section>` : '';
 
