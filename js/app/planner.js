@@ -19,6 +19,8 @@
       S, save, render, toast, esc, today, haversine, resolveTemple, visited, openModal,
       TEMPLES, THEMES, MISSIONS, TRAD, SIDO_ORDER, MJAnalytics, PLAN_RECO
     } = ctx;
+    // 상단 전환 탭(수첩 ↔ 계획 ↔ 리포트)은 셸이 만든다. 없으면(옛 셸)에는 아무것도 그리지 않는다.
+    const hubSwitch = typeof ctx.hubSwitch === 'function' ? ctx.hubSwitch : () => '';
 
     // ---------- 사찰 여행 계획 (Trip Planner) ----------
     const TRIP_TEMPLATES = [
@@ -635,6 +637,7 @@
 
       return `<div class="row between"><h1>🗓️ 사찰 여행 계획</h1><a class="btn small" style="text-decoration:none" href="#/planner/new">+ 새 계획 짜기</a></div>
         <p class="sub">가고 싶은 사찰을 골라 동선·소요시간·연계 순례 미션·준비물을 한눈에 계획해 보세요.</p>
+        ${hubSwitch('record', '#/planner')}
 
         <section class="card hero">
           <div class="row between"><b>나의 사찰 여행 일정</b><span class="tag">${trips.length}개</span></div>
