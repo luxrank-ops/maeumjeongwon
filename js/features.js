@@ -914,10 +914,15 @@
     ko: {
       app_title: '절로가',
       nav_home: '홈',
-      nav_explore: '탐색',
+      nav_explore: '사찰찾기',
       nav_map: '지도',
       nav_missions: '순례',
       nav_journal: '수첩',
+      nav_planner: '계획',
+      nav_store: '상점',
+      nav_board: '게시판',
+      nav_plus: '플러스',
+      nav_more: '전체메뉴',
       close: '닫기',
       copy: '복사',
       address: '소재지',
@@ -946,6 +951,11 @@
       nav_map: 'Map',
       nav_missions: 'Pilgrimage',
       nav_journal: 'Journal',
+      nav_planner: 'Plan',
+      nav_store: 'Shop',
+      nav_board: 'Board',
+      nav_plus: 'Plus',
+      nav_more: 'Menu',
       close: 'Close',
       copy: 'Copy',
       address: 'Address',
@@ -986,19 +996,20 @@
       const btn = document.getElementById('langToggle');
       if (btn) btn.textContent = curLang === 'ko' ? 'EN' : 'KO';
 
-      // 탭 라벨 갱신
-      const tabs = document.querySelectorAll('.tabbar a');
-      const labels = [
-        I18N.t('nav_home'),
-        I18N.t('nav_explore'),
-        I18N.t('nav_map'),
-        I18N.t('nav_missions'),
-        I18N.t('nav_journal')
-      ];
-      tabs.forEach((tab, idx) => {
+      /* 탭 라벨 갱신 — 순서(index)가 아니라 주소로 고른다.
+         하단 바가 다섯 칸으로 바뀌어도, 데스크톱 레일에 항목이 더 있어도 라벨이 어긋나지 않는다. */
+      const TAB_KEYS = {
+        '#/home': 'nav_home', '#/explore': 'nav_explore', '#/map': 'nav_map',
+        '#/missions': 'nav_missions', '#/journal': 'nav_journal', '#/planner': 'nav_planner',
+        '#/store': 'nav_store', '#/board': 'nav_board', '#/plus': 'nav_plus'
+      };
+      document.querySelectorAll('.tabbar a').forEach(tab => {
+        const key = TAB_KEYS[tab.getAttribute('href')];
         const lbl = tab.querySelector('.tab-label');
-        if (lbl && labels[idx]) lbl.textContent = labels[idx];
+        if (key && lbl) lbl.textContent = I18N.t(key);
       });
+      const moreLbl = document.querySelector('.tabbar .tab-more .tab-label');
+      if (moreLbl) moreLbl.textContent = I18N.t('nav_more');
     }
   };
 
