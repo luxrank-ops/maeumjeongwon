@@ -94,6 +94,21 @@ test('④ 홈 첫 화면의 바로가기 네 칸은 네 주소로만 간다', ()
   assert.match(home, /\$\{ticker\}\s*\$\{mainTitleHero\}\s*\$\{featTiles\}/);
 });
 
+test('⑥ 언어 전환 — 탭 라벨을 순서가 아니라 주소로 갱신한다', () => {
+  // features.js 의 I18N.apply 가 탭을 '몇 번째'로 찾으면, 하단 바 구성이 바뀔 때 라벨이 어긋난다
+  // (2026-11-24 실제로 사찰찾기 자리에 '탐색', 순례 자리에 '지도'가 붙었다).
+  const features = read('js/features.js');
+  const apply = features.slice(features.indexOf('apply: function ()'), features.indexOf('// 8. 오디오 도즔트'));
+  assert.match(apply, /TAB_KEYS/, '주소 → 사전 키 표로 고른다');
+  assert.match(apply, /getAttribute\('href'\)/, '항목의 href 로 키를 찾는다');
+  assert.doesNotMatch(apply, /labels\[idx\]/, '순서(index)로 라벨을 덮어쓰지 않는다');
+  for (const key of ['nav_planner', 'nav_store', 'nav_board', 'nav_plus', 'nav_more']) {
+    assert.ok(features.includes(`${key}: '`), `사전 키가 한국어·영어 두 벌 모두 필요: ${key}`);
+  }
+  // 전체메뉴는 링크가 아니라 버튼이라 별도로 라벨을 맞춘다
+  assert.match(apply, /tab-more \.tab-label/);
+});
+
 test('⑤ CSS — 전체메뉴 버튼은 탭 링크와 같은 모양을 쓰고, 데스크톱 레일에서도 선다', () => {
   // 링크와 버튼이 같은 규칙을 공유한다(모양이 갈라지면 하단 바가 어긋나 보인다)
   assert.match(css, /\.tabbar a,\.tabbar \.tab-more\{position:relative;flex:1;/);
