@@ -119,18 +119,18 @@ p{overflow-wrap:anywhere}
 /* ---------- ⑥ 하단 탭 (모바일) — 데스크톱에서는 ⑪에서 사이드 내비로 재배치 ----------
    선택 상태는 '색'이 아니라 ▲ 표시줄 + 굵기 + 아이콘 채움으로 알린다 (색약·야외 광택 대응). */
 .tabbar{grid-area:nav;position:sticky;bottom:0;display:flex;gap:3px;background:var(--surface-2);border-top:1px solid var(--border-1);z-index:600;padding:6px 8px calc(6px + var(--safe-b))}
-.tabbar a{position:relative;flex:1;min-width:0;text-align:center;text-decoration:none;font-size:.74em;padding:10px 4px 6px;color:var(--text-3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:var(--tabbar-h);border-radius:var(--r-lg);-webkit-tap-highlight-color:transparent}
+.tabbar a,.tabbar .tab-more{position:relative;flex:1;min-width:0;text-align:center;text-decoration:none;font-size:.74em;padding:10px 4px 6px;color:var(--text-3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:var(--tabbar-h);border-radius:var(--r-lg);-webkit-tap-highlight-color:transparent}
 /* 레일 전용 항목(계획·상점)은 모바일 하단 탭에 넣지 않는다 — 엄지로 닿는 5칸을 지키고, 넓은 화면에서만 메뉴로 노출 */
 .tabbar a.rail-only{display:none}
-.tabbar a span{display:block;line-height:1.2;opacity:.6}
-.tabbar a .ic{width:1.7em;height:1.7em;stroke-width:1.5}
-.tabbar a span.tab-label{opacity:1;font-size:1em;font-weight:600;letter-spacing:-.005em}
-.tabbar a:before{content:"";position:absolute;top:6px;left:50%;width:26px;height:4px;margin-left:-13px;border-radius:99px;background:transparent;transition:background var(--dur-2) var(--ease)}
-.tabbar a.on{color:var(--text-1);font-weight:700;background:var(--surface-sunken)}
-.tabbar a.on span{opacity:1}
-.tabbar a.on .ic{stroke-width:1.9}
-.tabbar a.on:before{background:var(--accent)}
-.tabbar a:active{transform:translateY(1px)}
+.tabbar a span,.tabbar .tab-more span{display:block;line-height:1.2;opacity:.6}
+.tabbar a .ic,.tabbar .tab-more .ic{width:1.7em;height:1.7em;stroke-width:1.5}
+.tabbar a span.tab-label,.tabbar .tab-more span.tab-label{opacity:1;font-size:1em;font-weight:600;letter-spacing:-.005em}
+.tabbar a:before,.tabbar .tab-more:before{content:"";position:absolute;top:6px;left:50%;width:26px;height:4px;margin-left:-13px;border-radius:99px;background:transparent;transition:background var(--dur-2) var(--ease)}
+.tabbar a.on,.tabbar .tab-more.on{color:var(--text-1);font-weight:700;background:var(--surface-sunken)}
+.tabbar a.on span,.tabbar .tab-more.on span{opacity:1}
+.tabbar a.on .ic,.tabbar .tab-more.on .ic{stroke-width:1.9}
+.tabbar a.on:before,.tabbar .tab-more.on:before{background:var(--accent)}
+.tabbar a:active,.tabbar .tab-more:active{transform:translateY(1px)}
 
 /* ---------- ⑦ 목록·그리드 배치 : 개수가 아니라 '남는 폭'으로 열을 정한다 ---------- */
 .tlist{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
@@ -218,7 +218,7 @@ body.big .moods{grid-template-columns:repeat(auto-fill,minmax(128px,1fr))}
 body.big .dex{grid-template-columns:repeat(auto-fill,minmax(min(100%,76px),1fr))}
 body.big .badge{font-size:.9em}
 body.big .btn{padding:14px 16px}
-body.big .tabbar a{font-size:.8em}
+body.big .tabbar a,body.big .tabbar .tab-more{font-size:.8em}
 body.big .sub,body.big .notice,body.big .legal{font-size:.95em}
 
 /* ---------- ⑫ 플러스(유료화 데모)·스토어·스토리·기도·풍수 ---------- */
@@ -287,11 +287,11 @@ table.cmp td:nth-child(2),table.cmp td:nth-child(3),table.cmp th:nth-child(2),ta
     background:var(--surface-1);overflow-y:auto;z-index:400;
   }
   .tabbar::before{display:block;content:"메뉴";font-size:.76em;letter-spacing:.12em;color:var(--text-3);padding:2px 12px 10px;font-weight:700}
-  .tabbar a{flex:0 0 auto;flex-direction:row;justify-content:flex-start;gap:10px;text-align:left;font-size:.95em;padding:11px 12px;min-height:var(--tap);border-radius:12px}
+  .tabbar a,.tabbar .tab-more{flex:0 0 auto;flex-direction:row;justify-content:flex-start;gap:10px;text-align:left;font-size:.95em;padding:11px 12px;min-height:var(--tap);border-radius:12px}
   .tabbar a.rail-only{display:flex}          /* 좌측 레일에서는 계획·상점까지 한눈에 */
   .tabbar a.rail-only::after{content:"";flex:1}
-  .tabbar a span{display:inline-block;font-size:1.3em}
-  .tabbar a.on{background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--border-1)}
+  .tabbar a span,.tabbar .tab-more span{display:inline-block;font-size:1.3em}
+  .tabbar a.on,.tabbar .tab-more.on{background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--border-1)}
   .tabbar::after{display:block;content:"🪷 절로가 — 마음 따라 걷는 사찰 순례";margin-top:auto;padding:14px 12px 2px;font-size:.72em;line-height:1.5;color:var(--text-3);border-top:1px dashed var(--border-1)}
   #toast{bottom:26px}
   .hero:after{font-size:120px;right:8px;bottom:-22px}
@@ -330,8 +330,8 @@ table.cmp td:nth-child(2),table.cmp td:nth-child(3),table.cmp th:nth-child(2),ta
 /* 가로가 짧은 모바일(가로모드 폰) — 세로 공간 확보가 최우선 */
 @media (max-height:560px) and (orientation:landscape){
   :root{--pad-y:10px;--tabbar-h:46px;--gap:8px}
-  .tabbar a{flex-direction:row;gap:6px;font-size:.74em;padding:5px 8px}
-  .tabbar a span{font-size:1.15em}
+  .tabbar a,.tabbar .tab-more{flex-direction:row;gap:6px;font-size:.74em;padding:5px 8px}
+  .tabbar a span,.tabbar .tab-more span{font-size:1.15em}
   .hero:after{display:none}
   .card{padding:11px;border-radius:14px;margin-bottom:10px}
   #map{height:calc(100vh - 168px);height:calc(100svh - 168px);min-height:220px}
@@ -346,7 +346,7 @@ table.cmp td:nth-child(2),table.cmp td:nth-child(3),table.cmp th:nth-child(2),ta
   .topbar{gap:6px;padding-inline:12px}
   .chip{padding:6px 10px;font-size:.84em}   /* 높이는 ⑯-7 이 지킨다 — 좁다고 손끝을 줄이지 않는다 */
   .logo{font-size:1.02em}
-  .tabbar a{font-size:.7em}
+  .tabbar a,.tabbar .tab-more{font-size:.7em}
 }
 
 /* 입력 도구에 따른 미세 조정 : 마우스는 밀도 있게, 터치에서는 넉넉하게 */
@@ -354,8 +354,8 @@ table.cmp td:nth-child(2),table.cmp td:nth-child(3),table.cmp th:nth-child(2),ta
   .btn:hover{filter:brightness(.97)}
   .btn.ghost:hover{background:var(--surface-3)}
   .titem:hover,.plan:hover,.mood:hover,.badge:hover{border-color:var(--gold)}
-  .tabbar a:hover{background:var(--surface-sunken)}
-  .tabbar a.on:hover{background:var(--surface-2)}
+  .tabbar a:hover,.tabbar .tab-more:hover{background:var(--surface-sunken)}
+  .tabbar a.on:hover,.tabbar .tab-more.on:hover{background:var(--surface-2)}
   input,textarea,select{min-height:38px}
   .btn{min-height:40px}.btn.small{min-height:34px}
   textarea{resize:vertical}
@@ -516,12 +516,8 @@ table.cmp td:nth-child(2),table.cmp td:nth-child(3),table.cmp th:nth-child(2),ta
   --border-strong:var(--ink);
 }
 
-/* ---------- ⑮-1d 저조도(다크) — 새벽예불 · 야간 산행 · 어두운 숙소 ----------
-   바꾸는 것은 팔레트뿐이다. 시맨틱 토큰이 그 값을 가리키고 있으므로 컴포넌트는 그대로다.
-     · 배경은 완전한 검정이 아니라 남색이 감도는 밤 · 강조색은 밝히고 위 글자는 어둡게 뒤집는다
-     · 그림자는 거의 쓰지 않고 선으로 면을 가른다
-   적용은 <html data-theme> 하나로 정한다. 기본은 '시스템 설정을 따른다'이고,
-   상단 토글로 하루 중에도 바꿀 수 있다 (js/app.js 의 applyTheme). */
+/* ---------- ⑮-1d 저조도(다크) — 팔레트만 바꾼다. 적용은 <html data-theme> 하나 (js/app.js applyTheme).
+   검정 대신 남색 밤 · 강조색은 밝히고 위 글자는 뒤집는다 · 그림자 대신 선으로 면을 가른다. */
 :root[data-theme=dark]{
   --paper:#0B1120;--paper-2:#060A15;
   --card:#131B2E;
@@ -556,10 +552,7 @@ table.cmp td:nth-child(2),table.cmp td:nth-child(3),table.cmp th:nth-child(2),ta
   color-scheme:dark;
 }
 
-/* ---------- ⑮-1e 저조도에서만 손대는 예외 ----------
-   팔레트 교체로는 안 되는 몇 가지: (1) '어둡게'가 아니라 '지우는' 필터
-   (2) 우리 것이 아닌 CSS(leaflet)가 하얀 면을 직접 들고 있는 자리
-   (3) 지도 타일은 사진이라 어둡게 덮는 수밖에 없다 — 새벽·야간에 눈부심을 줄이는 게 목적 */
+/* ---------- ⑮-1e 저조도에서만 손대는 예외 ---------- 지우는 필터 · leaflet 의 흰 면 · 지도 타일 어둡게 */
 :root[data-theme=dark] .dex .cell.sil .s{filter:none;opacity:.3;color:var(--text-3)}
 :root[data-theme=dark] .leaflet-popup-content-wrapper,
 :root[data-theme=dark] .leaflet-popup-tip{background:var(--surface-2);color:var(--text-1);box-shadow:0 6px 22px rgba(0,0,0,.5)}
@@ -636,9 +629,9 @@ body.scrolled .brand-copy small{opacity:0;transform:translateY(-4px)}
 /* 하단 탭 — 아이콘·라벨은 같은 축, 선택은 위 표시줄 */
 .tabbar{background:color-mix(in srgb,var(--surface-2) 94%,transparent);border-top-color:var(--border-1);padding-top:6px}
 @supports not (background:color-mix(in srgb,red 50%,transparent)){.tabbar{background:rgba(var(--card-rgb),.97)}}
-.tabbar a{color:var(--text-3);border-radius:14px}
-.tabbar a.on{color:var(--pine-ink)}
-.tabbar a:focus-visible{outline:none;box-shadow:var(--ring)}
+.tabbar a,.tabbar .tab-more{color:var(--text-3);border-radius:14px}
+.tabbar a.on,.tabbar .tab-more.on{color:var(--pine-ink)}
+.tabbar a:focus-visible,.tabbar .tab-more:focus-visible{outline:none;box-shadow:var(--ring)}
 main{padding:var(--pad-y) var(--pad-x) calc(var(--pad-y) + 26px)}
 
 /* ---------- ⑮-3 타이포 (2026-11: 제목은 굵은 고딕, 명조는 경전 구절·이야기 본문에만) ---------- */
@@ -1000,9 +993,9 @@ input[type=search]::-webkit-search-cancel-button,input[type=search]::-webkit-sea
   .topbar{padding-block:13px}
   /* 상단바가 2px 더 두꺼워진다 — 그 아래에 붙는 스티키(오디오 바·탐색 검색)의 기준값도 같이 올린다 */
   :root{--topbar-h:74px}
-  .tabbar a:hover{background:var(--surface-sunken)}
-  .tabbar a.on{background:var(--pine-soft);color:var(--pine-ink)}
-  .tabbar a.on:before{display:none}
+  .tabbar a:hover,.tabbar .tab-more:hover{background:var(--surface-sunken)}
+  .tabbar a.on,.tabbar .tab-more.on{background:var(--pine-soft);color:var(--pine-ink)}
+  .tabbar a.on:before,.tabbar .tab-more.on:before{display:none}
   main{padding-top:var(--s6);padding-bottom:64px}
   .card{padding:20px 22px}
   .rail{grid-auto-columns:minmax(250px,1fr)}
@@ -1071,7 +1064,7 @@ body.big{--s4:20px;--s5:26px}
 body.big .card{border-radius:20px}
 body.big .section-heading h2{font-size:1.22em}
 body.big .btn{min-height:52px;font-size:1em}
-body.big .tabbar a{font-size:.8em}
+body.big .tabbar a,body.big .tabbar .tab-more{font-size:.8em}
 body.big .mood{min-height:96px}
 body.big .tag{font-size:.9em}
 body.big .notice,body.big .sub{font-size:1em}
@@ -1222,9 +1215,7 @@ table.cmp td{border-bottom-color:var(--border-2)}
 }
 
 /* ---------- 메인 타이틀 히어로 — “절로가 — 마음 따라 걷는 사찰 순례” ----------
-   · 브랜드와 서비스 설명을 한 번에 읽게 한다. 2026-11 단청: 흰 카드 + 숫자 배지(⑲) + 굵은 남색 제목.
-   · 낮·저조도·큰글씨·고대비 모두에서 명도 대비 4.5:1 이상을 유지한다.
-   ---------------------------------------------------------------------------- */
+   흰 카드 + 숫자 배지(⑲) + 굵은 남색 제목 · 낮·저조도·큰글씨·고대비 모두 4.5:1 이상 */
 .main-title-hero{position:relative;overflow:hidden;background:var(--surface-2);border:1.5px solid var(--border-1);border-radius:var(--r);padding:16px;margin:0 0 var(--s3);box-shadow:var(--elev-1)}
 .main-title-kicker{display:inline-flex;align-items:center;gap:6px;font-size:.74em;font-weight:800;letter-spacing:.02em;color:var(--pine-ink)}
 .main-title-kicker .ic{width:1.05em;height:1.05em}
@@ -1326,16 +1317,10 @@ body.big .main-title__desc{font-size:1em}
 .cm-count{font-size:.8em;color:var(--text-3);margin:0;font-variant-numeric:tabular-nums}
 
 /* ============================================================================
-   ⑯ 모바일 조작 규칙 — 손끝 48dp · 입력의 지우기 · 옵션은 펼쳐서 · 즉각 피드백
-   2026-11: 터치 44→48px(상단 칩은 44+히트 슬롭) · 본문 15→16px · 모든 텍스트필드에
-   Clear(×)(JS enhanceFields) · 5개 이하 옵션은 .choices 로 펼침 · 수량은 .stepper ·
-   모든 조작에 누름 피드백 · 대비 미달 2곳 수정. 근거와 실측: docs/mobile-ux-guidelines.md
+   ⑯ 모바일 조작 규칙 — 손끝 48dp · 입력 지우기 · 옵션은 펼쳐서 · 즉각 피드백 (docs/mobile-ux-guidelines.md)
    ============================================================================ */
 
-/* ---------- ⑯-1 손끝 크기 ----------
-   48px 은 '보이는 크기'가 아니라 '닿는 크기'다. 상단 칩처럼 밀도가 중요한 크롬은
-   44px 로 그리되 ::after 로 위아래 2px씩 히트 영역을 넓혀 48px 을 확보한다
-   (칩 사이 간격이 6px 이라 이웃 칩의 히트 영역을 잡아먹지 않는다). */
+/* ---------- ⑯-1 손끝 크기 ---------- 48px 은 '닿는 크기'. 칩은 44px + ::after 히트 슬롭 */
 .chip{position:relative;min-height:var(--tap-sm)}
 .chip::after{content:"";position:absolute;inset:-2px -3px;border-radius:999px}
 .chip.icon-only,.lang-btn{min-width:var(--tap-sm)}
@@ -1354,11 +1339,9 @@ textarea{min-height:96px}
 .sheet-close{width:var(--tap);min-height:var(--tap);height:var(--tap)}
 .sheet-close .ic{width:1.2em;height:1.2em}
 .audio-btn{min-height:var(--tap-sm);padding:6px 10px}
-.tabbar a{min-height:var(--tabbar-h)}
+.tabbar a,.tabbar .tab-more{min-height:var(--tabbar-h)}
 
-/* ---------- ⑯-2 텍스트필드 Clear(×) ----------
-   값이 있을 때만 보이고, 누르면 값·포커스·'input' 이벤트까지 되돌린다(검색은 즉시 다시 그려진다).
-   마크업은 그대로 두고 js/enhanceFields 가 감싼다 — 다시 그려지는 화면에도 같은 규칙이 적용된다. */
+/* ---------- ⑯-2 텍스트필드 Clear(×) ---------- js/enhanceFields 가 감싼다(값·포커스·input 이벤트 되돌림) */
 .field{position:relative;display:block;flex:1 1 auto;min-width:0}
 .field>input{width:100%;padding-right:calc(var(--tap-sm) + 4px)}
 .search-wrap .field>input{padding-left:36px}
@@ -1369,10 +1352,7 @@ textarea{min-height:96px}
 .field-clear:focus-visible{outline:none;box-shadow:var(--ring)}
 .field-clear[hidden]{display:none}
 
-/* ---------- ⑯-3 옵션이 5개 이하면 펼친다 (.choices) ----------
-   드롭다운은 '고르기 전에는 무엇이 있는지 모르는' UI다. 5개까지는 펼쳐 두고,
-   7개 이상(지역 17 · 테마 9 · 사찰 1,000+)만 <select> 로 접는다. 6개는 경계값이라
-   화면 폭에 따라 격자가 감당하는 쪽(펼침)을 택한다. */
+/* ---------- ⑯-3 옵션이 5개 이하면 펼친다 (.choices) ---------- 7개 이상(지역·테마·사찰)만 select */
 .field-label{display:block;margin:10px 0 5px;font-size:.9em;color:var(--text-3);font-weight:600}
 .choices{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,104px),1fr));gap:var(--s2)}
 .choice{display:flex;align-items:center;justify-content:center;gap:5px;min-height:var(--tap);padding:9px 10px;border:1px solid var(--border-1);border-radius:12px;background:var(--surface-3);color:var(--text-1);font-size:.92em;font-weight:600;line-height:1.3;text-align:center;transition:border-color var(--dur-1) var(--ease),background var(--dur-1) var(--ease),color var(--dur-1) var(--ease)}
@@ -1383,9 +1363,7 @@ textarea{min-height:96px}
 .choice:active{background:var(--pine-soft)}
 .choice:focus-visible{outline:none;box-shadow:var(--ring)}
 
-/* ---------- ⑯-4 수량은 스텝퍼 ----------
-   몇 개인지 세는 값(인원·개수)은 목록을 열어 고르게 하지 않는다. −/값/+ 세 칸이면
-   현재 값과 바뀔 방향이 동시에 보이고, 버튼 하나가 한 걸음이라는 것도 분명하다. */
+/* ---------- ⑯-4 수량은 스텝퍼 ---------- −/값/+ 세 칸: 현재 값과 바뀔 방향이 함께 보인다 */
 .stepper{display:inline-flex;align-items:center;gap:2px;padding:3px;border:1px solid var(--border-1);border-radius:16px;background:var(--surface-3)}
 .step-btn{display:grid;place-items:center;width:var(--tap);min-height:var(--tap);height:var(--tap);border-radius:13px;border:1px solid var(--border-1);background:var(--surface-2);color:var(--text-1);font-size:1.2em;font-weight:700;line-height:1}
 .step-btn:hover{border-color:var(--pine-line);color:var(--pine-ink)}
@@ -1395,9 +1373,7 @@ textarea{min-height:96px}
 .step-value{min-width:4.2em;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
 .step-hint{margin:4px 0 0;font-size:.84em;color:var(--text-3)}
 
-/* ---------- ⑯-5 즉각 피드백 ----------
-   ① 누름: 들여앉는 대신 배경·테두리가 먼저 바뀐다(움직임을 줄인 사용자에게도 유효).
-   ② 오래 걸리는 일: 버튼이 잠기고 스피너가 돌며 aria-busy 로 상태가 읽힌다. */
+/* ---------- ⑯-5 즉각 피드백 ---------- ① 누름: 배경·테두리 먼저 ② 오래 걸리면 잠금+aria-busy */
 .titem,.rail-item,.tool-list a,.tool-list button,.cm-row,.mood,.badge,.plan,.sound-btn,.choice{transition:background var(--dur-1) var(--ease),border-color var(--dur-1) var(--ease)}
 .titem:active,.rail-item:active,.tool-list a:active,.tool-list button:active,.cm-row:active{background:var(--pine-soft);border-color:var(--pine-line)}
 .mood:active,.badge:active,.plan:active,.sound-btn:active{background:var(--pine-soft);border-color:var(--pine-line)}
@@ -1406,25 +1382,18 @@ textarea{min-height:96px}
 .btn[aria-busy=true]::before{content:"";flex:0 0 auto;width:1em;height:1em;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:mj-spin .7s linear infinite}
 @media (prefers-reduced-motion:reduce){.btn[aria-busy=true]::before{animation-duration:1.8s}}
 
-/* ---------- ⑯-6 저조도에서 깨지던 자리 ----------
-   js/app/planner.js 가 인라인 style 로 직접 칠하던 크림색 패널은
-   어두운 화면에서 '밝은 면 + 밝은 글자'가 되어 읽히지 않았다. 면은 토큰이 맡는다. */
+/* ---------- ⑯-6 저조도에서 깨지던 자리 ---------- 인라인 크림색 대신 면은 토큰이 맡는다 */
 .panel-soft{background:var(--surface-3);border-color:var(--border-2)}
 /* 같은 이유로 js/features.js 의 '흰 박스'(설치 안내·실용정보·템플스테이 프로그램)도 면을 토큰에 맡긴다 */
 .panel-plain{background:var(--surface-2);border:1px solid var(--border-1);border-radius:12px;padding:12px}
 
-/* ---------- ⑯-7 아주 좁은 화면(320~360px)에서도 손끝 크기는 줄이지 않는다 ----------
-   이전에는 이 구간에서 칩 높이를 34px 로 낮췄다. 자리는 아끼고 손끝은 잃는 교환이라
-   대신 글자·좌우 여백만 줄인다. */
+/* ---------- ⑯-7 아주 좁은 화면(320~360px)에서도 손끝 크기는 줄이지 않는다 ---------- 글자·여백만 줄인다 */
 @media (max-width:380px){
   .chip{min-height:var(--tap-sm);padding:6px 9px;font-size:.82em}
   .topright{gap:4px}
 }
 
-/* ---------- ⑰ 사경첩 — 화면 조각은 css/sagye.css 에서 받는다 ----------
-   격자·붓글씨·인장·리포트 꺾은선은 첫 화면에 필요 없다. 보고서 화면과 상담 시트가
-   열릴 때 js/lib/loader.js 가 그 파일만 내려받는다 (첫 화면 예산 140KB).
-   여기에는 가입 폼에서 바로 쓰는 비밀번호 토글만 남긴다. */
+/* ---------- ⑰ 사경첩 — 화면 조각은 css/sagye.css(지연 자산)에서, 여기는 비밀번호 토글만 ---------- */
 /* ---------- ⑰-8 비밀번호 칸 — 보기 토글 (가입 2칸 · SCR-AUTH-001) ----------
    확인 칸을 없애는 대신 '보기'를 둔다. 오타로 잠기는 일은 화면에서 막는 게 낫다. */
 .pw-row{position:relative;display:block}
@@ -1436,13 +1405,9 @@ textarea{min-height:96px}
 .pw-toggle[aria-pressed=true]{color:var(--pine-ink);background:var(--pine-soft)}
 
 
-/* ---------- ⑱ 화면 ID · 화면별 전환 효과 (SCR-* 명세) ----------
-   라우터가 #view 에 data-screen / data-motion 을 남긴다. 이름을 DOM 에 두면
-   기획서·QA·분석이 같은 말을 쓴다(docs/recovery-and-report.md 2절).
-     SCR-MAIN-001 홈·상담 → Fade-in 400ms
-     SCR-AUTH-002 가입·로그인 → Slide Left 300ms
-     SCR-REP-003 리포트 → Staggered Lift 250ms
-   움직임을 줄인 사용자에게는 셋 다 끈다 (정보는 그대로, 움직임만 뺀다). */
+/* ---------- ⑱ 화면 ID · 화면별 전환 효과 (SCR-* 명세, docs/recovery-and-report.md 2절) ----------
+   SCR-MAIN-001 Fade 400ms · SCR-AUTH-002 Slide Left 300ms · SCR-REP-003 Staggered Lift 250ms
+   움직임을 줄인 사용자에게는 셋 다 끈다. */
 @keyframes mj-fade{from{opacity:0}to{opacity:1}}
 @keyframes mj-slide-left{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
 @keyframes mj-lift{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -1616,3 +1581,16 @@ main.entering[data-motion=lift]>*:nth-child(n+4){--i:3}
   .brand-copy>b{font-size:1.12em}
 }
 @media (max-width:380px){.stat-badge{min-width:100px;padding:6px 9px}.feat b{font-size:1.12em}}
+
+/* 2026-11-24 내비 개편: 전체메뉴 시트·전환 탭·홈 바로가기 */
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:8px}
+.menu-item{display:flex;align-items:center;gap:10px;min-height:var(--tap);padding:10px 12px;border:1.5px solid var(--border-1);border-radius:14px;background:var(--surface-2);text-decoration:none}
+.menu-item:active{background:var(--pine-soft);border-color:var(--pine-line)}
+.menu-ic{display:grid;place-items:center;flex:0 0 auto;width:38px;height:38px;border-radius:12px;background:var(--surface-sunken);color:var(--pine-ink)}
+.menu-copy{display:grid;flex:1;min-width:0}
+.menu-copy b{font-size:.98em;font-weight:800}
+.menu-copy small{font-size:.78em;color:var(--text-3)}
+.home-shortcuts .feat{padding:14px 8px 12px}
+.home-shortcuts .feat .tile{width:50px;height:50px}
+.home-shortcuts .feat b{font-size:1.02em}
+@media (min-width:560px){.home-shortcuts{grid-template-columns:repeat(4,minmax(0,1fr))}}

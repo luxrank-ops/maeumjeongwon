@@ -227,7 +227,7 @@ test('④ 상태1(1~2장)은 격려 한 장, 상태2(3장~)부터 결을 보여 
   assert.match(report, /class="tag-cloud"/);
   assert.match(report, /회<\/span>/, '낱말마다 횟수 (#불안 3회)');
   assert.match(report, /data-act="print"/, 'PDF 내보내기');
-  assert.match(app, /head \+ counselSection\(\)/, '리포트 화면에 사경 블록이 붙는다');
+  assert.match(app, /head \+ hub \+ counselSection\(\)/, '리포트 화면에 사경 블록이 붙는다 (앞에는 전환 탭)');
   assert.match(app, /window\.MJ_REPORT\.counsel/, '지연 모듈이 그린다');
   assert.match(app, /마음 사경 리포트를 불러오지 못했어요/, '모듈이 없으면 다음 행동을 준다');
   // 그래프 좌표는 화면 없이도 검산할 수 있게 순수 함수로 둔다

@@ -385,7 +385,8 @@ test('홈 상단에서 마음 가기 좋은 곳을 보여 주고 테마 선택�
   assert.ok(pos('class="card main-title-hero"') < pos('data-home-order='), '브랜드 소개 뒤 오늘 인사');
   assert.ok(pos('data-home-order=') < pos('class="card hero rail-card"'), '오늘 인사 바로 뒤 마음 가기 좋은 곳');
   assert.ok(pos('class="card hero rail-card"') < pos('class="qbar"'), '빠른 실행보다 먼저 추천 레일');
-  assert.ok(pos('class="card hero rail-card"') < pos('class="feat-grid"'), '바로가기 타일보다 먼저 추천 레일');
+  // 2026-11-24: 핵심 바로가기 네 칸은 히어로 바로 아래(첫 화면 위쪽)로 올렸다. 추천 레일은 그 다음이다.
+  assert.ok(pos('class="feat-grid home-shortcuts"') < pos('data-home-order='), '바로가기가 오늘 인사보다 먼저');
   assert.ok(pos('class="card hero rail-card"') < pos('class="card mood-card"'), '별도 마음 체크인보다 추천 레일이 먼저');
   assert.match(home, /마음 가기 좋은 곳/);
   assert.match(home, /마음으로 고르기/);
@@ -742,7 +743,7 @@ test('로더: 스크립트는 왔지만 모듈이 없으면 실패로 보고, �
 
 test('서비스 워커: 코드·스타일은 네트워크 우선, 잘못된 형식은 캐시하지 않는다', () => {
   const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
-  assert.match(sw, /maeumjeongwon-v17/, '캐시 이름을 올려 구 캐시를 지운다');
+  assert.match(sw, /maeumjeongwon-v18/, '캐시 이름을 올려 구 캐시를 지운다');
   assert.match(sw, /CODE_RE/, '코드·스타일 판별식이 있어야 함');
   assert.match(sw, /fetch\(req\)\s*\n?\s*\.then\(res => \{[\s\S]{0,200}?cacheable\(req, res\)/,
     '코드 요청은 네트워크 응답을 먼저 쓰고, 형식이 맞을 때만 캐시한다');

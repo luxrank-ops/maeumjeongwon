@@ -954,7 +954,8 @@
     const d = reportData(), open = isPlus();
     const g = gradeInfo(d.uniq.length);
     const head = `<h1>나의 순례 리포트 ${open ? '' : '<span class="tag">플러스 미리보기</span>'}</h1><p class="sub">이 기기에 저장된 방문·수첩·상담 기록만으로 계산해요. 서버로 보내지 않아요.</p>`;
-    if (!d.vs.length) return head + `<section class="card"><p>아직 방문 기록이 없어요. 사찰 상세에서 GPS 인증(또는 🧪 데모 체크인)을 하면 리포트가 만들어져요.</p><a class="btn" style="text-decoration:none" href="#/explore">사찰 둘러보기</a></section>` + counselSection();
+    const hub = hubSwitch('record', '#/report');
+    if (!d.vs.length) return head + hub + `<section class="card"><p>아직 방문 기록이 없어요. 사찰 상세에서 GPS 인증(또는 🧪 데모 체크인)을 하면 리포트가 만들어져요.</p><a class="btn" style="text-decoration:none" href="#/explore">사찰 둘러보기</a></section>` + counselSection();
     const summary = `<section class="card hero"><div class="sub">지금까지</div><div class="grade">${d.uniq.length}곳 · ${d.vs.length}번의 걸음</div>
       <p style="margin:6px 0 0">${d.sido.length}개 시·도를 다녔어요 · 현재 등급 <b>${g.cur ? g.cur.name : '첫걸음 전'}</b>${d.demo ? ` <span class="sub">(🧪 데모 ${d.demo}회 포함)</span>` : ''}</p>
       ${open ? '' : `<p class="sub" style="margin:6px 0 0">무료 미리보기 · 가장 많이 간 지역은 <b>${esc(d.sido[0][0])}</b>예요. 아래에서 발자취·취향·계절·연말 결산을 볼 수 있어요.</p>`}</section>`;
@@ -973,7 +974,7 @@
       <section class="card"><h2>📔 수첩</h2><p style="margin:0">기록 ${d.journal}편${d.weather[0] ? ` · 가장 많았던 날씨 ${esc(d.weather[0][0])}` : ''}</p></section>
       <section class="card legend"><span class="lbl">${d.yr} 연말 결산 미리보기</span><h2 style="margin-top:8px">올해 ${d.yuniq}곳, ${d.yv.length}번 걸었어요</h2>
         <p class="sub" style="margin:0">12월에는 한 해 순례를 카드 한 장으로 정리해 저장·공유할 수 있게 만들 예정이에요.</p></section>`;
-    return head + counselSection() + summary + (open ? full : lockBlock('report', full.replace(/<section/g, '<div').replace(/<\/section>/g, '</div>')));
+    return head + hub + counselSection() + summary + (open ? full : lockBlock('report', full.replace(/<section/g, '<div').replace(/<\/section>/g, '</div>')));
   }
 
   // ---------- 단품 콘텐츠 화면 ----------
@@ -1254,10 +1255,12 @@
       </div>
     </section>`;
 
-    const featTiles = `<div class="feat-grid">
-      <a class="feat" href="#/planner"><span class="tile t-orange">${ic('calendar')}</span><b>여행 계획</b><small>${tripN ? `내 계획 ${tripN}건 · 동선 자동 정리` : '경유 사찰·동선 자동 정리'}</small></a>
-      <a class="feat" href="#/journal"><span class="tile t-green">${ic('pencil')}</span><b>사찰 수첩</b><small>날짜별 기록 · 방문 발자국</small></a>
-    </div>`;
+    const featTiles = `<nav class="feat-grid home-shortcuts" aria-label="핵심 바로가기">
+      <a class="feat" href="#/explore"><span class="tile t-blue">${ic('compass')}</span><b>사찰·풍수 찾기</b><small>991곳 · 테마·지역</small></a>
+      <a class="feat" href="#/map"><span class="tile t-green">${ic('map')}</span><b>주변 사찰 지도</b><small>가까운 절 찾기</small></a>
+      <a class="feat" href="#/missions"><span class="tile t-orange">${ic('stamp')}</span><b>순례·도감</b><small>도장 ${v.size}곳 · 염주 ${beads()}</small></a>
+      <a class="feat" href="#/journal"><span class="tile t-yellow">${ic('book')}</span><b>수첩·계획</b><small>${tripN ? `계획 ${tripN}건 · 기록` : '기록 · 동선 짜기'}</small></a>
+    </nav>`;
 
     const toolsDrop = `<details class="card drop">
       <summary><span class="tile t-blue">${ic('sparkle')}</span><span class="drop-copy"><b>마음 도구함 · AI 참배 안내</b><small>질문 → 예절·동선 안내 → 마음 쉼터 소리 → 3분 호흡</small></span><span class="drop-caret" aria-hidden="true">${ic('chevron')}</span></summary>
@@ -1309,10 +1312,10 @@
     return `
     ${ticker}
     ${mainTitleHero}
+    ${featTiles}
     ${todayHead}
     ${railCard}
     ${quickBar}
-    ${featTiles}
     ${toolsDrop}
     ${cqHome}
     ${returning ? pilgrimCard + moodCard : moodCard}
@@ -1419,6 +1422,7 @@
         <span class="search-wrap">${ic('search')}<input id="eq" type="search" placeholder="사찰명 · 지역 · 테마 (예: 해인사, 경주, 단풍)" value="${esc(query)}" aria-label="사찰 검색" autocomplete="off" enterkeyhint="search" /></span>
       </div>`;
     return `<div class="screen-head"><h1>사찰 탐색</h1><p class="sub"> 수록 ${TEMPLES.length}곳 · 전통사찰 ${TRAD.length}곳 · 이야기 ${STORIES.length}편</p></div>
+      ${hubSwitch('find', '#/explore')}
       ${search}
       <nav class="seg" aria-label="탐색 방식">${tabs.map(([k, n]) => `<a class="${k === tab ? 'on' : ''}" style="text-decoration:none" href="#/explore/${k}${qs}"${k === tab ? ' aria-current="page"' : ''}>${n}</a>`).join('')}</nav>
       <div id="eres">${exploreBody(tab, facet, query)}</div>`;
@@ -1593,6 +1597,7 @@
 
     return `<a href="#/explore/theme/fengshui" class="sub" style="text-decoration:none">← 풍수 답사 사찰</a>
       <div class="screen-head"><h1>${esc(A.title)}</h1></div>
+      ${hubSwitch('find', '#/fengshui')}
       <p class="sub" style="margin:4px 0 8px">${esc(A.subtitle)} — ${esc(A.intro)}</p>
       <p class="notice">${(A.disclaimer || []).map(esc).join('<br>')}</p>
       ${matrixHtml}
@@ -1800,6 +1805,7 @@
   function viewMap() {
     mapMode = 'map'; mapActiveFilter = '';
     return `<div class="screen-head map-head"><div><h1>사찰 지도</h1><p class="sub">수록 ${TEMPLES.length}곳 · 지도를 움직여 주변 사찰을 살펴보세요.</p></div><button class="btn soft small" data-act="locate">${ic('target')} 내 주변</button></div>
+      ${hubSwitch('find', '#/map')}
       <div class="map-controls">
         <div class="tabs" id="mapf" role="group" aria-label="사찰 분류"><button class="chip on" data-f="" aria-pressed="true">전체</button>${Object.entries(LL).map(([k, n]) => `<button class="chip" data-f="${k}" aria-pressed="false">${n}</button>`).join('')}<button class="chip" data-f="visited" aria-pressed="false">방문한 곳</button></div>
         <div class="map-view-switch" role="group" aria-label="결과 보기 방식"><button class="chip" data-map-view="map" aria-pressed="true">${ic('map')} 지도</button><button class="chip" data-map-view="list" aria-pressed="false">${ic('list')} 목록</button></div>
@@ -1909,6 +1915,7 @@
         <div class="row between"><h1>사찰 수첩</h1><a class="btn small" style="text-decoration:none" href="#/journal/new/">${ic('plus')} 첫 기록</a></div>
         <p class="sub">사진·날씨·다짐을 남겨 두면 나중에 '1년 전 오늘'로 다시 만나요. (이 기기에만 저장)</p>
       </div>
+      ${hubSwitch('record', '#/journal')}
       <div class="screen-actions">
         <a class="chip" style="text-decoration:none" href="#/planner">${ic('calendar')} 여행 계획 ${trips.length}</a>
         <button class="chip" data-act="cert-open">${ic('file')} 완주증</button>
@@ -1961,7 +1968,7 @@
     if (!PLAN_RECO && window.PLANNER_RECO) PLAN_RECO = window.PLANNER_RECO;
     if (!planner && window.MJ_PLANNER_FACTORY) {
       planner = window.MJ_PLANNER_FACTORY({
-        S, save, render, toast, esc, today, haversine, resolveTemple, visited, openModal,
+        S, save, render, toast, esc, today, haversine, resolveTemple, visited, openModal, hubSwitch,
         TEMPLES, THEMES, MISSIONS, TRAD, SIDO_ORDER, MJAnalytics, PLAN_RECO
       });
     }
@@ -2311,6 +2318,78 @@
   }
   window.MJ_OPEN_AUTH = openAuthModal;
 
+  /* ---------- 내비게이션 구조 (2026-11-24 개편) ----------
+   * 문제: 좁은 화면에서 '계획·상점·게시판'이 숨고, '풍수·도감·리포트'는 깊은 곳에 묻혀 있었다.
+   * 해결: ① 하단 다섯 칸 + 전체메뉴(≡) 시트 ② 비슷한 화면은 상단 전환 탭으로 묶기
+   *       ③ 홈 맨 위에 핵심 바로가기 네 칸. 주소(#/explore 등)는 하나도 바꾸지 않는다. */
+
+  // 화면(route) → 하단 내비에서 함께 켜 둘 탭들. 한 화면이 두 칸에 걸쳐 있으면 둘 다 표시한다
+  // (예: 지도는 '사찰찾기'로 들어온 흐름이라 사찰찾기도 켜 두고, 데스크톱 레일의 '지도'도 같이 켠다).
+  const NAV_GROUP = {
+    home: ['home'], explore: ['explore'], temple: ['explore'], story: ['explore'], fengshui: ['explore'], map: ['explore', 'map'],
+    missions: ['missions'], dex: ['missions'],
+    journal: ['journal'], planner: ['journal'], report: ['journal'],
+    store: ['plus'], plus: ['plus'], guide: ['plus'], 'season-report': ['plus'],
+    board: ['board'], account: ['board'], mind: ['home']
+  };
+  // 하단 바에 늘 보이는 네 탭 — 여기에 하나도 걸리지 않는 화면은 전체메뉴(≡)를 켠다
+  const BOTTOM_TABS = ['home', 'explore', 'missions', 'journal'];
+
+  /* 전체메뉴(≡) 시트 — 좁은 화면에서 숨은 기능 전부를 한 줄 설명과 함께 1탭으로 꺼낸다.
+   * 항목은 새 기능이 아니라 이미 있는 주소(#/…)만 가리킨다. 누르면 해시가 바뀌고,
+   * hashchange 가 시트를 닫은 뒤 그 화면을 그린다(따로 닫기 코드를 두지 않는다). */
+  const MENU_ITEMS = [
+    { href: '#/explore', icon: 'compass', title: '사찰 탐색', desc: '순위·테마·지역 · 전통사찰 991곳' },
+    { href: '#/map', icon: 'map', title: '주변 지도', desc: '지도에서 가까운 사찰 찾기' },
+    { href: '#/fengshui', icon: 'wind', title: '풍수 명당', desc: '명당 사찰 풍수 대백과' },
+    { href: '#/missions', icon: 'stamp', title: '순례', desc: '도장·염주·등급과 미션' },
+    { href: '#/dex', icon: 'book', title: '사찰 도감', desc: '방문한 사찰 도장 모아 보기' },
+    { href: '#/journal', icon: 'pencil', title: '마음 수첩', desc: '다녀온 날의 기록과 사진' },
+    { href: '#/planner', icon: 'calendar', title: '방문 계획', desc: '경유 사찰 동선·소요시간 정리' },
+    { href: '#/report', icon: 'list', title: '마음 리포트', desc: '내 순례 발자취·취향 분석' },
+    { href: '#/board', icon: 'chat', title: '게시판', desc: '순례 후기·질문을 나눠요' },
+    { href: '#/store', icon: 'bag', title: '상점', desc: '가이드북·스토리 1회 결제' },
+    { href: '#/plus', icon: 'sparkle', title: '플러스', desc: '심화 스토리·오디오·순례 코스' }
+  ];
+  function menuSheetHTML() {
+    return `<div class="sheet menu-sheet" id="menuSheet">
+      <h2>전체 메뉴</h2>
+      <p class="sub" style="margin:0 0 10px">찾던 기능을 한 번에 열어요.</p>
+      <div class="menu-grid">${MENU_ITEMS.map(it => `<a class="menu-item" href="${it.href}">
+        <span class="menu-ic" aria-hidden="true">${ic(it.icon)}</span>
+        <span class="menu-copy"><b>${esc(it.title)}</b><small>${esc(it.desc)}</small></span>
+        ${ic('chevron')}
+      </a>`).join('')}</div>
+    </div>`;
+  }
+  function openMenuSheet() {
+    openModal(menuSheetHTML());
+    const more = document.getElementById('tabMore');
+    if (more) more.setAttribute('aria-expanded', 'true');
+  }
+
+  /* 비슷한 화면을 한 화면에 묶는 상단 전환 탭.
+   * '탐색 ↔ 지도 ↔ 풍수', '수첩 ↔ 계획 ↔ 리포트' — 서로 오가던 기능을 한 줄 안에 세운다.
+   * 각 칸은 그 화면의 기존 주소 그대로라 뒤로 가기·북마크가 깨지지 않는다. */
+  const HUB_GROUPS = {
+    find: {
+      label: '사찰 찾기 방법',
+      items: [{ href: '#/explore', icon: 'compass', name: '탐색' }, { href: '#/map', icon: 'map', name: '지도' }, { href: '#/fengshui', icon: 'wind', name: '풍수' }]
+    },
+    record: {
+      label: '나의 기록',
+      items: [{ href: '#/journal', icon: 'book', name: '수첩' }, { href: '#/planner', icon: 'calendar', name: '계획' }, { href: '#/report', icon: 'list', name: '리포트' }]
+    }
+  };
+  function hubSwitch(group, active) {
+    const g = HUB_GROUPS[group];
+    if (!g) return '';
+    return `<nav class="seg hub-switch" aria-label="${esc(g.label)}">${g.items.map(it => {
+      const on = it.href === active;
+      return `<a class="${on ? 'on' : ''}" href="${it.href}"${on ? ' aria-current="page"' : ''}>${ic(it.icon)}<span>${esc(it.name)}</span></a>`;
+    }).join('')}</nav>`;
+  }
+
   // ---------- 라우터 ----------
   let prevRoute = null, enterT = null;
   // 화면 그리기가 예외로 실패했을 때의 복구 화면 — 빈 화면·먹통 대신 다음 행동을 준다.
@@ -2354,7 +2433,7 @@
       case 'plus': html = viewPlus(); tab = 'plus'; break;
       case 'store': html = viewStore(); tab = 'plus'; break;
       case 'story': html = viewStory(a); tab = 'explore'; break;
-      case 'report': html = viewReport(); tab = 'missions'; break;
+      case 'report': html = viewReport(); tab = 'journal'; break;
       case 'guide': html = viewGuide(); tab = 'plus'; break;
       case 'season-report': html = viewSeasonReport(); tab = 'plus'; break;
       case 'mind': html = viewMind(); tab = 'home'; break;
@@ -2392,12 +2471,21 @@
         enterT = window.setTimeout(() => $view.classList.remove('entering'), 520);
       }
     }
+    const navGroups = NAV_GROUP[route] || [tab];
     document.querySelectorAll('.tabbar a').forEach(x => {
-      const on = x.dataset.tab === tab;
+      const on = navGroups.indexOf(x.dataset.tab) > -1;
       x.classList.toggle('on', on);
       // aria-current 는 'false' 도 유효 — removeAttribute 보다 안전하고(가상 DOM 호환) SR 도 상태를 안다
       x.setAttribute('aria-current', on ? 'page' : 'false');
     });
+    // 전체메뉴(≡) — 하단 네 칸 어디에도 걸리지 않는 화면(상점·게시판·플러스 등)에서 켜서
+    // '지금 어디쯤인지'를 알린다. aria-expanded 는 시트가 열렸는지 여부만 가리킨다.
+    const moreBtn = document.getElementById('tabMore');
+    if (moreBtn) {
+      const inBottom = BOTTOM_TABS.some(k => navGroups.indexOf(k) > -1);
+      moreBtn.classList.toggle('on', !inBottom);
+      moreBtn.setAttribute('aria-current', inBottom ? 'false' : 'page');
+    }
     updatePlusChip();
     updateMemberChip();
     if (window.MJ_FEATURES && window.MJ_FEATURES.I18N) window.MJ_FEATURES.I18N.apply();
@@ -2678,6 +2766,7 @@
       return;
     }
     if (act === 'copy-promo') { copyPromoText(); return; }
+    if (act === 'open-menu') { openMenuSheet(); return; }
     if (act === 'auth-tab') {
       authModalState.mode = el.dataset.tab === 'signup' ? 'signup' : 'login';
       openModal(authModalHTML());

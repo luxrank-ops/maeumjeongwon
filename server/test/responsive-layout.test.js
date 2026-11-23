@@ -75,7 +75,7 @@ test('6. 터치 타깃 48px · iOS 입력 확대(16px) 방지 · 큰 글씨 모�
   // 2026-11: 44px → 48px (모바일 실무 가이드의 48×48dp). 상단 칩만 44px + 히트 슬롭으로 48px.
   assert.match(css, /--tap:48px/);
   assert.match(declOf('.btn'), /min-height:var\(--tap\)/);
-  assert.match(declOf('.tabbar a'), /min-height:var\(--tabbar-h\)/);
+  assert.match(declOf('.tabbar a,.tabbar .tab-more'), /min-height:var\(--tabbar-h\)/);
   assert.match(declOf('input,textarea,select'), /font-size:max\(16px,1em\)/);
   assert.match(declOf('input:not\(\[type=checkbox\]\):not\(\[type=radio\]\),select'), /min-height:var\(--tap\)/);
   // 큰 글씨 모드는 px 하드코딩이 아니라 '기저 크기'를 교체해서 어떤 화면에서도 같이 커진다
