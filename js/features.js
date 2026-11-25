@@ -1129,7 +1129,7 @@
       function applyFallbackTheme() {
         const sheet = modal.querySelector('.sagye-sheet');
         if (!sheet) return;
-        const F = { paper: '#FFFFFF', ink: '#0F1B3D', jusa: '#1A2C6B', onJusa: '#FFFFFF', line: '#D6DDE8', sub: '#56607A' };  // 단청 대시보드 팔레트
+        const F = { paper: '#FAF7F2', ink: '#1A1A1A', jusa: '#B71C1C', onJusa: '#FFFDF9', line: '#E4DFD2', sub: '#6E6759' };  // 한지 에디토리얼 팔레트
         sheet.style.background = F.paper; sheet.style.color = F.ink;
         sheet.style.padding = '18px 16px'; sheet.style.borderRadius = '24px 24px 0 0';
         const paperEl = sheet.querySelector('.sagye-paper');
@@ -1137,7 +1137,7 @@
           paperEl.style.borderRadius = '16px';
           paperEl.style.border = '1px solid ' + F.line;
           paperEl.style.padding = '16px';
-          paperEl.style.backgroundImage = 'linear-gradient(90deg, rgba(26,44,107,.08) 1px, transparent 1px), linear-gradient(0deg, rgba(26,44,107,.08) 1px, transparent 1px)';
+          paperEl.style.backgroundImage = 'linear-gradient(90deg, rgba(183,28,28,.09) 1px, transparent 1px), linear-gradient(0deg, rgba(183,28,28,.09) 1px, transparent 1px)';
           paperEl.style.backgroundSize = '32px 32px';
         }
         const seal = sheet.querySelector('.seal-send');

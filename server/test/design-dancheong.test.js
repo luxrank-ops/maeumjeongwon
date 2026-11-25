@@ -1,13 +1,11 @@
 'use strict';
 
-/* 단청 대시보드 (2026-11) 가드 — 홈의 새 조각과 그 약속.
+/* 한지 에디토리얼 · 잉크 블랙+골드 (2026-11) 가드 — 홈의 새 조각과 그 약속.
  *
  *   ① 공지 띠는 흐르지만, 움직임을 줄인 사용자에게는 멈추고 손으로 민다
  *   ② 빠른 실행 바·기능 타일·도구함·권역 띠·도감·상담 버튼이 기존 행동(data-act·라우트)만 부른다
- *   ③ 단청 빛깔은 토큰으로만 — 낮·저조도 모두 4.5:1 (타일 글자·띠 글자)
+ *   ③ 에디토리얼 빛깔도 토큰으로만 — 낮·저조도 모두 4.5:1 (타일 글자·띠 글자)
  *   ④ 떠 있는 버튼은 fixed 가 아니라 sticky — 데스크톱 레일·하단 탭 레이아웃을 깨지 않는다
- *
- * 근거: docs/design-dancheong.md
  */
 
 const test = require('node:test');
@@ -35,7 +33,8 @@ function blockIn(src, marker) {
 }
 const tokens = src => Object.fromEntries([...src.matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]+);/g)].map(m => [m[1], m[2].trim()]));
 const LIGHT = tokens(blockIn(css, '/* ---------- ⑮-1 토큰'));
-const DARK = tokens(blockIn(css, ':root[data-theme=dark]{'));
+const DARK_BLOCK_PLACEHOLDER = blockIn(css, ':root[data-theme=dark]{');
+const DARK = tokens(DARK_BLOCK_PLACEHOLDER);
 
 test('① 공지 띠 — 흐르되, 움직임을 줄이면 멈추고 가로로 민다', () => {
   assert.match(app, /class="ticker" role="region" aria-label="오늘의 안내"/);
@@ -59,12 +58,12 @@ test('② 홈의 새 조각은 이미 있는 행동만 부른다 (새 기능·�
   assert.match(shell, /<symbol id="i-star"/, '빠른 실행 바의 별 아이콘');
 });
 
-test('③ 단청 빛깔은 토큰 — 낮·저조도 모두 채워져 있고 글자 대비 4.5:1', () => {
+test('③ 에디토리얼 빛깔은 토큰 — 낮·저조도 모두 채워져 있고 글자 대비 4.5:1', () => {
   const rgb = h => { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
   const lum = c => { const f = x => { x /= 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); }; const [r, g, b] = c.map(f); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
   const ratio = (a, b) => { const A = lum(rgb(a)), B = lum(rgb(b)); return (Math.max(A, B) + 0.05) / (Math.min(A, B) + 0.05); };
   const pairs = [['--hl-ink', '--hl'], ['--ink', '--hl'], ['--on-band', '--band-2'], ['--on-band', '--band-4'],
-    ['--on-band', '--band-6'], ['--on-band', '--band-8'], ['--on-band', '--fab-1'], ['--on-band', '--fab-2']];
+    ['--on-band', '--band-6'], ['--on-band', '--band-8'], ['--on-pine', '--fab-1'], ['--on-pine', '--fab-2']];
   for (const c of ['blue', 'green', 'orange', 'yellow', 'pink', 'purple']) pairs.push([`--tile-${c}-ink`, `--tile-${c}`]);
   for (const [name, set] of [['낮', LIGHT], ['저조도', DARK]]) {
     for (const [fg, bg] of pairs) {
@@ -73,9 +72,10 @@ test('③ 단청 빛깔은 토큰 — 낮·저조도 모두 채워져 있고 글
       assert.ok(r >= 4.5, `${name}: ${fg} on ${bg} = ${r.toFixed(2)}:1`);
     }
   }
-  // 두툼한 남색 테두리는 시맨틱 한 이름으로만 부른다
-  assert.match(blockIn(css, '/* ② 시맨틱'), /--border-strong:var\(--ink\)/);
-  assert.match(css, /\.feat\{[^}]*border:2\.5px solid var\(--border-strong\)/);
+  // 얇은 헤어라인은 팔레트 블록이 들고, 컴포넌트는 시맨틱 한 이름으로만 부른다
+  assert.match(blockIn(css, '/* ---------- ⑮-1 토큰'), /--border-strong:#CFC8B8/i, '낮=먹 헤어라인');
+  assert.match(DARK_BLOCK_PLACEHOLDER, /--border-strong:#363C48/i, '저조도=촛불 헤어라인');
+  assert.match(css, /\.feat\{[^}]*border:1px solid var\(--border-strong\)/);
   assert.match(css, /\.qchip\{[^}]*min-height:var\(--tap\)/, '빠른 실행 칩도 48dp');
 });
 

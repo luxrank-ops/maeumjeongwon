@@ -3127,7 +3127,7 @@
    * 값은 앱 상태(S)와 섞지 않고 별도 키에 둔다 — 첫 페인트 전(<head> 의 인라인 스크립트)에도
    * 읽어야 하므로, 앱 상태 JSON 전체를 기다릴 수 없다. */
   const THEME_KEY = 'maeumjeongwon.theme.v1';
-  const THEME_BAR = { light: '#FFFFFF', dark: '#131B2E' };
+  const THEME_BAR = { light: '#FAF7F2', dark: '#0E1116' };
   let themePref = '';
   try { themePref = localStorage.getItem(THEME_KEY) || ''; } catch (e) { themePref = ''; }
   const systemDark = () => !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
