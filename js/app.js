@@ -3122,16 +3122,14 @@
   applyBig();
 
   /* ---------- 테마: 낮 / 저조도 ----------
-   * CSS 는 <html data-theme> 하나만 본다. 정하는 순서는 '사용자가 고른 것 > 시스템 설정'이고,
-   * 고른 적이 없으면 OS 의 low-light 설정이 바뀔 때 따라간다.
+   * 기본 테마는 방향 B(잉크 블랙 + 골드)다. 직접 '낮 모드'를 고른 경우에만 그 값을 따른다.
    * 값은 앱 상태(S)와 섞지 않고 별도 키에 둔다 — 첫 페인트 전(<head> 의 인라인 스크립트)에도
    * 읽어야 하므로, 앱 상태 JSON 전체를 기다릴 수 없다. */
   const THEME_KEY = 'maeumjeongwon.theme.v1';
   const THEME_BAR = { light: '#FAF7F2', dark: '#0E1116' };
   let themePref = '';
   try { themePref = localStorage.getItem(THEME_KEY) || ''; } catch (e) { themePref = ''; }
-  const systemDark = () => !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  const isDark = () => themePref ? themePref === 'dark' : systemDark();
+  const isDark = () => themePref ? themePref === 'dark' : true;   // 기본 = B(잉크 블랙 + 골드)
   function applyTheme() {
     const dark = isDark();
     const root = document.documentElement;
@@ -3154,12 +3152,6 @@
     toast(isDark() ? '저조도 모드 — 새벽예불·야간 산행에서 눈이 편해요' : '낮 모드로 돌아왔어요');
   });
   applyTheme();
-  if (window.matchMedia) {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const onSysTheme = () => { if (!themePref) applyTheme(); };   // 직접 고른 적이 없을 때만 따라간다
-    if (mq.addEventListener) mq.addEventListener('change', onSysTheme);
-    else if (mq.addListener) mq.addListener(onSysTheme);
-  }
   window.addEventListener('hashchange', () => { clearInterval(openAd._t); closeModal(); navigate(); });
   // 스크롤 위치로만 상단 바의 경계를 그린다 — 늘 그림자를 달면 화면이 '무게'를 잃는다
   let scrolledT = null;

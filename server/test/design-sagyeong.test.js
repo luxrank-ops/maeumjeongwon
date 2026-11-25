@@ -69,11 +69,11 @@ test('① 강조 한 색 — 주 행동은 주사 #B71C1C, 바탕은 한지, 글
   assert.ok(token(DARK, '--pine').length === 7, '저조도 주사 토큰');
 });
 
-test('① 테마 표기(manifest·meta·PWA)가 한지 바탕·잉크 블랙으로 함께 움직인다', () => {
+test('① 테마 표기(manifest·meta·PWA)가 방향 B(잉크 블랙 + 골드) 기본으로 함께 움직인다', () => {
   const manifest = JSON.parse(read('manifest.webmanifest'));
-  assert.equal(manifest.theme_color.toUpperCase(), '#FAF7F2', '상태바 = 한지 바탕');
-  assert.equal(manifest.background_color.toUpperCase(), '#FAF7F2', '스플래시 = 화면 바탕');
-  assert.match(shell, /<meta name="theme-color" content="#FAF7F2"/);
+  assert.equal(manifest.theme_color.toUpperCase(), '#0E1116', '상태바 = 잉크 블랙(B 기본)');
+  assert.equal(manifest.background_color.toUpperCase(), '#0E1116', '스플래시 = 화면 바탕(B)');
+  assert.match(shell, /<meta name="theme-color" content="#0E1116"/);
   assert.match(app, /const THEME_BAR = \{ light: '#FAF7F2', dark: '#0E1116' \}/);
   // 단청 대시보드 팔레트 잔재가 화면 코드에 남아 있으면 안 된다
   assert.equal(/1A2C6B|EEF2F8|0F1B3D|131B2E|7FA4FF/i.test(css + shell + app + features), false, '단청 대시보드 팔레트 잔재');
