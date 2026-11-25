@@ -10,7 +10,7 @@ const site = require('../config/site');
 
 const DEFAULT_OUT = path.join(__dirname, '..', 'seo-out');
 // 정적 페이지가 부르는 자산의 캐시 버전 — index.html·js/lib/loader.js(VERSION)·sw.js(CACHE_NAME)와 함께 올린다.
-const ASSET_V = '20261124nav3';
+const ASSET_V = '20261125ed1';
 
 const ADS_PUB_RE = /^pub-\d{16}$/;
 const ADS_SLOT_RE = /^\d{6,}$/;
@@ -80,7 +80,7 @@ function page({ base, urlPath, title, desc, body, ld, ads = null, ga = null, tra
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#FFFFFF" />
+<meta name="theme-color" content="#FAF7F2" />
 <title>${esc(title)} — 절로가</title>
 <meta name="description" content="${esc(desc)}" />
 <!-- 색인 허용을 명시한다 — 검색엔진이 색인 여부를 추측하지 않게 한다 -->
